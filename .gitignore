@@ -1,0 +1,12 @@
+*.pdf
+2019大作业
+*.exe
+*.aux
+*.log
+*.out
+*.gz
+__latexindent_temp.tex
+*.bbl
+*.blg
+Stroustrup_*
+.vscode
