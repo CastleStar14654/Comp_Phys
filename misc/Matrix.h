@@ -76,7 +76,7 @@ Matrix<T>::Matrix(size_type r, size_type c, T deft)
     : Base_Matrix<T>{r, c, r * c, new T[r * c]{}}
 {
     if (deft != T{})
-        for (size_t i = 0; i < rs * cs; i++)
+        for (std::size_t i = 0; i < rs * cs; i++)
         {
             elem[i] = deft;
         }
@@ -183,9 +183,8 @@ Matrix<T> &Matrix<T>::operator=(Matrix &&mat)
 template <typename T>
 Row<T> Matrix<T>::row(size_type pos) const
 {
-    Row<T> res(cs);
-    std::copy(&elem[pos*cs], &elem[(pos+1)*cs], res.begin());
-    // for (size_t c = 0; c < cs; c++)
+    Row<T> res(&elem[pos*cs], &elem[(pos+1)*cs]);
+    // for (std::size_t c = 0; c < cs; c++)
     // {
     //     res[c] = this->operator()(pos, c);
     // }
@@ -196,7 +195,7 @@ template <typename T>
 Column<T> Matrix<T>::column(size_type pos) const
 {
     Column<T> res(rs);
-    for (size_t r = 0; r < rs; r++)
+    for (std::size_t r = 0; r < rs; r++)
     {
         res[r] = this->operator()(r, pos);
     }

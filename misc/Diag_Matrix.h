@@ -46,7 +46,7 @@ Diag_Matrix<T> operator*(const Diag_Matrix<T> &a, const Diag_Matrix<T> &b)
 {
     if (a.cols() != b.rows())
     {
-        throw std::domain_error("Matrix::operator*(): invalid shapes.");
+        throw std::domain_error("Diag_Matrix::operator*(): invalid shapes.");
     }
 
     Matrix<T> res{a.rows(), b.cols()};
@@ -62,7 +62,7 @@ Matrix<T> operator*(const Diag_Matrix<T> &a, const Base_Matrix<T> &b)
 {
     if (a.cols() != b.rows())
     {
-        throw std::domain_error("Matrix::operator*(): invalid shapes.");
+        throw std::domain_error("Diag_Matrix::operator*(): invalid shapes.");
     }
 
     Matrix<T> res{a.rows(), b.cols()};
@@ -79,7 +79,7 @@ Matrix<T> operator*(const Base_Matrix<T> &a, const Diag_Matrix<T> &b)
 {
     if (a.cols() != b.rows())
     {
-        throw std::domain_error("Matrix::operator*(): invalid shapes.");
+        throw std::domain_error("Diag_Matrix::operator*(): invalid shapes.");
     }
 
     Matrix<T> res{a.rows(), b.cols()};
@@ -98,7 +98,7 @@ Diag_Matrix<T>::Diag_Matrix(size_type n, T deft)
     : Base_Matrix<T>{n, n, n, new T[n]{}}
 {
     if (deft != T{})
-        for (size_t i = 0; i < data_sz; i++)
+        for (std::size_t i = 0; i < data_sz; i++)
         {
             elem[i] = deft;
         }
