@@ -64,7 +64,7 @@ Matrix<T> operator*(const Base_Matrix<T> &a, const Base_Matrix<T> &b)
     for (std::size_t i = 0; i < res.rows(); i++)
         for (std::size_t k = 0; k < a.cols(); k++)
         {
-            r = a(i, k);
+            T r = a(i, k);
             for (std::size_t j = 0; j < res.cols(); j++)
             {
                 res(i, j) += r * b(k, j);
