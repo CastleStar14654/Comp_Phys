@@ -22,14 +22,14 @@ public:
     using typename Base_Matrix<T>::size_type;
 
     explicit Diag_Matrix(size_type n, T deft = T{});
-    Diag_Matrix(const Diag_Matrix &mat);
-    Diag_Matrix(Diag_Matrix &&mat);
+    Diag_Matrix(const Diag_Matrix &mat)=default;
+    Diag_Matrix(Diag_Matrix &&mat)=default;
     template <typename It>
     explicit Diag_Matrix(It b, It e);
     explicit Diag_Matrix(std::initializer_list<T> ini);
 
-    Diag_Matrix &operator=(const Diag_Matrix &mat);
-    Diag_Matrix &operator=(Diag_Matrix &&mat);
+    Diag_Matrix &operator=(const Diag_Matrix &mat)=default;
+    Diag_Matrix &operator=(Diag_Matrix &&mat)=default;
 
     Row<T> row(size_type pos) const override;
     Column<T> column(size_type pos) const override;
@@ -95,27 +95,8 @@ Matrix<T> operator*(const Base_Matrix<T> &a, const Diag_Matrix<T> &b)
 
 template <typename T>
 Diag_Matrix<T>::Diag_Matrix(size_type n, T deft)
-    : Base_Matrix<T>{n, n, n, new T[n]{}}
+    : Base_Matrix<T>{n, n, n, deft}
 {
-    if (deft != T{})
-        for (std::size_t i = 0; i < data_sz; i++)
-        {
-            elem[i] = deft;
-        }
-}
-
-template <typename T>
-Diag_Matrix<T>::Diag_Matrix(const Diag_Matrix &mat)
-    : Base_Matrix<T>{mat.rs, mat.cs, mat.data_sz, new T[mat.data_sz]}
-{
-    std::copy(mat.elem, mat.elem + data_sz, elem);
-}
-
-template <typename T>
-Diag_Matrix<T>::Diag_Matrix(Diag_Matrix &&mat)
-    : Base_Matrix<T>{mat.rs, mat.cs, mat.data_sz, mat.elem}
-{
-    mat.elem = nullptr;
 }
 
 template <typename T>
@@ -131,33 +112,6 @@ Diag_Matrix<T>::Diag_Matrix(std::initializer_list<T> ini)
     : Base_Matrix<T>(ini.size(), ini.size(), ini.size(), new T[ini.size()])
 {
     std::move(ini.begin(), ini.end(), elem);
-}
-
-// ----------------------- Diag_Matrix operator= --------------------------
-
-template <typename T>
-Diag_Matrix<T> &Diag_Matrix<T>::operator=(const Diag_Matrix &mat)
-{
-    T *temp = new T[mat.data_size()];
-    std::copy(mat.elem, mat.elem + data_sz, temp);
-    delete[] elem;
-    elem = temp;
-    rs = mat.rs;
-    cs = mat.cs;
-    data_sz = mat.data_sz;
-    return *this;
-}
-
-template <typename T>
-Diag_Matrix<T> &Diag_Matrix<T>::operator=(Diag_Matrix &&mat)
-{
-    delete[] elem;
-    elem = mat.elem;
-    mat.elem = nullptr;
-    rs = mat.rs;
-    cs = mat.cs;
-    data_sz = mat.data_sz;
-    return *this;
 }
 
 // ------------------------Diag_Matrix row() & column() ------------------------------

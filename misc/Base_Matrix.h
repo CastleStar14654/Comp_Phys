@@ -42,13 +42,14 @@ protected:
 public:
     Base_Matrix(size_type r, size_type c, size_type dt_sz, T *elm)
         : rs{r}, cs{c}, data_sz{dt_sz}, elem{elm} {}
-    Base_Matrix(const Base_Matrix &mat) = delete;
-    Base_Matrix(Base_Matrix &&mat) = delete;
+    Base_Matrix(size_type r, size_type c, size_type dt_sz, T deft=T{});
+    Base_Matrix(const Base_Matrix &mat);
+    Base_Matrix(Base_Matrix &&mat);
 
     virtual ~Base_Matrix() { delete[] elem; }
 
-    Base_Matrix &operator=(const Base_Matrix &mat) = delete;
-    Base_Matrix &operator=(Base_Matrix &&mat) = delete;
+    Base_Matrix &operator=(const Base_Matrix &mat);
+    Base_Matrix &operator=(Base_Matrix &&mat);
 
     virtual Row<T> row(size_type pos) const = 0;
     virtual Column<T> column(size_type pos) const = 0;
@@ -88,6 +89,73 @@ std::ostream &operator<<(std::ostream &os, const Base_Matrix<T> &mat)
     os << ']';
     return os;
 }
+
+// =========================== Base_Matrix =============================
+
+template <typename T>
+Base_Matrix<T>::Base_Matrix(size_type r, size_type c, size_type dt_sz, T deft)
+    : rs{r}, cs{c}, data_sz{dt_sz}, elem{new T[dt_sz]{}}
+{
+    if (deft != T{})
+        for (std::size_t i = 0; i < rs * cs; i++)
+        {
+            elem[i] = deft;
+        }
+}
+
+template <typename T>
+Base_Matrix<T>::Base_Matrix(const Base_Matrix<T> &mat)
+    : rs{mat.rs}, cs{mat.cs}, data_sz{mat.data_sz}, elem{new T[mat.data_sz]}
+{
+    std::copy(mat.elem, mat.elem+data_sz, elem);
+}
+
+template <typename T>
+Base_Matrix<T>::Base_Matrix(Base_Matrix<T> &&mat)
+    : rs{mat.rs}, cs{mat.cs}, data_sz{mat.data_sz}, elem{mat.elem}
+{
+    mat.elem = nullptr;
+}
+
+// ========================= operator= ===================================
+
+template <typename T>
+Base_Matrix<T>& Base_Matrix<T>::operator=(const Base_Matrix<T> &mat)
+{
+    if (this != &mat)
+    {
+        if (this->shape() != mat.shape())
+        {
+            throw std::runtime_error("Base_Matrix assignment: different shapes");
+        }
+        if (this->data_sz != mat.data_sz)
+        {
+            throw std::runtime_error("Base_Matrix assignment: different data_size");
+        }
+        std::copy(mat.elem, mat.elem+data_sz, elem);
+    }
+    return *this;
+}
+
+template <typename T>
+Base_Matrix<T>& Base_Matrix<T>::operator=(Base_Matrix<T> &&mat)
+{
+    if (this != &mat)
+    {
+        if (this->shape() != mat.shape())
+        {
+            throw std::runtime_error("Base_Matrix assignment: different shapes");
+        }
+        if (this->data_sz != mat.data_sz)
+        {
+            throw std::runtime_error("Base_Matrix assignment: different data_size");
+        }
+        delete[] elem;
+        elem = std::exchange(mat.elem, nullptr);
+    }
+    return *this;
+}
+
 
 } // namespace Misc
 

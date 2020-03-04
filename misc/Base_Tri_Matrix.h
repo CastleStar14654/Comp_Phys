@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include <initializer_list>
+#include <utility>
 
 #include "Base_Matrix.h"
 #include "Matrix.h"
@@ -21,10 +22,14 @@ public:
     using typename Base_Matrix<T>::size_type;
 
     explicit Base_Tri_Matrix(size_type n, T deft = T{});
+    Base_Tri_Matrix(const Base_Tri_Matrix &mat) = default;
+    Base_Tri_Matrix(Base_Tri_Matrix &&mat) = default;
     Base_Tri_Matrix(const Diag_Matrix<T> &mat);
     Base_Tri_Matrix(Diag_Matrix<T> &&mat);
     Base_Tri_Matrix(std::initializer_list<std::initializer_list<T>> ini);
 
+    Base_Tri_Matrix &operator=(const Base_Tri_Matrix &mat) = default;
+    Base_Tri_Matrix &operator=(Base_Tri_Matrix &&mat) = default;
     Base_Tri_Matrix &operator=(const Diag_Matrix<T> &mat);
     Base_Tri_Matrix &operator=(Diag_Matrix<T> &&mat);
 
@@ -34,13 +39,7 @@ protected:
     using Base_Matrix<T>::elem;
     using Base_Matrix<T>::data_sz;
 
-    // explicit Base_Tri_Matrix(size_type n, T* pt) : Base_Matrix<T>{n, n, n*(n+1)/2, pt} {}
-    Base_Tri_Matrix(const Base_Tri_Matrix &mat);
-    Base_Tri_Matrix(Base_Tri_Matrix &&mat);
-    Base_Tri_Matrix &operator=(const Base_Tri_Matrix &mat);
-    Base_Tri_Matrix &operator=(Base_Tri_Matrix &&mat);
-
-// protected, only return PART of the column/row
+    // protected, only return PART of the column/row
     virtual Row<T> row(size_type pos) const = 0;
     // virtual Column<T> column(size_type pos) const override;
     virtual T &operator()(size_type row, size_type col) override;
@@ -51,67 +50,18 @@ protected:
 };
 
 // ========================== Base_Tri_Matrix =================================
-// -------------------------------protected--------------------------------------
-
-template <typename T>
-Base_Tri_Matrix<T>::Base_Tri_Matrix(const Base_Tri_Matrix &mat)
-    : Base_Matrix<T>{mat.rs, mat.cs, mat.data_sz, new T[mat.data_sz]}
-{
-    std::copy(mat.elem, mat.elem + data_sz, elem);
-}
-
-template <typename T>
-Base_Tri_Matrix<T>::Base_Tri_Matrix(Base_Tri_Matrix &&mat)
-    : Base_Matrix<T>{mat.rs, mat.cs, mat.data_sz, mat.elem}
-{
-    mat.elem = nullptr;
-}
-
-// [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[operator=]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
-
-template <typename T>
-Base_Tri_Matrix<T> &Base_Tri_Matrix<T>::operator=(const Base_Tri_Matrix<T> &mat)
-{
-    T *temp = new T[mat.data_size()];
-    std::copy(mat.elem, mat.elem + data_sz, temp);
-    delete[] elem;
-    elem = temp;
-    rs = mat.rs;
-    cs = mat.cs;
-    data_sz = mat.data_sz;
-    return *this;
-}
-
-template <typename T>
-Base_Tri_Matrix<T> &Base_Tri_Matrix<T>::operator=(Base_Tri_Matrix<T> &&mat)
-{
-    delete[] elem;
-    elem = mat.elem;
-    mat.elem = nullptr;
-    rs = mat.rs;
-    cs = mat.cs;
-    data_sz = mat.data_sz;
-    return *this;
-}
-
-// --------------------------------public-------------------------------------
 
 template <typename T>
 Base_Tri_Matrix<T>::Base_Tri_Matrix(size_type n, T deft)
-    : Base_Matrix<T>{n, n, n * (n + 1) / 2, new T[n * (n + 1) / 2]{}}
+    : Base_Matrix<T>{n, n, n * (n + 1) / 2, deft}
 {
-    if (deft != T{})
-        for (std::size_t i = 0; i < data_sz; i++)
-        {
-            elem[i] = deft;
-        }
 }
 
 template <typename T>
 Base_Tri_Matrix<T>::Base_Tri_Matrix(const Diag_Matrix<T> &mat)
     : Base_Matrix<T>{mat.rows(), mat.cols(),
                      mat.rows() * (mat.rows() + 1) / 2,
-                     new T[mat.rows() * (mat.rows() + 1) / 2]{}}
+                     T{}}
 {
     for (std::size_t i = 0; i < rs; i++)
     {
@@ -123,7 +73,7 @@ template <typename T>
 Base_Tri_Matrix<T>::Base_Tri_Matrix(Diag_Matrix<T> &&mat)
     : Base_Matrix<T>{mat.rows(), mat.cols(),
                      mat.rows() * (mat.rows() + 1) / 2,
-                     new T[mat.rows() * (mat.rows() + 1) / 2]{}}
+                     T{}}
 {
     for (std::size_t i = 0; i < rs; i++)
     {
@@ -134,9 +84,9 @@ Base_Tri_Matrix<T>::Base_Tri_Matrix(Diag_Matrix<T> &&mat)
 template <typename T>
 Base_Tri_Matrix<T>::Base_Tri_Matrix(std::initializer_list<std::initializer_list<T>> ini)
     : Base_Matrix<T>{ini.size(), ini.size(),
-                     ini.size() * (ini.size()+1)/2, nullptr}
+                     ini.size() * (ini.size() + 1) / 2, nullptr}
 {
-    int count {1};
+    int count{1};
     for (auto i = ini.begin(); i != ini.end(); i++)
     {
         if (i->size() != count)
@@ -152,23 +102,41 @@ Base_Tri_Matrix<T>::Base_Tri_Matrix(std::initializer_list<std::initializer_list<
     }
 }
 
-
-
 // -------------------- Base_Tri_Matrix: operator= ----------------------------
 
 template <typename T>
 Base_Tri_Matrix<T> &Base_Tri_Matrix<T>::operator=(const Diag_Matrix<T> &mat)
 {
-    Base_Tri_Matrix<T> temp{mat};
-    *this = std::move(temp);
+    if (this->shape() != mat.shape())
+    {
+        throw std::runtime_error("Matrix assignment: non-uniform shape.");
+    }
+
+    T* temp = new T[data_sz]{};
+    delete[] elem;
+    elem = temp;
+    for (std::size_t i = 0; i < rs; i++)
+    {
+        (*this)(i, i) = mat(i, i);
+    }
     return *this;
 }
 
 template <typename T>
 Base_Tri_Matrix<T> &Base_Tri_Matrix<T>::operator=(Diag_Matrix<T> &&mat)
 {
-    Matrix<T> temp{mat};
-    *this = std::move(temp);
+    if (this->shape() != mat.shape())
+    {
+        throw std::runtime_error("Matrix assignment: non-uniform shape.");
+    }
+
+    T* temp = new T[data_sz]{};
+    delete[] elem;
+    elem = temp;
+    for (std::size_t i = 0; i < rs; i++)
+    {
+        (*this)(i, i) = std::move(mat(i, i));
+    }
     return *this;
 }
 
@@ -178,33 +146,33 @@ Base_Tri_Matrix<T> &Base_Tri_Matrix<T>::operator=(Diag_Matrix<T> &&mat)
 template <typename T>
 Row<T> Base_Tri_Matrix<T>::row(size_type pos) const
 {
-    Row<T> res(&elem[pos*(pos+1)/2], &elem[(pos+1)*(pos+2)/2]);
+    Row<T> res(&elem[pos * (pos + 1) / 2], &elem[(pos + 1) * (pos + 2) / 2]);
     return res;
 }
 
 template <typename T>
 T &Base_Tri_Matrix<T>::operator()(size_type row, size_type col)
 {
-    if (row<col)
+    if (row < col)
     {
         throw std::out_of_range("Base_Tri_Matrix::operator(): trying to access empty area.");
     }
     else
     {
-        return elem[row*(row+1)/2+col];
+        return elem[row * (row + 1) / 2 + col];
     }
 }
 
 template <typename T>
 const T &Base_Tri_Matrix<T>::operator()(size_type row, size_type col) const
 {
-    if (row<col)
+    if (row < col)
     {
         throw std::out_of_range("Base_Tri_Matrix::operator(): trying to access empty area.");
     }
     else
     {
-        return elem[row*(row+1)/2+col];
+        return elem[row * (row + 1) / 2 + col];
     }
 }
 

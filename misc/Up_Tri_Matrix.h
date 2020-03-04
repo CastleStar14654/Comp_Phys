@@ -27,8 +27,8 @@ public:
     using typename Base_Tri_Matrix<T>::size_type;
     using Base_Tri_Matrix<T>::Base_Tri_Matrix;
 
-    Up_Tri_Matrix(const Up_Tri_Matrix &mat);
-    Up_Tri_Matrix(Up_Tri_Matrix &&mat);
+    Up_Tri_Matrix(const Up_Tri_Matrix &mat)=default;
+    Up_Tri_Matrix(Up_Tri_Matrix &&mat)=default;
     Up_Tri_Matrix(std::initializer_list<std::initializer_list<T>> ini);
 
     Up_Tri_Matrix &operator=(const Up_Tri_Matrix &mat);
@@ -60,19 +60,20 @@ Up_Tri_Matrix<T> operator*(const Up_Tri_Matrix<T> &a, const Up_Tri_Matrix<T> &b)
     return res;
 }
 
+template <typename T>
+Up_Tri_Matrix<T> operator*(const Up_Tri_Matrix<T> &a, const Diag_Matrix<T> &b)
+{
+    return a * (*reinterpret_cast<const Up_Tri_Matrix<T> *>(&b));
+}
+
+template <typename T>
+Up_Tri_Matrix<T> operator*(const Diag_Matrix<T> &a, const Up_Tri_Matrix<T> &b)
+{
+    return (*reinterpret_cast<const Up_Tri_Matrix<T> *>(&a)) * b;
+}
+
+
 // ========================== Up_Tri_Matrix =================================
-
-template <typename T>
-Up_Tri_Matrix<T>::Up_Tri_Matrix(const Up_Tri_Matrix &mat)
-    : Base_Tri_Matrix<T>{mat}
-{
-}
-
-template <typename T>
-Up_Tri_Matrix<T>::Up_Tri_Matrix(Up_Tri_Matrix &&mat)
-    : Base_Tri_Matrix<T>{mat}
-{
-}
 
 template <typename T>
 Up_Tri_Matrix<T>::Up_Tri_Matrix(std::initializer_list<std::initializer_list<T>> ini)
@@ -100,20 +101,6 @@ Up_Tri_Matrix<T>::Up_Tri_Matrix(std::initializer_list<std::initializer_list<T>> 
         }
         ++ini_r;
     }
-}
-
-// -------------------- Up_Tri_Matrix: operator= ----------------------------
-
-template <typename T>
-Up_Tri_Matrix<T> &Up_Tri_Matrix<T>::operator=(const Up_Tri_Matrix<T> &mat)
-{
-    return Base_Tri_Matrix<T>::operator=(mat);
-}
-
-template <typename T>
-Up_Tri_Matrix<T> &Up_Tri_Matrix<T>::operator=(Up_Tri_Matrix<T> &&mat)
-{
-    return Base_Tri_Matrix<T>::operator=(mat);
 }
 
 // -------------------- Up_Tri_Matrix: row & column ----------------------------

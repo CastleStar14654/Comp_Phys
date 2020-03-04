@@ -25,45 +25,19 @@ public:
     using typename Base_Tri_Matrix<T>::size_type;
     using Base_Tri_Matrix<T>::Base_Tri_Matrix;
 
-    Symm_Matrix(const Symm_Matrix &mat);
-    Symm_Matrix(Symm_Matrix &&mat);
+    Symm_Matrix(const Symm_Matrix &mat) = default;
+    Symm_Matrix(Symm_Matrix &&mat) = default;
 
-    Symm_Matrix &operator=(const Symm_Matrix &mat);
-    Symm_Matrix &operator=(Symm_Matrix &&mat);
+    Symm_Matrix &operator=(const Symm_Matrix &mat) = default;
+    Symm_Matrix &operator=(Symm_Matrix &&mat) = default;
 
     Row<T> row(size_type pos) const override;
-    Column<T> column(size_type pos) const override  { return row(pos); };
+    Column<T> column(size_type pos) const override { return row(pos); };
     T &operator()(size_type row, size_type col) override;
     const T &operator()(size_type row, size_type col) const override;
 };
 
 // ========================== Symm_Matrix =================================
-
-template <typename T>
-Symm_Matrix<T>::Symm_Matrix(const Symm_Matrix &mat)
-    : Base_Tri_Matrix<T>{mat}
-{
-}
-
-template <typename T>
-Symm_Matrix<T>::Symm_Matrix(Symm_Matrix &&mat)
-    : Base_Tri_Matrix<T>{mat}
-{
-}
-
-// -------------------- Symm_Matrix: operator= ----------------------------
-
-template <typename T>
-Symm_Matrix<T> &Symm_Matrix<T>::operator=(const Symm_Matrix<T> &mat)
-{
-    return this->Base_Tri_Matrix<T>::operator=(mat);
-}
-
-template <typename T>
-Symm_Matrix<T> &Symm_Matrix<T>::operator=(Symm_Matrix<T> &&mat)
-{
-    return this->Base_Tri_Matrix<T>::operator=(mat);
-}
 
 // -------------------- Symm_Matrix: row & column ----------------------------
 

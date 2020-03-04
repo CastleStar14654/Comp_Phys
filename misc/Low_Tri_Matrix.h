@@ -4,7 +4,7 @@
 #include <iterator>
 
 #include "Base_Matrix.h"
-// #include "Matrix.h"
+#include "Diag_Matrix.h"
 #include "Base_Tri_Matrix.h"
 
 // the namespace miscellany
@@ -24,12 +24,14 @@ private:
 public:
     using typename Base_Tri_Matrix<T>::size_type;
     using Base_Tri_Matrix<T>::Base_Tri_Matrix;
+    using Base_Tri_Matrix<T>::operator=;
+    using Base_Tri_Matrix<T>::operator();
 
-    Low_Tri_Matrix(const Low_Tri_Matrix &mat);
-    Low_Tri_Matrix(Low_Tri_Matrix &&mat);
+    Low_Tri_Matrix(const Low_Tri_Matrix &mat)=default;
+    Low_Tri_Matrix(Low_Tri_Matrix &&mat)=default;
 
-    Low_Tri_Matrix &operator=(const Low_Tri_Matrix &mat);
-    Low_Tri_Matrix &operator=(Low_Tri_Matrix &&mat);
+    Low_Tri_Matrix &operator=(const Low_Tri_Matrix &mat) = default;
+    Low_Tri_Matrix &operator=(Low_Tri_Matrix &&mat) = default;
 
     Row<T> row(size_type pos) const override;
     Column<T> column(size_type pos) const override;
@@ -56,33 +58,21 @@ Low_Tri_Matrix<T> operator*(const Low_Tri_Matrix<T> &a, const Low_Tri_Matrix<T> 
     return res;
 }
 
+// ---------------------------------------------------------------------------
+
+template <typename T>
+Low_Tri_Matrix<T> operator*(const Low_Tri_Matrix<T> &a, const Diag_Matrix<T> &b)
+{
+    return a * (*reinterpret_cast<const Low_Tri_Matrix<T> *>(&b));
+}
+
+template <typename T>
+Low_Tri_Matrix<T> operator*(const Diag_Matrix<T> &a, const Low_Tri_Matrix<T> &b)
+{
+    return (*reinterpret_cast<const Low_Tri_Matrix<T> *>(&a)) * b;
+}
+
 // ========================== Low_Tri_Matrix =================================
-
-template <typename T>
-Low_Tri_Matrix<T>::Low_Tri_Matrix(const Low_Tri_Matrix &mat)
-    : Base_Tri_Matrix<T>{mat}
-{
-}
-
-template <typename T>
-Low_Tri_Matrix<T>::Low_Tri_Matrix(Low_Tri_Matrix &&mat)
-    : Base_Tri_Matrix<T>{mat}
-{
-}
-
-// -------------------- Low_Tri_Matrix: operator= ----------------------------
-
-template <typename T>
-Low_Tri_Matrix<T> &Low_Tri_Matrix<T>::operator=(const Low_Tri_Matrix<T> &mat)
-{
-    return Base_Tri_Matrix<T>::operator=(mat);
-}
-
-template <typename T>
-Low_Tri_Matrix<T> &Low_Tri_Matrix<T>::operator=(Low_Tri_Matrix<T> &&mat)
-{
-    return Base_Tri_Matrix<T>::operator=(mat);
-}
 
 // -------------------- Low_Tri_Matrix: row & column ----------------------------
 

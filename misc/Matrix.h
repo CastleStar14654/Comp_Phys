@@ -32,16 +32,16 @@ public:
     using typename Base_Matrix<T>::size_type;
 
     explicit Matrix(size_type r, size_type c, T deft = T{});
+    Matrix(const Matrix &mat) = default;
+    Matrix(Matrix &&mat) = default;
     Matrix(const Base_Matrix<T> &mat);
-    Matrix(const Matrix &mat);
     Matrix(Base_Matrix<T> &&mat);
-    Matrix(Matrix &&mat);
     explicit Matrix(std::initializer_list<std::initializer_list<T>> ini);
 
+    Matrix &operator=(const Matrix &mat) = default;
+    Matrix &operator=(Matrix &&mat) = default;
     Matrix &operator=(const Base_Matrix<T> &mat);
-    Matrix &operator=(const Matrix &mat);
     Matrix &operator=(Base_Matrix<T> &&mat);
-    Matrix &operator=(Matrix &&mat);
 
     Row<T> row(size_type pos) const override;
     Column<T> column(size_type pos) const override;
@@ -73,13 +73,8 @@ Matrix<T> operator*(const Base_Matrix<T> &a, const Base_Matrix<T> &b)
 
 template <typename T>
 Matrix<T>::Matrix(size_type r, size_type c, T deft)
-    : Base_Matrix<T>{r, c, r * c, new T[r * c]{}}
+    : Base_Matrix<T>{r, c, r * c, deft}
 {
-    if (deft != T{})
-        for (std::size_t i = 0; i < rs * cs; i++)
-        {
-            elem[i] = deft;
-        }
 }
 
 template <typename T>
@@ -93,12 +88,12 @@ Matrix<T>::Matrix(const Base_Matrix<T> &mat)
         }
 }
 
-template <typename T>
-Matrix<T>::Matrix(const Matrix &mat)
-    : Base_Matrix<T>{mat.rs, mat.cs, mat.data_sz, new T[mat.data_sz]}
-{
-    std::copy(mat.elem, mat.elem + data_sz, elem);
-}
+// template <typename T>
+// Matrix<T>::Matrix(const Matrix &mat)
+//     : Base_Matrix<T>{mat.rs, mat.cs, mat.data_sz, new T[mat.data_sz]}
+// {
+//     std::copy(mat.elem, mat.elem + data_sz, elem);
+// }
 
 template <typename T>
 Matrix<T>::Matrix(Base_Matrix<T> &&mat)
@@ -111,12 +106,12 @@ Matrix<T>::Matrix(Base_Matrix<T> &&mat)
         }
 }
 
-template <typename T>
-Matrix<T>::Matrix(Matrix &&mat)
-    : Base_Matrix<T>{mat.rs, mat.cs, mat.data_sz, new T[mat.data_sz]}
-{
-    mat.elem = nullptr;
-}
+// template <typename T>
+// Matrix<T>::Matrix(Matrix &&mat)
+//     : Base_Matrix<T>{mat.rs, mat.cs, mat.data_sz, new T[mat.data_sz]}
+// {
+//     mat.elem = nullptr;
+// }
 
 template <typename T>
 Matrix<T>::Matrix(std::initializer_list<std::initializer_list<T>> ini)
@@ -140,50 +135,70 @@ Matrix<T>::Matrix(std::initializer_list<std::initializer_list<T>> ini)
 template <typename T>
 Matrix<T> &Matrix<T>::operator=(const Base_Matrix<T> &mat)
 {
+    if (this->shape() != mat.shape())
+    {
+        throw std::runtime_error("Matrix assignment: non-uniform shape.");
+    }
+
     Matrix<T> temp{mat};
     *this = std::move(temp);
     return *this;
 }
 
-template <typename T>
-Matrix<T> &Matrix<T>::operator=(const Matrix &mat)
-{
-    T *temp = new T[mat.size()];
-    std::copy(mat.elem, mat.elem + rs * cs, temp);
-    delete[] elem;
-    elem = temp;
-    rs = mat.rs;
-    cs = mat.cs;
-    data_sz = mat.data_sz;
-    return *this;
-}
+// template <typename T>
+// Matrix<T> &Matrix<T>::operator=(const Matrix &mat)
+// {
+//     if (this->shape() != mat.shape())
+//     {
+//         throw std::runtime_error("Matrix assignment: non-uniform shape.");
+//     }
+
+//     T *temp = new T[mat.size()];
+//     std::copy(mat.elem, mat.elem + rs * cs, temp);
+//     delete[] elem;
+//     elem = temp;
+//     rs = mat.rs;
+//     cs = mat.cs;
+//     data_sz = mat.data_sz;
+//     return *this;
+// }
 
 template <typename T>
 Matrix<T> &Matrix<T>::operator=(Base_Matrix<T> &&mat)
 {
+    if (this->shape() != mat.shape())
+    {
+        throw std::runtime_error("Matrix assignment: different shapes.");
+    }
+
     Matrix<T> temp{mat};
     *this = std::move(temp);
     return *this;
 }
 
-template <typename T>
-Matrix<T> &Matrix<T>::operator=(Matrix &&mat)
-{
-    delete[] elem;
-    elem = mat.elem;
-    mat.elem = nullptr;
-    rs = mat.rs;
-    cs = mat.cs;
-    data_sz = mat.data_sz;
-    return *this;
-}
+// template <typename T>
+// Matrix<T> &Matrix<T>::operator=(Matrix &&mat)
+// {
+//     if (this->shape() != mat.shape())
+//     {
+//         throw std::runtime_error("Matrix assignment: non-uniform shape.");
+//     }
+
+//     delete[] elem;
+//     elem = mat.elem;
+//     mat.elem = nullptr;
+//     rs = mat.rs;
+//     cs = mat.cs;
+//     data_sz = mat.data_sz;
+//     return *this;
+// }
 
 // ------------------------- Matrix row() & column() -----------------------------
 
 template <typename T>
 Row<T> Matrix<T>::row(size_type pos) const
 {
-    Row<T> res(&elem[pos*cs], &elem[(pos+1)*cs]);
+    Row<T> res(&elem[pos * cs], &elem[(pos + 1) * cs]);
     // for (std::size_t c = 0; c < cs; c++)
     // {
     //     res[c] = this->operator()(pos, c);
