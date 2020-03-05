@@ -39,14 +39,8 @@ protected:
     using Base_Matrix<T>::elem;
     using Base_Matrix<T>::data_sz;
 
-    // protected, only return PART of the column/row
-    virtual Row<T> row(size_type pos) const = 0;
-    // virtual Column<T> column(size_type pos) const override;
     virtual T &operator()(size_type row, size_type col) override;
     virtual const T &operator()(size_type row, size_type col) const override;
-
-    template <typename OutputIt>
-    OutputIt insert_column(size_type pos, OutputIt out) const;
 };
 
 // ========================== Base_Tri_Matrix =================================
@@ -141,14 +135,6 @@ Base_Tri_Matrix<T> &Base_Tri_Matrix<T>::operator=(Diag_Matrix<T> &&mat)
 }
 
 // -------------------- Base_Tri_Matrix: row & column ----------------------------
-// protected, only return PART of the column/row
-
-template <typename T>
-Row<T> Base_Tri_Matrix<T>::row(size_type pos) const
-{
-    Row<T> res(&elem[pos * (pos + 1) / 2], &elem[(pos + 1) * (pos + 2) / 2]);
-    return res;
-}
 
 template <typename T>
 T &Base_Tri_Matrix<T>::operator()(size_type row, size_type col)
@@ -174,18 +160,6 @@ const T &Base_Tri_Matrix<T>::operator()(size_type row, size_type col) const
     {
         return elem[row * (row + 1) / 2 + col];
     }
-}
-
-template <typename T>
-template <typename OutputIt>
-OutputIt Base_Tri_Matrix<T>::insert_column(size_type pos, OutputIt out) const
-{
-    for (std::size_t i = pos; i < rs; i++)
-    {
-        *out = (*this)(i, pos);
-        ++out;
-    }
-    return out;
 }
 
 } // namespace Misc

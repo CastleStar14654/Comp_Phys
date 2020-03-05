@@ -31,8 +31,6 @@ public:
     Diag_Matrix &operator=(const Diag_Matrix &mat)=default;
     Diag_Matrix &operator=(Diag_Matrix &&mat)=default;
 
-    Row<T> row(size_type pos) const override;
-    Column<T> column(size_type pos) const override;
     T &operator()(size_type row, size_type col) override;
     T &operator()(size_type n) { return elem[n]; }
     const T &operator()(size_type row, size_type col) const override;
@@ -115,22 +113,6 @@ Diag_Matrix<T>::Diag_Matrix(std::initializer_list<T> ini)
 }
 
 // ------------------------Diag_Matrix row() & column() ------------------------------
-
-template <typename T>
-Row<T> Diag_Matrix<T>::row(size_type pos) const
-{
-    Row<T> res(cs, Base_Matrix<T>::zero);
-    res[pos] = elem[pos];
-    return res;
-}
-
-template <typename T>
-Column<T> Diag_Matrix<T>::column(size_type pos) const
-{
-    Column<T> res(rs, Base_Matrix<T>::zero);
-    res[pos] = elem[pos];
-    return res;
-}
 
 template <typename T>
 T &Diag_Matrix<T>::operator()(size_type row, size_type col)

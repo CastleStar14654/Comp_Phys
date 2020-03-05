@@ -31,8 +31,6 @@ public:
     Symm_Matrix &operator=(const Symm_Matrix &mat) = default;
     Symm_Matrix &operator=(Symm_Matrix &&mat) = default;
 
-    Row<T> row(size_type pos) const override;
-    Column<T> column(size_type pos) const override { return row(pos); };
     T &operator()(size_type row, size_type col) override;
     const T &operator()(size_type row, size_type col) const override;
 };
@@ -40,14 +38,6 @@ public:
 // ========================== Symm_Matrix =================================
 
 // -------------------- Symm_Matrix: row & column ----------------------------
-
-template <typename T>
-Row<T> Symm_Matrix<T>::row(size_type pos) const
-{
-    Row<T> res{Base_Tri_Matrix<T>::row(pos)};
-    Base_Tri_Matrix<T>::insert_column(pos, std::back_inserter(res));
-    return res;
-}
 
 template <typename T>
 T &Symm_Matrix<T>::operator()(size_type row, size_type col)

@@ -27,14 +27,12 @@ public:
     using Base_Tri_Matrix<T>::operator=;
     using Base_Tri_Matrix<T>::operator();
 
-    Low_Tri_Matrix(const Low_Tri_Matrix &mat)=default;
-    Low_Tri_Matrix(Low_Tri_Matrix &&mat)=default;
+    Low_Tri_Matrix(const Low_Tri_Matrix &mat) = default;
+    Low_Tri_Matrix(Low_Tri_Matrix &&mat) = default;
 
     Low_Tri_Matrix &operator=(const Low_Tri_Matrix &mat) = default;
     Low_Tri_Matrix &operator=(Low_Tri_Matrix &&mat) = default;
 
-    Row<T> row(size_type pos) const override;
-    Column<T> column(size_type pos) const override;
     const T &operator()(size_type row, size_type col) const override;
 };
 
@@ -75,22 +73,6 @@ Low_Tri_Matrix<T> operator*(const Diag_Matrix<T> &a, const Low_Tri_Matrix<T> &b)
 // ========================== Low_Tri_Matrix =================================
 
 // -------------------- Low_Tri_Matrix: row & column ----------------------------
-
-template <typename T>
-Row<T> Low_Tri_Matrix<T>::row(size_type pos) const
-{
-    Row<T> res{Base_Tri_Matrix<T>::row(pos)};
-    res.resize(cs, Base_Tri_Matrix<T>::zero);
-    return res;
-}
-
-template <typename T>
-Column<T> Low_Tri_Matrix<T>::column(size_type pos) const
-{
-    Column<T> res(pos, Base_Tri_Matrix<T>::zero);
-    Base_Tri_Matrix<T>::insert_column(pos, std::back_inserter(res));
-    return res;
-}
 
 template <typename T>
 const T &Low_Tri_Matrix<T>::operator()(size_type row, size_type col) const

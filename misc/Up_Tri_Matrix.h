@@ -1,5 +1,5 @@
-#ifndef MISC_LOW_TRI_MATRIX
-#define MISC_LOW_TRI_MATRIX
+#ifndef MISC_UP_TRI_MATRIX
+#define MISC_UP_TRI_MATRIX
 
 #include <iterator>
 #include <initializer_list>
@@ -34,8 +34,6 @@ public:
     Up_Tri_Matrix &operator=(const Up_Tri_Matrix &mat);
     Up_Tri_Matrix &operator=(Up_Tri_Matrix &&mat);
 
-    Row<T> row(size_type pos) const override;
-    Column<T> column(size_type pos) const override;
     T &operator()(size_type row, size_type col) override;
     const T &operator()(size_type row, size_type col) const override;
 };
@@ -106,22 +104,6 @@ Up_Tri_Matrix<T>::Up_Tri_Matrix(std::initializer_list<std::initializer_list<T>> 
 // -------------------- Up_Tri_Matrix: row & column ----------------------------
 
 template <typename T>
-Row<T> Up_Tri_Matrix<T>::row(size_type pos) const
-{
-    Row<T> res(pos, Base_Tri_Matrix<T>::zero);
-    Base_Tri_Matrix<T>::insert_column(pos, std::back_inserter(res));
-    return res;
-}
-
-template <typename T>
-Column<T> Up_Tri_Matrix<T>::column(size_type pos) const
-{
-    Column<T> res{Base_Tri_Matrix<T>::row(pos)};
-    res.resize(rs, Base_Tri_Matrix<T>::zero);
-    return res;
-}
-
-template <typename T>
 T &Up_Tri_Matrix<T>::operator()(size_type row, size_type col)
 {
     if (col < row)
@@ -149,4 +131,4 @@ const T &Up_Tri_Matrix<T>::operator()(size_type row, size_type col) const
 
 } // namespace Misc
 
-#endif // MISC_LOW_TRI_MATRIX
+#endif // MISC_UP_TRI_MATRIX

@@ -43,8 +43,6 @@ public:
     Matrix &operator=(const Base_Matrix<T> &mat);
     Matrix &operator=(Base_Matrix<T> &&mat);
 
-    Row<T> row(size_type pos) const override;
-    Column<T> column(size_type pos) const override;
     T &operator()(size_type row, size_type col) override { return elem[row * cs + col]; }
     const T &operator()(size_type row, size_type col) const override { return elem[row * cs + col]; }
 };
@@ -92,13 +90,6 @@ Matrix<T>::Matrix(const Base_Matrix<T> &mat)
         }
 }
 
-// template <typename T>
-// Matrix<T>::Matrix(const Matrix &mat)
-//     : Base_Matrix<T>{mat.rs, mat.cs, mat.data_sz, new T[mat.data_sz]}
-// {
-//     std::copy(mat.elem, mat.elem + data_sz, elem);
-// }
-
 template <typename T>
 Matrix<T>::Matrix(Base_Matrix<T> &&mat)
     : Base_Matrix<T>{mat.rows(), mat.cols(), mat.size(), new T[mat.size()]}
@@ -110,13 +101,19 @@ Matrix<T>::Matrix(Base_Matrix<T> &&mat)
         }
 }
 
-// template <typename T>
-// Matrix<T>::Matrix(Matrix &&mat)
-//     : Base_Matrix<T>{mat.rs, mat.cs, mat.data_sz, new T[mat.data_sz]}
-// {
-//     mat.elem = nullptr;
-// }
-
+// Matrix<double> mat {
+//     {1, 2, 4},
+//     {6, 3, 2},
+//     {9, 5, -2},
+//     {3, 3, 4}
+// };
+// would be
+// [
+//     [1 2 4]
+//     [6 3 2]
+//     [9 5 -2]
+//     [3 3 4]
+// ]
 template <typename T>
 Matrix<T>::Matrix(std::initializer_list<std::initializer_list<T>> ini)
     : Base_Matrix<T>{ini.size(), ini.begin()->size(),
@@ -149,24 +146,6 @@ Matrix<T> &Matrix<T>::operator=(const Base_Matrix<T> &mat)
     return *this;
 }
 
-// template <typename T>
-// Matrix<T> &Matrix<T>::operator=(const Matrix &mat)
-// {
-//     if (this->shape() != mat.shape())
-//     {
-//         throw std::runtime_error("Matrix assignment: non-uniform shape.");
-//     }
-
-//     T *temp = new T[mat.size()];
-//     std::copy(mat.elem, mat.elem + rs * cs, temp);
-//     delete[] elem;
-//     elem = temp;
-//     rs = mat.rs;
-//     cs = mat.cs;
-//     data_sz = mat.data_sz;
-//     return *this;
-// }
-
 template <typename T>
 Matrix<T> &Matrix<T>::operator=(Base_Matrix<T> &&mat)
 {
@@ -179,49 +158,6 @@ Matrix<T> &Matrix<T>::operator=(Base_Matrix<T> &&mat)
     *this = std::move(temp);
     return *this;
 }
-
-// template <typename T>
-// Matrix<T> &Matrix<T>::operator=(Matrix &&mat)
-// {
-//     if (this->shape() != mat.shape())
-//     {
-//         throw std::runtime_error("Matrix assignment: non-uniform shape.");
-//     }
-
-//     delete[] elem;
-//     elem = mat.elem;
-//     mat.elem = nullptr;
-//     rs = mat.rs;
-//     cs = mat.cs;
-//     data_sz = mat.data_sz;
-//     return *this;
-// }
-
-// ------------------------- Matrix row() & column() -----------------------------
-
-template <typename T>
-Row<T> Matrix<T>::row(size_type pos) const
-{
-    Row<T> res(&elem[pos * cs], &elem[(pos + 1) * cs]);
-    // for (std::size_t c = 0; c < cs; c++)
-    // {
-    //     res[c] = this->operator()(pos, c);
-    // }
-    return res;
-}
-
-template <typename T>
-Column<T> Matrix<T>::column(size_type pos) const
-{
-    Column<T> res(rs);
-    for (std::size_t r = 0; r < rs; r++)
-    {
-        res[r] = this->operator()(r, pos);
-    }
-    return res;
-}
-
-// ===============================================================================
 
 } // namespace Misc
 

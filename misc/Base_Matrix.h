@@ -15,12 +15,61 @@
 // the namespace miscellany
 namespace Misc
 {
+template <typename T>
+class Base_Matrix;
 
-// Alias for convenience
+// Row and Column for convenience
+// A deputy for columns & rows in a matrix
+// NO data is copied
 template <typename T>
-using Row = std::vector<T>;
+class Base_Vector
+{
+public:
+    using size_type = std::size_t;
+    using value_type = T;
+
+    size_type size() const {return m.cols();}
+
+protected:
+    Base_Vector(Base_Matrix<T>& mat) : m{mat} {}
+
+    Base_Matrix<T>& m;
+};
+
 template <typename T>
-using Column = std::vector<T>;
+class Row: public Base_Vector<T>
+{
+public:
+    using typename Base_Vector<T>::size_type;
+
+    Row(Base_Matrix<T>& mat, size_type row) : Base_Vector<T>{mat}, r{row} {}
+
+    T& operator[](size_type col) {return m(r, col);}
+    const T& operator[](size_type col) const {
+        return const_cast<const Base_Matrix<T>&>(m)(r, col);
+    }
+private:
+    using Base_Vector<T>::m;
+    size_type r;
+};
+
+template <typename T>
+class Column: public Base_Vector<T>
+{
+public:
+    using typename Base_Vector<T>::size_type;
+
+    Column(Base_Matrix<T>& mat, size_type col) : Base_Vector<T>{mat}, c{col} {}
+
+    T& operator[](size_type row) {return m(row, c);}
+    const T& operator[](size_type row) const {
+        return const_cast<const Base_Matrix<T>&>(m)(row, c);
+    }
+private:
+    using Base_Vector<T>::m;
+    size_type c;
+};
+
 
 // ================================================================================
 
@@ -51,8 +100,12 @@ public:
     Base_Matrix &operator=(const Base_Matrix &mat);
     Base_Matrix &operator=(Base_Matrix &&mat);
 
-    virtual Row<T> row(size_type pos) const = 0;
-    virtual Column<T> column(size_type pos) const = 0;
+    Row<T> row(size_type pos) { return Row<T>(*this, pos);}
+    const Row<T> row(size_type pos) const { return Row<T>(*this, pos);}
+    Row<T> operator[](size_type pos) { return Row<T>(*this, pos);}
+    const Row<T> operator[](size_type pos) const { return Row<T>(*this, pos);}
+    Column<T> column(size_type pos) { return Column<T>(*this, pos);};
+    const Column<T> column(size_type pos) const { return Column<T>(*this, pos);};
 
     virtual T &operator()(size_type row, size_type col) = 0;
     virtual const T &operator()(size_type row, size_type col) const = 0;
