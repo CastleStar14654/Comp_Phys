@@ -71,6 +71,18 @@ Matrix<T> operator*(const Base_Matrix<T> &a, const Base_Matrix<T> &b)
     return res;
 }
 
+template <typename T>
+Matrix<T> operator*(const Column<T>& a, const Row<T>& b)
+{
+    Matrix<T> res {a.size(), b.size()};
+    for (std::size_t i = 0; i < a.size(); i++)
+        for (std::size_t j = 0; j < b.size(); j++)
+        {
+            res(i, j) = a[i]*b[j];
+        }
+    return res;
+}
+
 // =====================Matrix===============================
 
 template <typename T>

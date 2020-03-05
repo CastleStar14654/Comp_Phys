@@ -5,12 +5,12 @@
 #ifndef MISC_BASE_MATRIX
 #define MISC_BASE_MATRIX
 
-#include <vector>
 #include <utility>
-#include <iostream>
 #include <algorithm>
 #include <stdexcept>
 #include <initializer_list>
+
+#include "Matrix.h"
 
 // the namespace miscellany
 namespace Misc
@@ -18,11 +18,30 @@ namespace Misc
 template <typename T>
 class Base_Matrix;
 
+template <typename T>
+class Matrix;
+
+
 // Row and Column for convenience
 // A deputy for columns & rows in a matrix
 // NO data is copied
+// template <typename T>
+// class Base_Vector
+// {
+// public:
+//     using size_type = std::size_t;
+//     using value_type = T;
+
+//     size_type size() const {return m.cols();}
+
+// protected:
+//     Base_Vector(Base_Matrix<T>& mat) : m{mat} {}
+
+//     Base_Matrix<T>& m;
+// };
+
 template <typename T>
-class Base_Vector
+class Row
 {
 public:
     using size_type = std::size_t;
@@ -30,45 +49,96 @@ public:
 
     size_type size() const {return m.cols();}
 
-protected:
-    Base_Vector(Base_Matrix<T>& mat) : m{mat} {}
-
-    Base_Matrix<T>& m;
-};
-
-template <typename T>
-class Row: public Base_Vector<T>
-{
-public:
-    using typename Base_Vector<T>::size_type;
-
-    Row(Base_Matrix<T>& mat, size_type row) : Base_Vector<T>{mat}, r{row} {}
+    Row(Base_Matrix<T>& mat, size_type row) : m{mat}, r{row} {}
 
     T& operator[](size_type col) {return m(r, col);}
     const T& operator[](size_type col) const {
         return const_cast<const Base_Matrix<T>&>(m)(r, col);
     }
+    Row& operator=(const Base_Matrix<T>& mat_row);
+    Row& operator=(Base_Matrix<T>&& mat_row);
 private:
-    using Base_Vector<T>::m;
+    Base_Matrix<T>& m;
     size_type r;
 };
 
+// int a[3]{1, 2, 3};
+// int(&b)[3] = a;
+// void f(const int(&)[]);
+// void f(const int(&a)[]) {
+//     a;
+// }
+
 template <typename T>
-class Column: public Base_Vector<T>
+class Column
 {
 public:
-    using typename Base_Vector<T>::size_type;
+    using size_type = std::size_t;
+    using value_type = T;
 
-    Column(Base_Matrix<T>& mat, size_type col) : Base_Vector<T>{mat}, c{col} {}
+    size_type size() const {return m.rows();}
+
+    Column(Base_Matrix<T>& mat, size_type col) : m{mat}, c{col} {}
 
     T& operator[](size_type row) {return m(row, c);}
     const T& operator[](size_type row) const {
         return const_cast<const Base_Matrix<T>&>(m)(row, c);
     }
+    Column& operator=(const Base_Matrix<T>& mat_col);
+    Column& operator=(Base_Matrix<T>&& mat_col);
 private:
-    using Base_Vector<T>::m;
+    Base_Matrix<T>& m;
     size_type c;
 };
+
+template <typename T>
+T operator*(const Row<T>& a, const Column<T>& b)
+{
+    if (a.size() != b.size())
+    {
+        throw std::domain_error("Row*Column: invalid shapes.");
+    }
+
+    T res {};
+    for (std::size_t i = 0; i < a.size(); i++)
+    {
+        res += a[i]*b[i];
+    }
+    return res;
+}
+
+template <typename T>
+Matrix<T> operator*(const Row<T>& a, const Base_Matrix<T>& b)
+{
+    if (a.size() != b.rows())
+    {
+        throw std::domain_error("Row*Base_Matrix: invalid shapes.");
+    }
+
+    Matrix<T> res {1, a.size()};
+    for (std::size_t i = 0; i < a.size(); i++)
+    {
+        res(0, i) = a*b.column(i);
+    }
+    return res;
+}
+
+template <typename T>
+Matrix<T> operator*(const Base_Matrix<T>& a, const Column<T>& b)
+{
+    if (a.cols() != b.size())
+    {
+        throw std::domain_error("Base_Matrix*Column: invalid shapes.");
+    }
+
+    Matrix<T> res {b.size(), 1};
+    for (std::size_t i = 0; i < a.size(); i++)
+    {
+        res(i, 0) = a.row(i)*b;
+    }
+    return res;
+}
+
 
 
 // ================================================================================
