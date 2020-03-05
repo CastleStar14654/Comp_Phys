@@ -55,7 +55,7 @@ private:
     using Base_Matrix<T>::data_sz;
     const size_type h_bd_w; // half_band_width
 
-    size_type elem_line_len() const { return 2 * rs - h_bd_w - 1; }
+    // size_type elem_line_len() const { return 2 * rs - h_bd_w - 1; }
     size_type index(size_type row, size_type col) const;
     std::pair<size_type, size_type> row_col(size_type idx) const;
 };
@@ -64,7 +64,7 @@ private:
 
 template <typename T>
 Band_Matrix<T>::Band_Matrix(size_type n, size_type m, T deft)
-    : Base_Matrix<T>{n, n, n + m * (2 * n - m - 1), deft}, h_bd_w{m}
+    : Base_Matrix<T>{n, n, n * (2 * m + 1), deft}, h_bd_w{m}
 {
 }
 
@@ -72,7 +72,7 @@ template <typename T>
 Band_Matrix<T>::Band_Matrix(std::initializer_list<std::initializer_list<T>> ini)
     : Base_Matrix<T>{ini.begin()->size() + ini.size() / 2,
                      ini.begin()->size() + ini.size() / 2,
-                     ini.size() * (ini.begin()->size()) + (ini.size() / 2) * (ini.size() / 2),
+                     ini.size() * (ini.begin()->size() + ini.size() / 2),
                      nullptr},
       h_bd_w{ini.size() / 2}
 {
@@ -98,17 +98,12 @@ Band_Matrix<T>::Band_Matrix(std::initializer_list<std::initializer_list<T>> ini)
         ++it;
     }
 
-    elem = new T[data_sz];
-    it = ini.begin();
-    for (std::size_t count = 0; count <= h_bd_w; count++)
+    elem = new T[data_sz]{};
+    std::size_t count{0};
+    for (auto it = ini.begin(); it != ini.end(); it++)
     {
-        std::move(it->begin(), it->end(), &elem[count * elem_line_len()]);
-        ++it;
-    }
-    for (std::size_t count = 0; count < h_bd_w; count++)
-    {
-        std::move(it->begin(), it->end(), &elem[count * elem_line_len() + rs - h_bd_w + count]);
-        ++it;
+        std::move(it->begin(), it->end(), &elem[count * rs]);
+        ++count;
     }
 }
 
@@ -119,20 +114,24 @@ Band_Matrix<T> &Band_Matrix<T>::operator=(const Band_Matrix<T> &mat)
 {
     if (this != &mat)
     {
-        if (this->h_bd_w < mat.h_bd_w)
+        if (h_bd_w < mat.h_bd_w)
         {
             throw std::runtime_error("Base_Matrix assignment: different half_band_width");
         }
-        else if (this->h_bd_w == mat.h_bd_w)
+        else if (h_bd_w == mat.h_bd_w)
         {
             Base_Matrix<T>::operator=(mat);
         }
         else
         {
-            for (size_t i = 0; i < data_sz; i++)
+            for (std::size_t i = 0; i < (h_bd_w - mat.h_bd_w) * cs; i++)
             {
-                auto r_c {row_col(i)};
-                (*this)(r_c.first, r_c.second) = mat(r_c.first, r_c.second);
+                elem[i] = T{};
+            }
+            std::copy(mat.elem, &mat.elem[mat.data_sz], &elem[(h_bd_w - mat.h_bd_w) * cs]);
+            for (std::size_t i = (h_bd_w + 1 + mat.h_bd_w) * cs; i < data_sz; i++)
+            {
+                elem[i] = T{};
             }
         }
     }
@@ -154,10 +153,14 @@ Band_Matrix<T> &Band_Matrix<T>::operator=(Band_Matrix<T> &&mat)
         }
         else
         {
-            for (size_t i = 0; i < data_sz; i++)
+            for (std::size_t i = 0; i < (h_bd_w - mat.h_bd_w) * cs; i++)
             {
-                auto r_c {row_col(i)};
-                (*this)(r_c.first, r_c.second) = std::move(mat(r_c.first, r_c.second));
+                elem[i] = T{};
+            }
+            std::move(mat.elem, &mat.elem[mat.data_sz], &elem[(h_bd_w - mat.h_bd_w) * cs]);
+            for (std::size_t i = (h_bd_w + 1 + mat.h_bd_w) * cs; i < data_sz; i++)
+            {
+                elem[i] = T{};
             }
         }
     }
@@ -198,22 +201,21 @@ const T &Band_Matrix<T>::operator()(size_type row, size_type col) const
 template <typename T>
 typename Band_Matrix<T>::size_type Band_Matrix<T>::index(size_type row, size_type col) const
 {
-    size_type line_no{(row > col) ? (row - col - 1) : (h_bd_w + row - col)};
-    if (line_no > h_bd_w)
+    if (col > h_bd_w + row || row > h_bd_w + col)
     {
         return -1;
     }
-    else if (row > col)
-    {
-        if (line_no == h_bd_w)
-        {
-            return -1;
-        }
-        return line_no * elem_line_len() + rs - h_bd_w + line_no + col;
-    }
     else
     {
-        return line_no * elem_line_len() + row;
+        size_type line_no{h_bd_w + row - col};
+        if (row > col)
+        {
+            return line_no * rs + col;
+        }
+        else
+        {
+            return line_no * rs + row;
+        }
     }
 }
 
@@ -222,16 +224,15 @@ template <typename T>
 std::pair<typename Band_Matrix<T>::size_type, typename Band_Matrix<T>::size_type>
 Band_Matrix<T>::row_col(size_type idx) const
 {
-    size_type line_no{idx / elem_line_len()};
-    size_type rel_loc{idx % elem_line_len()};
-    if (rs - h_bd_w + line_no > rel_loc)
+    size_type line_no{idx / rs};
+    size_type rel_loc{idx % rs};
+    if (line_no > h_bd_w)
     {
-        return {rel_loc, h_bd_w - line_no + rel_loc};
+        return {line_no - h_bd_w + rel_loc, rel_loc};
     }
     else
     {
-        rel_loc -= rs - h_bd_w + line_no;
-        return { line_no + 1 + rel_loc, rel_loc };
+        return {rel_loc, h_bd_w - line_no + rel_loc};
     }
 }
 
