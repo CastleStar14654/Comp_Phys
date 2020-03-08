@@ -9,113 +9,111 @@ namespace Misc
 {
 
 // Diagonal Matrix; only diagonal items are stored
-template <typename T>
-class Diag_Matrix : public Base_Matrix<T>
+template <typename T, size_t N>
+class Diag_Matrix : public Base_Matrix<T, N, N>
 {
 private:
-    using Base_Matrix<T>::rs;
-    using Base_Matrix<T>::cs;
-    using Base_Matrix<T>::elem;
-    using Base_Matrix<T>::data_sz;
+    // using Base_Matrix<T, N, N>::rs;
+    // using Base_Matrix<T, N, N>::cs;
+    using Base_Matrix<T, N, N>::elem;
+    using Base_Matrix<T, N, N>::data_ln;
 
 public:
-    using typename Base_Matrix<T>::size_type;
+    using typename Base_Matrix<T, N, N>::size_type;
 
-    explicit Diag_Matrix(size_type n, T deft = T{});
-    Diag_Matrix(const Diag_Matrix &mat)=default;
-    Diag_Matrix(Diag_Matrix &&mat)=default;
+    explicit Diag_Matrix(T deft = T{});
+    Diag_Matrix(const Diag_Matrix &mat) = default;
+    Diag_Matrix(Diag_Matrix &&mat) = default;
     template <typename It>
     explicit Diag_Matrix(It b, It e);
     explicit Diag_Matrix(std::initializer_list<T> ini);
 
-    Diag_Matrix &operator=(const Diag_Matrix &mat)=default;
-    Diag_Matrix &operator=(Diag_Matrix &&mat)=default;
+    Diag_Matrix &operator=(const Diag_Matrix &mat) = default;
+    Diag_Matrix &operator=(Diag_Matrix &&mat) = default;
 
     T &operator()(size_type row, size_type col) override;
-    T &operator()(size_type n) { return elem[n]; }
+    T &operator()(size_type n) { return elem[0][n]; }
     const T &operator()(size_type row, size_type col) const override;
-    const T &operator()(size_type n) const { return elem[n]; }
+    const T &operator()(size_type n) const { return elem[0][n]; }
 };
 
 // -------------------------------------------------------------------------
 
-template <typename T>
-Diag_Matrix<T> operator*(const Diag_Matrix<T> &a, const Diag_Matrix<T> &b)
+template <typename T, size_t N>
+Diag_Matrix<T, N> operator*(const Diag_Matrix<T, N> &a, const Diag_Matrix<T, N> &b)
 {
-    if (a.cols() != b.rows())
+    Diag_Matrix<T, N> res{};
+    for (std::size_t i = 0; i < N; i++)
     {
-        throw std::domain_error("Diag_Matrix::operator*(): invalid shapes.");
-    }
-
-    Matrix<T> res{a.rows(), b.cols()};
-    for (std::size_t i = 0; i < res.rows(); i++)
-    {
-        res(i, i) = a(i, i) * b(i, i);
+        res(i) = a(i) * b(i);
     }
     return res;
 }
 
-template <typename T>
-Matrix<T> operator*(const Diag_Matrix<T> &a, const Base_Matrix<T> &b)
+template <typename T, size_t N>
+Matrix<T, N, N> operator*(const Diag_Matrix<T, N> &a, const Base_Matrix<T, N, N> &b)
 {
-    if (a.cols() != b.rows())
+    Matrix<T, N, N> res{};
+    for (std::size_t i = 0; i < N; i++)
     {
-        throw std::domain_error("Diag_Matrix::operator*(): invalid shapes.");
-    }
-
-    Matrix<T> res{a.rows(), b.cols()};
-    for (std::size_t i = 0; i < res.rows(); i++)
-        for (std::size_t j = 0; j < res.cols(); j++)
+        T temp {a(i)};
+        for (std::size_t j = 0; j < N; j++)
         {
-            res(i, j) = a(i, i) * b(i, j);
+            res(i, j) = temp * b(i, j);
         }
+    }
     return res;
 }
 
-template <typename T>
-Matrix<T> operator*(const Base_Matrix<T> &a, const Diag_Matrix<T> &b)
+template <typename T, size_t N>
+Matrix<T, N, N> operator*(const Base_Matrix<T, N, N> &a, const Diag_Matrix<T, N> &b)
 {
-    if (a.cols() != b.rows())
-    {
-        throw std::domain_error("Diag_Matrix::operator*(): invalid shapes.");
-    }
-
-    Matrix<T> res{a.rows(), b.cols()};
-    for (std::size_t i = 0; i < res.rows(); i++)
-        for (std::size_t j = 0; j < res.cols(); j++)
+    Matrix<T, N, N> res{};
+    for (std::size_t i = 0; i < N; i++)
+        for (std::size_t j = 0; j < N; j++)
         {
-            res(i, j) = a(i, j) * b(j, j);
+            res(i, j) = a(i, j) * b(j);
         }
     return res;
 }
 
 // ===========================Diag_Matrix====================================
 
-template <typename T>
-Diag_Matrix<T>::Diag_Matrix(size_type n, T deft)
-    : Base_Matrix<T>{n, n, n, deft}
+template <typename T, size_t N>
+Diag_Matrix<T, N>::Diag_Matrix(T deft)
+    : Base_Matrix<T, N, N>{1, deft}
 {
 }
 
-template <typename T>
+template <typename T, size_t N>
 template <typename It>
-Diag_Matrix<T>::Diag_Matrix(It b, It e)
-    : Base_Matrix<T>(e - b, e - b, e - b, new T[e - b])
+Diag_Matrix<T, N>::Diag_Matrix(It b, It e)
+    : Base_Matrix<T, N, N>(1, nullptr)
 {
-    std::copy(b, e, elem);
+    if (e - b != N)
+    {
+        throw std::runtime_error("Diag_Matrix construct: wrong iterators.");
+    }
+    elem = new T[1][N];
+    std::copy(b, e, elem[0]);
 }
 
-template <typename T>
-Diag_Matrix<T>::Diag_Matrix(std::initializer_list<T> ini)
-    : Base_Matrix<T>(ini.size(), ini.size(), ini.size(), new T[ini.size()])
+template <typename T, size_t N>
+Diag_Matrix<T, N>::Diag_Matrix(std::initializer_list<T> ini)
+    : Base_Matrix<T, N, N>(1, nullptr)
 {
-    std::move(ini.begin(), ini.end(), elem);
+    if (ini.size() != N)
+    {
+        throw std::runtime_error("Diag_Matrix construct: wrong iterators.");
+    }
+    elem = new T[1][N];
+    std::move(ini.begin(), ini.end(), elem[0]);
 }
 
 // ------------------------Diag_Matrix row() & column() ------------------------------
 
-template <typename T>
-T &Diag_Matrix<T>::operator()(size_type row, size_type col)
+template <typename T, size_t N>
+T &Diag_Matrix<T, N>::operator()(size_type row, size_type col)
 {
     if (row == col)
     {
@@ -127,8 +125,8 @@ T &Diag_Matrix<T>::operator()(size_type row, size_type col)
     }
 }
 
-template <typename T>
-const T &Diag_Matrix<T>::operator()(size_type row, size_type col) const
+template <typename T, size_t N>
+const T &Diag_Matrix<T, N>::operator()(size_type row, size_type col) const
 {
     if (row == col)
     {
@@ -136,7 +134,7 @@ const T &Diag_Matrix<T>::operator()(size_type row, size_type col) const
     }
     else
     {
-        return Base_Matrix<T>::zero;
+        return Base_Matrix<T, N, N>::zero;
     }
 }
 

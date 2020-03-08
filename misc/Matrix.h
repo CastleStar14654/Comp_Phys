@@ -19,51 +19,46 @@ namespace Misc
 {
 
 // Matrix with every item specified
-template <typename T>
-class Matrix : public Base_Matrix<T>
+template <typename T, size_t R, size_t C>
+class Matrix : public Base_Matrix<T, R, C>
 {
 private:
-    using Base_Matrix<T>::rs;
-    using Base_Matrix<T>::cs;
-    using Base_Matrix<T>::elem;
-    using Base_Matrix<T>::data_sz;
+    // using Base_Matrix<T, R, C>::rs;
+    // using Base_Matrix<T, R, C>::cs;
+    using Base_Matrix<T, R, C>::elem;
+    using Base_Matrix<T, R, C>::data_ln;
 
 public:
-    using typename Base_Matrix<T>::size_type;
+    using typename Base_Matrix<T, R, C>::size_type;
 
-    explicit Matrix(size_type r, size_type c, T deft = T{});
+    explicit Matrix(T deft = T{});
     Matrix(const Matrix &mat) = default;
     Matrix(Matrix &&mat) = default;
-    Matrix(const Base_Matrix<T> &mat);
-    Matrix(Base_Matrix<T> &&mat);
+    Matrix(const Base_Matrix<T, R, C> &mat);
+    Matrix(Base_Matrix<T, R, C> &&mat);
     explicit Matrix(std::initializer_list<std::initializer_list<T>> ini);
 
     Matrix &operator=(const Matrix &mat) = default;
     Matrix &operator=(Matrix &&mat) = default;
-    Matrix &operator=(const Base_Matrix<T> &mat);
-    Matrix &operator=(Base_Matrix<T> &&mat);
+    Matrix &operator=(const Base_Matrix<T, R, C> &mat);
+    Matrix &operator=(Base_Matrix<T, R, C> &&mat);
 
-    T &operator()(size_type row, size_type col) override { return elem[row * cs + col]; }
-    const T &operator()(size_type row, size_type col) const override { return elem[row * cs + col]; }
+    T &operator()(size_type row, size_type col) override { return elem[row][col]; }
+    const T &operator()(size_type row, size_type col) const override { return elem[row][col]; }
 };
 
 // -------------------------------------------------------------------------
 
-template <typename T>
-Matrix<T> operator*(const Base_Matrix<T> &a, const Base_Matrix<T> &b)
+template <typename T, size_t R, size_t N, size_t C>
+Matrix<T, R, C> operator*(const Base_Matrix<T, R, N> &a, const Base_Matrix<T, N, C> &b)
 {
-    if (a.cols() != b.rows())
-    {
-        throw std::domain_error("Matrix::operator*(): invalid shapes.");
-    }
-
-    Matrix<T> res{a.rows(), b.cols()};
+    Matrix<T, R, C> res{};
     // This should be ten times faster.
-    for (std::size_t i = 0; i < res.rows(); i++)
-        for (std::size_t k = 0; k < a.cols(); k++)
+    for (std::size_t i = 0; i < R; i++)
+        for (std::size_t k = 0; k < N; k++)
         {
             T r = a(i, k);
-            for (std::size_t j = 0; j < res.cols(); j++)
+            for (std::size_t j = 0; j < C; j++)
             {
                 res(i, j) += r * b(k, j);
             }
@@ -71,12 +66,12 @@ Matrix<T> operator*(const Base_Matrix<T> &a, const Base_Matrix<T> &b)
     return res;
 }
 
-template <typename T>
-Matrix<T> operator*(const Column<T>& a, const Row<T>& b)
+template <typename T, size_t R, size_t C, size_t A, size_t B>
+Matrix<T, R, C> operator*(const Column<T, R, A>& a, const Row<T, B, C>& b)
 {
-    Matrix<T> res {a.size(), b.size()};
-    for (std::size_t i = 0; i < a.size(); i++)
-        for (std::size_t j = 0; j < b.size(); j++)
+    Matrix<T, R, C> res {};
+    for (std::size_t i = 0; i < R; i++)
+        for (std::size_t j = 0; j < C; j++)
         {
             res(i, j) = a[i]*b[j];
         }
@@ -85,31 +80,31 @@ Matrix<T> operator*(const Column<T>& a, const Row<T>& b)
 
 // =====================Matrix===============================
 
-template <typename T>
-Matrix<T>::Matrix(size_type r, size_type c, T deft)
-    : Base_Matrix<T>{r, c, r * c, deft}
+template <typename T, size_t R, size_t C>
+Matrix<T, R, C>::Matrix(T deft)
+    : Base_Matrix<T, R, C>{R, deft}
 {
 }
 
-template <typename T>
-Matrix<T>::Matrix(const Base_Matrix<T> &mat)
-    : Base_Matrix<T>{mat.rows(), mat.cols(), mat.size(), new T[mat.size()]}
+template <typename T, size_t R, size_t C>
+Matrix<T, R, C>::Matrix(const Base_Matrix<T, R, C> &mat)
+    : Base_Matrix<T, R, C>{R, new T[R][C]}
 {
-    for (size_type i = 0; i < rs; i++)
-        for (size_type j = 0; j < cs; j++)
+    for (size_type i = 0; i < R; i++)
+        for (size_type j = 0; j < C; j++)
         {
-            this->operator()(i, j) = mat(i, j);
+            (*this)(i, j) = mat(i, j);
         }
 }
 
-template <typename T>
-Matrix<T>::Matrix(Base_Matrix<T> &&mat)
-    : Base_Matrix<T>{mat.rows(), mat.cols(), mat.size(), new T[mat.size()]}
+template <typename T, size_t R, size_t C>
+Matrix<T, R, C>::Matrix(Base_Matrix<T, R, C> &&mat)
+    : Base_Matrix<T, R, C>{R, new T[R][C]}
 {
-    for (size_type i = 0; i < rs; i++)
-        for (size_type j = 0; j < cs; j++)
+    for (size_type i = 0; i < R; i++)
+        for (size_type j = 0; j < C; j++)
         {
-            this->operator()(i, j) = std::move(mat(i, j));
+            (*this)(i, j) = std::move(mat(i, j));
         }
 }
 
@@ -126,47 +121,41 @@ Matrix<T>::Matrix(Base_Matrix<T> &&mat)
 //     [9 5 -2]
 //     [3 3 4]
 // ]
-template <typename T>
-Matrix<T>::Matrix(std::initializer_list<std::initializer_list<T>> ini)
-    : Base_Matrix<T>{ini.size(), ini.begin()->size(),
-                     ini.size() * ini.begin()->size(), nullptr}
+template <typename T, size_t R, size_t C>
+Matrix<T, R, C>::Matrix(std::initializer_list<std::initializer_list<T>> ini)
+    : Base_Matrix<T, R, C>{R, nullptr}
 {
+    if (ini.size() != R)
+        {
+            throw std::invalid_argument("Matrix::Matrix: wrong row number");
+        }
     for (auto i = ini.begin(); i != ini.end(); i++)
-        if (i->size() != cs)
+        if (i->size() != C)
         {
             throw std::invalid_argument("Matrix::Matrix: non-uniform column number");
         }
-    elem = new T[data_sz];
-    for (std::size_t i = 0; i < rs; i++)
+    elem = new T[R][C];
+    auto it {ini.begin()};
+    for (std::size_t i = 0; i < R; i++, it++)
     {
-        std::move((ini.begin() + i)->begin(), (ini.begin() + i)->end(), &(*this)(i, 0));
+        std::move(it->begin(), it->end(), elem[i]);
     }
 }
 
 // ------------------- Matrix operator= -----------------------------
 
-template <typename T>
-Matrix<T> &Matrix<T>::operator=(const Base_Matrix<T> &mat)
+template <typename T, size_t R, size_t C>
+Matrix<T, R, C> &Matrix<T, R, C>::operator=(const Base_Matrix<T, R, C> &mat)
 {
-    if (this->shape() != mat.shape())
-    {
-        throw std::runtime_error("Matrix assignment: non-uniform shape.");
-    }
-
-    Matrix<T> temp{mat};
+    Matrix<T, R, C> temp{mat};
     *this = std::move(temp);
     return *this;
 }
 
-template <typename T>
-Matrix<T> &Matrix<T>::operator=(Base_Matrix<T> &&mat)
+template <typename T, size_t R, size_t C>
+Matrix<T, R, C> &Matrix<T, R, C>::operator=(Base_Matrix<T, R, C> &&mat)
 {
-    if (this->shape() != mat.shape())
-    {
-        throw std::runtime_error("Matrix assignment: different shapes.");
-    }
-
-    Matrix<T> temp{mat};
+    Matrix<T, R, C> temp{mat};
     *this = std::move(temp);
     return *this;
 }

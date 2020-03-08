@@ -14,25 +14,25 @@ namespace Misc
 {
 
 // Upper Triangular Matrix; only half of the items are stored
-template <typename T>
-class Up_Tri_Matrix : public Base_Tri_Matrix<T>
+template <typename T, size_t N>
+class Up_Tri_Matrix : public Base_Tri_Matrix<T, N>
 {
 private:
-    using Base_Tri_Matrix<T>::rs;
-    using Base_Tri_Matrix<T>::cs;
-    using Base_Tri_Matrix<T>::elem;
-    using Base_Tri_Matrix<T>::data_sz;
+    // using Base_Tri_Matrix<T, N>::rs;
+    // using Base_Tri_Matrix<T, N>::cs;
+    using Base_Tri_Matrix<T, N>::elem;
+    using Base_Tri_Matrix<T, N>::data_ln;
 
 public:
-    using typename Base_Tri_Matrix<T>::size_type;
-    using Base_Tri_Matrix<T>::Base_Tri_Matrix;
+    using typename Base_Tri_Matrix<T, N>::size_type;
+    using Base_Tri_Matrix<T, N>::Base_Tri_Matrix;
 
-    Up_Tri_Matrix(const Up_Tri_Matrix &mat)=default;
-    Up_Tri_Matrix(Up_Tri_Matrix &&mat)=default;
+    Up_Tri_Matrix(const Up_Tri_Matrix &mat) = default;
+    Up_Tri_Matrix(Up_Tri_Matrix &&mat) = default;
     Up_Tri_Matrix(std::initializer_list<std::initializer_list<T>> ini);
 
-    Up_Tri_Matrix &operator=(const Up_Tri_Matrix &mat);
-    Up_Tri_Matrix &operator=(Up_Tri_Matrix &&mat);
+    Up_Tri_Matrix &operator=(const Up_Tri_Matrix &mat) = default;
+    Up_Tri_Matrix &operator=(Up_Tri_Matrix &&mat) = default;
 
     T &operator()(size_type row, size_type col) override;
     const T &operator()(size_type row, size_type col) const override;
@@ -40,42 +40,51 @@ public:
 
 // -------------------------------------------------------------------------
 
-template <typename T>
-Up_Tri_Matrix<T> operator*(const Up_Tri_Matrix<T> &a, const Up_Tri_Matrix<T> &b)
+template <typename T, size_t N>
+Up_Tri_Matrix<T, N> operator*(const Up_Tri_Matrix<T, N> &a, const Up_Tri_Matrix<T, N> &b)
 {
-    if (a.shape() != b.shape())
-    {
-        throw std::domain_error("Up_Tri_Matrix::operator*(): invalid shapes.");
-    }
-
-    Up_Tri_Matrix<T> res{a.rows()};
-    for (std::size_t i = 0; i < res.rows(); i++)
-        for (std::size_t j = i; j < res.cols(); j++)
-            for (std::size_t k = i; k <= j; k++)
+    Up_Tri_Matrix<T, N> res{};
+    for (std::size_t j = 0; j < N; j++)
+        for (std::size_t k = 0; k <= j; k++)
+        {
+            T temp {b(k, j)};
+            for (std::size_t i = k; i <= j; i++)
             {
-                res(i, j) += a(i, k) * b(k, j);
+                res(i, j) += a(i, k) * temp;
             }
+        }
     return res;
 }
 
-template <typename T>
-Up_Tri_Matrix<T> operator*(const Up_Tri_Matrix<T> &a, const Diag_Matrix<T> &b)
+template <typename T, size_t N>
+Up_Tri_Matrix<T, N> operator*(const Up_Tri_Matrix<T, N> &a, const Diag_Matrix<T, N> &b)
 {
-    return a * (*reinterpret_cast<const Up_Tri_Matrix<T> *>(&b));
+    Up_Tri_Matrix<T, N> res{};
+    for (std::size_t j = 0; j < N; j++)
+        for (std::size_t i = 0; i <= j; i++)
+        {
+            res(i, j) += a(i, j) * b(j);
+        }
+    return res;
 }
 
-template <typename T>
-Up_Tri_Matrix<T> operator*(const Diag_Matrix<T> &a, const Up_Tri_Matrix<T> &b)
+template <typename T, size_t N>
+Up_Tri_Matrix<T, N> operator*(const Diag_Matrix<T, N> &a, const Up_Tri_Matrix<T, N> &b)
 {
-    return (*reinterpret_cast<const Up_Tri_Matrix<T> *>(&a)) * b;
+    Up_Tri_Matrix<T, N> res{};
+    for (std::size_t j = 0; j < N; j++)
+        for (std::size_t i = 0; i <= j; i++)
+        {
+            res(i, j) += a(i) * b(i, j);
+        }
+    return res;
 }
-
 
 // ========================== Up_Tri_Matrix =================================
 
-template <typename T>
-Up_Tri_Matrix<T>::Up_Tri_Matrix(std::initializer_list<std::initializer_list<T>> ini)
-    : Base_Tri_Matrix<T>{ini.size()}
+template <typename T, size_t N>
+Up_Tri_Matrix<T, N>::Up_Tri_Matrix(std::initializer_list<std::initializer_list<T>> ini)
+    : Base_Tri_Matrix<T, N>{}
 {
     int count{1};
     for (auto i = std::rbegin(ini); i != std::rend(ini); i++)
@@ -88,11 +97,11 @@ Up_Tri_Matrix<T>::Up_Tri_Matrix(std::initializer_list<std::initializer_list<T>> 
     }
     // elem = new T[data_sz];
 
-    auto ini_r {ini.begin()};
-    for (std::size_t r = 0; r < rs; r++)
+    auto ini_r{ini.begin()};
+    for (std::size_t r = 0; r < N; r++)
     {
-        auto ini_c {ini_r->begin()};
-        for (std::size_t c = r; c < cs; c++)
+        auto ini_c{ini_r->begin()};
+        for (std::size_t c = r; c < N; c++)
         {
             (*this)(r, c) = *ini_c;
             ++ini_c;
@@ -103,8 +112,8 @@ Up_Tri_Matrix<T>::Up_Tri_Matrix(std::initializer_list<std::initializer_list<T>> 
 
 // -------------------- Up_Tri_Matrix: row & column ----------------------------
 
-template <typename T>
-T &Up_Tri_Matrix<T>::operator()(size_type row, size_type col)
+template <typename T, size_t N>
+T &Up_Tri_Matrix<T, N>::operator()(size_type row, size_type col)
 {
     if (col < row)
     {
@@ -112,20 +121,20 @@ T &Up_Tri_Matrix<T>::operator()(size_type row, size_type col)
     }
     else
     {
-        return Base_Tri_Matrix<T>::operator()(col, row);
+        return Base_Tri_Matrix<T, N>::operator()(col, row);
     }
 }
 
-template <typename T>
-const T &Up_Tri_Matrix<T>::operator()(size_type row, size_type col) const
+template <typename T, size_t N>
+const T &Up_Tri_Matrix<T, N>::operator()(size_type row, size_type col) const
 {
     if (col < row)
     {
-        return Base_Matrix<T>::zero;
+        return Base_Matrix<T, N, N>::zero;
     }
     else
     {
-        return Base_Tri_Matrix<T>::operator()(col, row);
+        return Base_Tri_Matrix<T, N>::operator()(col, row);
     }
 }
 

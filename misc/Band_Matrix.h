@@ -14,13 +14,13 @@ namespace Misc
 {
 
 // Band Matrix
-template <typename T>
-class Band_Matrix : public Base_Matrix<T>
+template <typename T, size_t N, size_t M>
+class Band_Matrix : public Base_Matrix<T, N, N>
 {
 public:
-    using typename Base_Matrix<T>::size_type;
+    using typename Base_Matrix<T, N, N>::size_type;
 
-    explicit Band_Matrix(size_type n, size_type m, T deft = T{});
+    explicit Band_Matrix(T deft = T{});
     Band_Matrix(const Band_Matrix &mat) = default;
     Band_Matrix(Band_Matrix &&mat) = default;
 
@@ -42,46 +42,52 @@ public:
      */
     Band_Matrix(std::initializer_list<std::initializer_list<T>> ini);
 
-    Band_Matrix &operator=(const Band_Matrix &mat);
-    Band_Matrix &operator=(Band_Matrix &&mat);
+    Band_Matrix &operator=(const Band_Matrix &mat) = default;
+    Band_Matrix &operator=(Band_Matrix &&mat) = default;
+    template <size_t OLD_M>
+    Band_Matrix &operator=(const Band_Matrix<T, N, OLD_M> &mat);
+    template <size_t OLD_M>
+    Band_Matrix &operator=(Band_Matrix<T, N, OLD_M> &&mat);
 
     T &operator()(size_type row, size_type col) override;
     const T &operator()(size_type row, size_type col) const override;
 
 private:
-    using Base_Matrix<T>::rs;
-    using Base_Matrix<T>::cs;
-    using Base_Matrix<T>::elem;
-    using Base_Matrix<T>::data_sz;
-    const size_type h_bd_w; // half_band_width
+    // using Base_Matrix<T, N, N>::rs;
+    // using Base_Matrix<T, N, N>::cs;
+    using Base_Matrix<T, N, N>::elem;
+    using Base_Matrix<T, N, N>::data_ln;
+    // const size_type h_bd_w; // half_band_width
 
     // size_type elem_line_len() const { return 2 * rs - h_bd_w - 1; }
-    size_type index(size_type row, size_type col) const;
-    std::pair<size_type, size_type> row_col(size_type idx) const;
+    // get an item's place in `elem' from row & col
+    std::pair<size_type, size_type> index(size_type row, size_type col) const
+    {
+        return (col > M + row || row > M + col)
+            ? std::pair<size_type, size_type>{-1, -1}
+            : std::pair<size_type, size_type>{M + row - col, (row > col) ? col : row};
+    }
+    // std::pair<size_type, size_type> row_col(size_type idx) const;
 };
 
 // ========================== Band_Matrix =================================
 
-template <typename T>
-Band_Matrix<T>::Band_Matrix(size_type n, size_type m, T deft)
-    : Base_Matrix<T>{n, n, n * (2 * m + 1), deft}, h_bd_w{m}
+template <typename T, size_t N, size_t M>
+Band_Matrix<T, N, M>::Band_Matrix(T deft)
+    : Base_Matrix<T, N, N>{2 * M + 1, deft}
 {
 }
 
-template <typename T>
-Band_Matrix<T>::Band_Matrix(std::initializer_list<std::initializer_list<T>> ini)
-    : Base_Matrix<T>{ini.begin()->size() + ini.size() / 2,
-                     ini.begin()->size() + ini.size() / 2,
-                     ini.size() * (ini.begin()->size() + ini.size() / 2),
-                     nullptr},
-      h_bd_w{ini.size() / 2}
+template <typename T, size_t N, size_t M>
+Band_Matrix<T, N, M>::Band_Matrix(std::initializer_list<std::initializer_list<T>> ini)
+    : Base_Matrix<T, N, N>{2 * M + 1, nullptr}
 {
     if (!(ini.size() % 2))
     {
         throw std::invalid_argument("Band_Matrix::Band_Matrix: wrong band width");
     }
     auto it = ini.begin();
-    for (size_type count = cs - h_bd_w; count < cs; count++)
+    for (size_type count = N - M; count < N; count++)
     {
         if (it->size() != count)
         {
@@ -89,7 +95,7 @@ Band_Matrix<T>::Band_Matrix(std::initializer_list<std::initializer_list<T>> ini)
         }
         ++it;
     }
-    for (size_type count = cs; count >= cs - h_bd_w; count--)
+    for (size_type count = N; count >= N - M; count--)
     {
         if (it->size() != count)
         {
@@ -98,143 +104,100 @@ Band_Matrix<T>::Band_Matrix(std::initializer_list<std::initializer_list<T>> ini)
         ++it;
     }
 
-    elem = new T[data_sz]{};
+    elem = new T[data_ln][N]{};
     std::size_t count{0};
     for (auto it = ini.begin(); it != ini.end(); it++)
     {
-        std::move(it->begin(), it->end(), &elem[count * rs]);
+        std::move(it->begin(), it->end(), elem[count]);
         ++count;
     }
 }
 
 // -------------------- Band_Matrix: operator= ----------------------------
 
-template <typename T>
-Band_Matrix<T> &Band_Matrix<T>::operator=(const Band_Matrix<T> &mat)
+template <typename T, size_t N, size_t M>
+template <size_t OLD_M>
+Band_Matrix<T, N, M> &Band_Matrix<T, N, M>::operator=(const Band_Matrix<T, N, OLD_M> &mat)
 {
-    if (this != &mat)
-    {
-        if (h_bd_w < mat.h_bd_w)
+    static_assert(M > OLD_M, "Band_Matrix: too wide.");
+    for (std::size_t i = 0; i < M - OLD_M; i++)
+        for (std::size_t j = 0; j < N; j++)
         {
-            throw std::runtime_error("Base_Matrix assignment: different half_band_width");
+            elem[i][j] = T{};
         }
-        else if (h_bd_w == mat.h_bd_w)
+    std::copy(mat.data()[0], mat.data()[mat.data_lines()], elem[M - OLD_M]);
+    for (std::size_t i = M + OLD_M + 1; i < data_ln; i++)
+        for (std::size_t j = 0; j < N; j++)
         {
-            Base_Matrix<T>::operator=(mat);
+            elem[i][j] = T{};
         }
-        else
-        {
-            for (std::size_t i = 0; i < (h_bd_w - mat.h_bd_w) * cs; i++)
-            {
-                elem[i] = T{};
-            }
-            std::copy(mat.elem, &mat.elem[mat.data_sz], &elem[(h_bd_w - mat.h_bd_w) * cs]);
-            for (std::size_t i = (h_bd_w + 1 + mat.h_bd_w) * cs; i < data_sz; i++)
-            {
-                elem[i] = T{};
-            }
-        }
-    }
     return *this;
 }
 
-template <typename T>
-Band_Matrix<T> &Band_Matrix<T>::operator=(Band_Matrix<T> &&mat)
+template <typename T, size_t N, size_t M>
+template <size_t OLD_M>
+Band_Matrix<T, N, M> &Band_Matrix<T, N, M>::operator=(Band_Matrix<T, N, OLD_M> &&mat)
 {
-    if (this != &mat)
-    {
-        if (this->h_bd_w < mat.h_bd_w)
+    static_assert(M > OLD_M, "Band_Matrix: too wide.");
+    for (std::size_t i = 0; i < M - OLD_M; i++)
+        for (std::size_t j = 0; j < N; j++)
         {
-            throw std::runtime_error("Base_Matrix assignment: different half_band_width");
+            elem[i][j] = T{};
         }
-        else if (this->h_bd_w == mat.h_bd_w)
+    std::move(mat.data()[0], mat.data()[mat.data_lines()], elem[M - OLD_M]);
+    for (std::size_t i = M + OLD_M + 1; i < data_ln; i++)
+        for (std::size_t j = 0; j < N; j++)
         {
-            Base_Matrix<T>::operator=(mat);
+            elem[i][j] = T{};
         }
-        else
-        {
-            for (std::size_t i = 0; i < (h_bd_w - mat.h_bd_w) * cs; i++)
-            {
-                elem[i] = T{};
-            }
-            std::move(mat.elem, &mat.elem[mat.data_sz], &elem[(h_bd_w - mat.h_bd_w) * cs]);
-            for (std::size_t i = (h_bd_w + 1 + mat.h_bd_w) * cs; i < data_sz; i++)
-            {
-                elem[i] = T{};
-            }
-        }
-    }
     return *this;
 }
 
 // -------------------- Band_Matrix: row & column ----------------------------
-
-template <typename T>
-T &Band_Matrix<T>::operator()(size_type row, size_type col)
+template <typename T, size_t N, size_t M>
+T &Band_Matrix<T, N, M>::operator()(size_type row, size_type col)
 {
-    size_type idx{index(row, col)};
-    if (idx == -1)
+    auto idx{index(row, col)};
+    if (idx.first == -1)
     {
         throw std::out_of_range("Band_Matrix::operator(): trying to access empty area.");
     }
     else
     {
-        return elem[idx];
+        return elem[idx.first][idx.second];
     }
 }
 
-template <typename T>
-const T &Band_Matrix<T>::operator()(size_type row, size_type col) const
+template <typename T, size_t N, size_t M>
+const T &Band_Matrix<T, N, M>::operator()(size_type row, size_type col) const
 {
-    size_type idx{index(row, col)};
-    if (idx == -1)
+    auto idx{index(row, col)};
+    if (idx.first == -1)
     {
-        return Base_Matrix<T>::zero;
+        return Base_Matrix<T, N, N>::zero;
     }
     else
     {
-        return elem[idx];
+        return elem[idx.first][idx.second];
     }
 }
 
-// get an item's index in `elem' from row & col
-template <typename T>
-typename Band_Matrix<T>::size_type Band_Matrix<T>::index(size_type row, size_type col) const
-{
-    if (col > h_bd_w + row || row > h_bd_w + col)
-    {
-        return -1;
-    }
-    else
-    {
-        size_type line_no{h_bd_w + row - col};
-        if (row > col)
-        {
-            return line_no * rs + col;
-        }
-        else
-        {
-            return line_no * rs + row;
-        }
-    }
-}
-
-// get an item's row & col from index in `elem'
-template <typename T>
-std::pair<typename Band_Matrix<T>::size_type, typename Band_Matrix<T>::size_type>
-Band_Matrix<T>::row_col(size_type idx) const
-{
-    size_type line_no{idx / rs};
-    size_type rel_loc{idx % rs};
-    if (line_no > h_bd_w)
-    {
-        return {line_no - h_bd_w + rel_loc, rel_loc};
-    }
-    else
-    {
-        return {rel_loc, h_bd_w - line_no + rel_loc};
-    }
-}
+// // get an item's row & col from index in `elem'
+// template <typename T, size_t N, size_t M>
+// std::pair<typename Band_Matrix<T, N, M>::size_type, typename Band_Matrix<T, N, M>::size_type>
+// Band_Matrix<T, N, M>::row_col(size_type idx) const
+// {
+//     size_type line_no{idx / rs};
+//     size_type rel_loc{idx % rs};
+//     if (line_no > h_bd_w)
+//     {
+//         return {line_no - h_bd_w + rel_loc, rel_loc};
+//     }
+//     else
+//     {
+//         return {rel_loc, h_bd_w - line_no + rel_loc};
+//     }
+// }
 
 } // namespace Misc
 

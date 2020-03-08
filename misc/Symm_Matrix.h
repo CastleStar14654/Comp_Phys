@@ -12,18 +12,18 @@ namespace Misc
 {
 
 // Symmetrical Matrix; only half of the items are stored
-template <typename T>
-class Symm_Matrix : public Base_Tri_Matrix<T>
+template <typename T, size_t N>
+class Symm_Matrix : public Base_Tri_Matrix<T, N>
 {
 private:
-    using Base_Tri_Matrix<T>::rs;
-    using Base_Tri_Matrix<T>::cs;
-    using Base_Tri_Matrix<T>::elem;
-    using Base_Tri_Matrix<T>::data_sz;
+    // using Base_Tri_Matrix<T, N>::rs;
+    // using Base_Tri_Matrix<T, N>::cs;
+    using Base_Tri_Matrix<T, N>::elem;
+    using Base_Tri_Matrix<T, N>::data_ln;
 
 public:
-    using typename Base_Tri_Matrix<T>::size_type;
-    using Base_Tri_Matrix<T>::Base_Tri_Matrix;
+    using typename Base_Tri_Matrix<T, N>::size_type;
+    using Base_Tri_Matrix<T, N>::Base_Tri_Matrix;
 
     Symm_Matrix(const Symm_Matrix &mat) = default;
     Symm_Matrix(Symm_Matrix &&mat) = default;
@@ -39,29 +39,29 @@ public:
 
 // -------------------- Symm_Matrix: row & column ----------------------------
 
-template <typename T>
-T &Symm_Matrix<T>::operator()(size_type row, size_type col)
+template <typename T, size_t N>
+T &Symm_Matrix<T, N>::operator()(size_type row, size_type col)
 {
     if (row < col)
     {
-        return Base_Tri_Matrix<T>::operator()(col, row);
+        return Base_Tri_Matrix<T, N>::operator()(col, row);
     }
     else
     {
-        return Base_Tri_Matrix<T>::operator()(row, col);
+        return Base_Tri_Matrix<T, N>::operator()(row, col);
     }
 }
 
-template <typename T>
-const T &Symm_Matrix<T>::operator()(size_type row, size_type col) const
+template <typename T, size_t N>
+const T &Symm_Matrix<T, N>::operator()(size_type row, size_type col) const
 {
     if (row < col)
     {
-        return Base_Tri_Matrix<T>::operator()(col, row);
+        return Base_Tri_Matrix<T, N>::operator()(col, row);
     }
     else
     {
-        return Base_Tri_Matrix<T>::operator()(row, col);
+        return Base_Tri_Matrix<T, N>::operator()(row, col);
     }
 }
 
