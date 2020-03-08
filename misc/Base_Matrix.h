@@ -39,6 +39,8 @@ class Matrix;
 //     Base_Matrix<T, R, C>& m;
 // };
 
+// ==================== Row =============================
+
 template <typename T, size_t R, size_t C>
 class Row
 {
@@ -57,11 +59,61 @@ public:
     }
     Row &operator=(const Base_Matrix<T, 1, C> &mat_row);
     Row &operator=(Base_Matrix<T, 1, C> &&mat_row);
+    template<size_t _R>
+    Row &operator=(const Row<T, _R, C> &other);
+    template<size_t _R>
+    Row &operator=(Row<T, _R, C> &&other);
 
 private:
     Base_Matrix<T, R, C> &m;
     size_type r;
 };
+
+// ------------------------- operator = --------------------------
+
+template <typename T, size_t R, size_t C>
+Row<T, R, C> &Row<T, R, C>::operator=(const Base_Matrix<T, 1, C> &mat_row)
+{
+    for (size_t i = 0; i < C; i++)
+    {
+        (*this)[i] = mat_row(0, i);
+    }
+    return *this;
+}
+
+template <typename T, size_t R, size_t C>
+Row<T, R, C> &Row<T, R, C>::operator=(Base_Matrix<T, 1, C> &&mat_row)
+{
+    for (size_t i = 0; i < C; i++)
+    {
+        (*this)[i] = std::move(mat_row(0, i));
+    }
+    return *this;
+}
+
+template <typename T, size_t R, size_t C>
+template<size_t _R>
+Row<T, R, C> &Row<T, R, C>::operator=(const Row<T, _R, C> &other)
+{
+    for (size_t i = 0; i < C; i++)
+    {
+        (*this)[i] = other[i];
+    }
+    return *this;
+}
+
+template <typename T, size_t R, size_t C>
+template<size_t _R>
+Row<T, R, C> &Row<T, R, C>::operator=(Row<T, _R, C> &&other)
+{
+    for (size_t i = 0; i < C; i++)
+    {
+        (*this)[i] = other[i];
+    }
+    return *this;
+}
+
+// ====================== Column ======================
 
 template <typename T, size_t R, size_t C>
 class Column
@@ -81,11 +133,61 @@ public:
     }
     Column &operator=(const Base_Matrix<T, R, 1> &mat_col);
     Column &operator=(Base_Matrix<T, R, 1> &&mat_col);
+    template <size_t _C>
+    Column &operator=(const Column<T, R, _C> &other);
+    template <size_t _C>
+    Column &operator=(Column<T, R, _C> &&other);
 
 private:
     Base_Matrix<T, R, C> &m;
     size_type c;
 };
+
+// ------------------------- operator = --------------------------
+
+template <typename T, size_t R, size_t C>
+Column<T, R, C> &Column<T, R, C>::operator=(const Base_Matrix<T, R, 1> &mat_row)
+{
+    for (size_t i = 0; i < R; i++)
+    {
+        (*this)[i] = mat_row(i, 0);
+    }
+    return *this;
+}
+
+template <typename T, size_t R, size_t C>
+Column<T, R, C> &Column<T, R, C>::operator=(Base_Matrix<T, R, 1> &&mat_row)
+{
+    for (size_t i = 0; i < R; i++)
+    {
+        (*this)[i] = std::move(mat_row(i, 0));
+    }
+    return *this;
+}
+
+template <typename T, size_t R, size_t C>
+template<size_t _C>
+Column<T, R, C> &Column<T, R, C>::operator=(const Column<T, R, _C> &other)
+{
+    for (size_t i = 0; i < R; i++)
+    {
+        (*this)[i] = other[i];
+    }
+    return *this;
+}
+
+template <typename T, size_t R, size_t C>
+template<size_t _C>
+Column<T, R, C> &Column<T, R, C>::operator=(Column<T, R, _C> &&other)
+{
+    for (size_t i = 0; i < R; i++)
+    {
+        (*this)[i] = other[i];
+    }
+    return *this;
+}
+
+// ------------------------- operator * --------------------------
 
 template <typename T, size_t R, size_t N, size_t C>
 T operator*(const Row<T, R, N> &a, const Column<T, N, C> &b)
