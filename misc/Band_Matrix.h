@@ -49,19 +49,21 @@ public:
     template <size_t OLD_M>
     Band_Matrix &operator=(Band_Matrix<T, N, OLD_M> &&mat);
 
-    T &operator()(size_type row, size_type col) override;
-    const T &operator()(size_type row, size_type col) const override;
+    virtual T &operator()(size_type row, size_type col) override;
+    virtual const T &operator()(size_type row, size_type col) const override;
 
-private:
+protected:
     // using Base_Matrix<T, N, N>::rs;
     // using Base_Matrix<T, N, N>::cs;
     using Base_Matrix<T, N, N>::elem;
     using Base_Matrix<T, N, N>::data_ln;
     // const size_type h_bd_w; // half_band_width
+    explicit Band_Matrix(bool, T deft = T{});
+    explicit Band_Matrix(bool, std::initializer_list<std::initializer_list<T>> ini);
 
     // size_type elem_line_len() const { return 2 * rs - h_bd_w - 1; }
     // get an item's place in `elem' from row & col
-    std::pair<size_type, size_type> index(size_type row, size_type col) const
+    virtual std::pair<size_type, size_type> index(size_type row, size_type col) const
     {
         return (col > M + row || row > M + col)
             ? std::pair<size_type, size_type>{-1, -1}
@@ -100,6 +102,37 @@ Band_Matrix<T, N, M>::Band_Matrix(std::initializer_list<std::initializer_list<T>
         if (it->size() != count)
         {
             throw std::invalid_argument("Band_Matrix::Band_Matrix: wrong column number");
+        }
+        ++it;
+    }
+
+    elem = new T[data_ln][N]{};
+    std::size_t count{0};
+    for (auto it = ini.begin(); it != ini.end(); it++)
+    {
+        std::move(it->begin(), it->end(), elem[count]);
+        ++count;
+    }
+}
+
+// --------------------- protected constructors ---------------------------
+
+template <typename T, size_t N, size_t M>
+Band_Matrix<T, N, M>::Band_Matrix(bool, T deft)
+    : Base_Matrix<T, N, N>{M + 1, deft}
+{
+}
+
+template <typename T, size_t N, size_t M>
+Band_Matrix<T, N, M>::Band_Matrix(bool, std::initializer_list<std::initializer_list<T>> ini)
+    : Base_Matrix<T, N, N>{M + 1, nullptr}
+{
+    auto it = ini.begin();
+    for (size_type count = N; count >= N - M; count--)
+    {
+        if (it->size() != count)
+        {
+            throw std::invalid_argument("Half_Band_Matrix::Half_Band_Matrix: wrong column number");
         }
         ++it;
     }
