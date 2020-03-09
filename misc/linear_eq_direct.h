@@ -120,12 +120,14 @@ void _l_u_decomposition(const Base_Matrix<T, N, N> &in_mat,
         {
             (*p_pivot)[i] = i;
         }
+    // whether the in_mat should be referred via p_pivot
+    bool via {p_pivot && (&in_mat != &out_l)};
 
     // calculation
     for (size_t i = 0; i < N; i++)
     {
         // calc the current pivot
-        out_u(i, i) = in_mat(i, i);
+        out_u(i, i) = in_mat(via ? (*p_pivot)[i] : i, i);
         for (size_t k = 0; k < i; k++)
         {
             out_u(i, i) -= out_l(i, k) * out_u(k, i);
@@ -134,7 +136,7 @@ void _l_u_decomposition(const Base_Matrix<T, N, N> &in_mat,
         // calc l (but the division)
         for (size_t j = i + 1; j < N; j++)
         {
-            out_l(j, i) = in_mat(j, i);
+            out_l(j, i) = in_mat(via ? (*p_pivot)[j] : j, i);
             for (size_t k = 0; k < i; k++)
             {
                 out_l(j, i) -= out_l(j, k) * out_u(k, i);
@@ -160,7 +162,7 @@ void _l_u_decomposition(const Base_Matrix<T, N, N> &in_mat,
             if (pivot_index != i)
             {
                 std::swap((*p_pivot)[pivot_index], (*p_pivot)[i]);
-                if (&in_mat != &out_l)
+                if (via)
                 {
                     std::swap_ranges(&out_l(i, 0), &out_l(i, i), &out_l(pivot_index, 0));
                     std::swap(out_u(i, i), out_l(pivot_index, i));
@@ -182,7 +184,7 @@ void _l_u_decomposition(const Base_Matrix<T, N, N> &in_mat,
         {
             // the division of l(j, i) here
             out_l(j, i) /= out_u(i, i);
-            out_u(i, j) = in_mat(i, j);
+            out_u(i, j) = in_mat(via ? (*p_pivot)[i] : i, j);
             for (size_t k = 0; k < i; k++)
             {
                 out_u(i, j) -= out_l(i, k) * out_u(k, j);
