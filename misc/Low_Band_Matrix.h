@@ -1,5 +1,5 @@
-#ifndef MISC_SYMM_BAND_MATRIX
-#define MISC_SYMM_BAND_MATRIX
+#ifndef MISC_LOW_BAND_MATRIX
+#define MISC_LOW_BAND_MATRIX
 
 #include <stdexcept>
 #include <initializer_list>
@@ -97,4 +97,4 @@ Low_Band_Matrix<T, N, M> &Low_Band_Matrix<T, N, M>::operator=(Low_Band_Matrix<T,
 
 } // namespace Misc
 
-#endif // MISC_SYMM_BAND_MATRIX
+#endif // MISC_LOW_BAND_MATRIX

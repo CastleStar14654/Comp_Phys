@@ -1,5 +1,5 @@
-#ifndef MISC_SYMM_BAND_MATRIX
-#define MISC_SYMM_BAND_MATRIX
+#ifndef MISC_UP_BAND_MATRIX
+#define MISC_UP_BAND_MATRIX
 
 #include <stdexcept>
 #include <initializer_list>
@@ -122,4 +122,4 @@ const T &Up_Band_Matrix<T, N, M>::operator()(size_type row, size_type col) const
 
 } // namespace Misc
 
-#endif // MISC_SYMM_BAND_MATRIX
+#endif // MISC_UP_BAND_MATRIX
