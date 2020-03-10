@@ -16,24 +16,6 @@ namespace Misc
 template <typename T, size_t R, size_t C>
 class Base_Matrix;
 
-// Row and Column for convenience
-// A deputy for columns & rows in a matrix
-// NO data is copied
-// template <typename T, size_t R, size_t C>
-// class Base_Vector
-// {
-// public:
-//     using size_type = std::size_t;
-//     using value_type = T;
-
-//     size_type size() const {return m.cols();}
-
-// protected:
-//     Base_Vector(Base_Matrix<T, R, C>& mat) : m{mat} {}
-
-//     Base_Matrix<T, R, C>& m;
-// };
-
 // ==================== Row =============================
 
 template <typename T, size_t R, size_t C>
@@ -52,61 +34,45 @@ public:
     {
         return const_cast<const Base_Matrix<T, R, C> &>(m)(r, col);
     }
-    Row &operator=(const Base_Matrix<T, 1, C> &mat_row);
-    Row &operator=(Base_Matrix<T, 1, C> &&mat_row);
-    template<size_t _R>
-    Row &operator=(const Row<T, _R, C> &other);
-    template<size_t _R>
-    Row &operator=(Row<T, _R, C> &&other);
+    Row &operator=(const Base_Matrix<T, 1, C> &mat_row)
+    {
+        for (size_t i = 0; i < C; i++)
+        {
+            (*this)[i] = mat_row(0, i);
+        }
+        return *this;
+    }
+    Row &operator=(Base_Matrix<T, 1, C> &&mat_row)
+    {
+        for (size_t i = 0; i < C; i++)
+        {
+            (*this)[i] = std::move(mat_row(0, i));
+        }
+        return *this;
+    }
+    template <size_t _R>
+    Row &operator=(const Row<T, _R, C> &other)
+    {
+        for (size_t i = 0; i < C; i++)
+        {
+            (*this)[i] = other[i];
+        }
+        return *this;
+    }
+    template <size_t _R>
+    Row &operator=(Row<T, _R, C> &&other)
+    {
+        for (size_t i = 0; i < C; i++)
+        {
+            (*this)[i] = other[i];
+        }
+        return *this;
+    }
 
 private:
     Base_Matrix<T, R, C> &m;
     size_type r;
 };
-
-// ------------------------- operator = --------------------------
-
-template <typename T, size_t R, size_t C>
-Row<T, R, C> &Row<T, R, C>::operator=(const Base_Matrix<T, 1, C> &mat_row)
-{
-    for (size_t i = 0; i < C; i++)
-    {
-        (*this)[i] = mat_row(0, i);
-    }
-    return *this;
-}
-
-template <typename T, size_t R, size_t C>
-Row<T, R, C> &Row<T, R, C>::operator=(Base_Matrix<T, 1, C> &&mat_row)
-{
-    for (size_t i = 0; i < C; i++)
-    {
-        (*this)[i] = std::move(mat_row(0, i));
-    }
-    return *this;
-}
-
-template <typename T, size_t R, size_t C>
-template<size_t _R>
-Row<T, R, C> &Row<T, R, C>::operator=(const Row<T, _R, C> &other)
-{
-    for (size_t i = 0; i < C; i++)
-    {
-        (*this)[i] = other[i];
-    }
-    return *this;
-}
-
-template <typename T, size_t R, size_t C>
-template<size_t _R>
-Row<T, R, C> &Row<T, R, C>::operator=(Row<T, _R, C> &&other)
-{
-    for (size_t i = 0; i < C; i++)
-    {
-        (*this)[i] = other[i];
-    }
-    return *this;
-}
 
 // ====================== Column ======================
 
@@ -126,61 +92,45 @@ public:
     {
         return const_cast<const Base_Matrix<T, R, C> &>(m)(row, c);
     }
-    Column &operator=(const Base_Matrix<T, R, 1> &mat_col);
-    Column &operator=(Base_Matrix<T, R, 1> &&mat_col);
+    Column &operator=(const Base_Matrix<T, R, 1> &mat_col)
+    {
+        for (size_t i = 0; i < R; i++)
+        {
+            (*this)[i] = mat_row(i, 0);
+        }
+        return *this;
+    }
+    Column &operator=(Base_Matrix<T, R, 1> &&mat_col)
+    {
+        for (size_t i = 0; i < R; i++)
+        {
+            (*this)[i] = std::move(mat_row(i, 0));
+        }
+        return *this;
+    }
     template <size_t _C>
-    Column &operator=(const Column<T, R, _C> &other);
+    Column &operator=(const Column<T, R, _C> &other)
+    {
+        for (size_t i = 0; i < R; i++)
+        {
+            (*this)[i] = other[i];
+        }
+        return *this;
+    }
     template <size_t _C>
-    Column &operator=(Column<T, R, _C> &&other);
+    Column &operator=(Column<T, R, _C> &&other)
+    {
+        for (size_t i = 0; i < R; i++)
+        {
+            (*this)[i] = other[i];
+        }
+        return *this;
+    }
 
 private:
     Base_Matrix<T, R, C> &m;
     size_type c;
 };
-
-// ------------------------- operator = --------------------------
-
-template <typename T, size_t R, size_t C>
-Column<T, R, C> &Column<T, R, C>::operator=(const Base_Matrix<T, R, 1> &mat_row)
-{
-    for (size_t i = 0; i < R; i++)
-    {
-        (*this)[i] = mat_row(i, 0);
-    }
-    return *this;
-}
-
-template <typename T, size_t R, size_t C>
-Column<T, R, C> &Column<T, R, C>::operator=(Base_Matrix<T, R, 1> &&mat_row)
-{
-    for (size_t i = 0; i < R; i++)
-    {
-        (*this)[i] = std::move(mat_row(i, 0));
-    }
-    return *this;
-}
-
-template <typename T, size_t R, size_t C>
-template<size_t _C>
-Column<T, R, C> &Column<T, R, C>::operator=(const Column<T, R, _C> &other)
-{
-    for (size_t i = 0; i < R; i++)
-    {
-        (*this)[i] = other[i];
-    }
-    return *this;
-}
-
-template <typename T, size_t R, size_t C>
-template<size_t _C>
-Column<T, R, C> &Column<T, R, C>::operator=(Column<T, R, _C> &&other)
-{
-    for (size_t i = 0; i < R; i++)
-    {
-        (*this)[i] = other[i];
-    }
-    return *this;
-}
 
 // ------------------------- operator * --------------------------
 
@@ -206,24 +156,62 @@ public:
     using value_type = T;
 
 protected:
-    // const size_type rs;
-    // const size_type cs;
     const size_type data_ln;
-    using p_ta = T(*)[C];
+    using p_ta = T (*)[C];
     p_ta elem;
     constexpr static T zero{};
 
 public:
     Base_Matrix(size_type dt_ln, T (*elm)[C])
         : data_ln{dt_ln}, elem{elm} {}
-    Base_Matrix(size_type dt_ln, T deft = T{});
-    Base_Matrix(const Base_Matrix &mat);
-    Base_Matrix(Base_Matrix &&mat);
+    Base_Matrix(size_type dt_ln, T deft = T{})
+        : data_ln{dt_ln}, elem{new T[dt_ln][C]{}}
+    {
+        if (deft != T{})
+            for (std::size_t i = 0; i < R; i++)
+                for (std::size_t j = 0; j < C; j++)
+                {
+                    elem[i][j] = deft;
+                }
+    }
+    Base_Matrix(const Base_Matrix &mat)
+        : data_ln{mat.data_ln}, elem{new T[mat.data_ln][C]}
+    {
+        std::copy(mat.elem[0], mat.elem[data_ln], elem[0]);
+    }
+    Base_Matrix(Base_Matrix &&mat)
+        : data_ln{mat.data_ln}, elem{mat.elem}
+    {
+        mat.elem = nullptr;
+    }
 
     virtual ~Base_Matrix() { delete[] elem; }
 
-    Base_Matrix &operator=(const Base_Matrix &mat);
-    Base_Matrix &operator=(Base_Matrix &&mat);
+    Base_Matrix &operator=(const Base_Matrix &mat)
+    {
+        if (this != &mat)
+        {
+            if (this->data_ln != mat.data_ln)
+            {
+                throw std::runtime_error("Base_Matrix assignment: different data_size");
+            }
+            std::copy(mat.elem, mat.elem + data_ln, elem);
+        }
+        return *this;
+    }
+    Base_Matrix &operator=(Base_Matrix &&mat)
+    {
+        if (this != &mat)
+        {
+            if (this->data_ln != mat.data_ln)
+            {
+                throw std::runtime_error("Base_Matrix assignment: different data_size");
+            }
+            delete[] elem;
+            elem = std::exchange(mat.elem, nullptr);
+        }
+        return *this;
+    }
 
     Row<T, R, C> row(size_type pos) { return Row<T, R, C>(*this, pos); }
     const Row<T, R, C> row(size_type pos) const { return Row<T, R, C>(*this, pos); }
@@ -267,65 +255,6 @@ std::ostream &operator<<(std::ostream &os, const Base_Matrix<T, R, C> &mat)
     }
     os << ']';
     return os;
-}
-
-// =========================== Base_Matrix =============================
-
-template <typename T, size_t R, size_t C>
-Base_Matrix<T, R, C>::Base_Matrix(size_type dt_ln, T deft)
-    : data_ln{dt_ln}, elem{new T[dt_ln][C]{}}
-{
-    if (deft != T{})
-        for (std::size_t i = 0; i < R; i++)
-            for (std::size_t j = 0; j < C; j++)
-            {
-                elem[i][j] = deft;
-            }
-}
-
-template <typename T, size_t R, size_t C>
-Base_Matrix<T, R, C>::Base_Matrix(const Base_Matrix<T, R, C> &mat)
-    : data_ln{mat.data_ln}, elem{new T[mat.data_ln][C]}
-{
-    std::copy(mat.elem[0], mat.elem[data_ln], elem[0]);
-}
-
-template <typename T, size_t R, size_t C>
-Base_Matrix<T, R, C>::Base_Matrix(Base_Matrix<T, R, C> &&mat)
-    : data_ln{mat.data_ln}, elem{mat.elem}
-{
-    mat.elem = nullptr;
-}
-
-// ========================= operator= ===================================
-
-template <typename T, size_t R, size_t C>
-Base_Matrix<T, R, C> &Base_Matrix<T, R, C>::operator=(const Base_Matrix<T, R, C> &mat)
-{
-    if (this != &mat)
-    {
-        if (this->data_ln != mat.data_ln)
-        {
-            throw std::runtime_error("Base_Matrix assignment: different data_size");
-        }
-        std::copy(mat.elem, mat.elem + data_ln, elem);
-    }
-    return *this;
-}
-
-template <typename T, size_t R, size_t C>
-Base_Matrix<T, R, C> &Base_Matrix<T, R, C>::operator=(Base_Matrix<T, R, C> &&mat)
-{
-    if (this != &mat)
-    {
-        if (this->data_ln != mat.data_ln)
-        {
-            throw std::runtime_error("Base_Matrix assignment: different data_size");
-        }
-        delete[] elem;
-        elem = std::exchange(mat.elem, nullptr);
-    }
-    return *this;
 }
 
 } // namespace Misc

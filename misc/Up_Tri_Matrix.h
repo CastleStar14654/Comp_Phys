@@ -18,8 +18,6 @@ template <typename T, size_t N>
 class Up_Tri_Matrix : public Base_Tri_Matrix<T, N>
 {
 private:
-    // using Base_Tri_Matrix<T, N>::rs;
-    // using Base_Tri_Matrix<T, N>::cs;
     using Base_Tri_Matrix<T, N>::elem;
     using Base_Tri_Matrix<T, N>::data_ln;
 
@@ -30,22 +28,85 @@ public:
     Up_Tri_Matrix(const Up_Tri_Matrix &mat) = default;
     Up_Tri_Matrix(Up_Tri_Matrix &&mat) = default;
     template <size_t M>
-    Up_Tri_Matrix(const Up_Band_Matrix<T, N, M> &mat);
+    Up_Tri_Matrix(const Up_Band_Matrix<T, N, M> &mat)
+        : Base_Tri_Matrix<T, N>{mat} {}
     template <size_t M>
-    Up_Tri_Matrix(Up_Band_Matrix<T, N, M> &&mat);
-    Up_Tri_Matrix(std::initializer_list<std::initializer_list<T>> ini);
+    Up_Tri_Matrix(Up_Band_Matrix<T, N, M> &&mat)
+        : Base_Tri_Matrix<T, N>{mat} {}
+    Up_Tri_Matrix(std::initializer_list<std::initializer_list<T>> ini)
+        : Base_Tri_Matrix<T, N>{}
+    {
+        int count{1};
+        for (auto i = std::rbegin(ini); i != std::rend(ini); i++)
+        {
+            if (i->size() != count)
+            {
+                throw std::invalid_argument("Matrix::Matrix: wrong column number");
+            }
+            ++count;
+        }
+        // elem = new T[data_sz];
+
+        auto ini_r{ini.begin()};
+        for (std::size_t r = 0; r < N; r++)
+        {
+            auto ini_c{ini_r->begin()};
+            for (std::size_t c = r; c < N; c++)
+            {
+                (*this)(r, c) = *ini_c;
+                ++ini_c;
+            }
+            ++ini_r;
+        }
+    }
 
     Up_Tri_Matrix &operator=(const Up_Tri_Matrix &mat) = default;
     Up_Tri_Matrix &operator=(Up_Tri_Matrix &&mat) = default;
-    Up_Tri_Matrix &operator=(const Diag_Matrix<T, N> &mat);
-    Up_Tri_Matrix &operator=(Diag_Matrix<T, N> &&mat);
+    Up_Tri_Matrix &operator=(const Diag_Matrix<T, N> &mat)
+    {
+        Base_Tri_Matrix<T, N>::operator=(mat);
+        return *this;
+    }
+    Up_Tri_Matrix &operator=(Diag_Matrix<T, N> &&mat)
+    {
+        Base_Tri_Matrix<T, N>::operator=(mat);
+        return *this;
+    }
     template <size_t M>
-    Up_Tri_Matrix &operator=(const Up_Band_Matrix<T, N, M> &mat);
+    Up_Tri_Matrix &operator=(const Up_Band_Matrix<T, N, M> &mat)
+    {
+        Base_Tri_Matrix<T, N>::operator=(mat);
+        return *this;
+    }
     template <size_t M>
-    Up_Tri_Matrix &operator=(Up_Band_Matrix<T, N, M> &&mat);
+    Up_Tri_Matrix &operator=(Up_Band_Matrix<T, N, M> &&mat)
+    {
+        Base_Tri_Matrix<T, N>::operator=(mat);
+        return *this;
+    }
 
-    T &operator()(size_type row, size_type col) override;
-    const T &operator()(size_type row, size_type col) const override;
+    T &operator()(size_type row, size_type col) override
+    {
+        if (col < row)
+        {
+            throw std::out_of_range("Up_Tri_Matrix::operator(): trying to access empty area.");
+        }
+        else
+        {
+            return Base_Tri_Matrix<T, N>::operator()(col, row);
+        }
+    }
+    const T &operator()(size_type row, size_type col) const override
+    {
+        if (col < row)
+        {
+            return Base_Matrix<T, N, N>::zero;
+        }
+        else
+        {
+            return Base_Tri_Matrix<T, N>::operator()(col, row);
+        }
+    }
 };
 
 // -------------------------------------------------------------------------
@@ -88,108 +149,6 @@ Up_Tri_Matrix<T, N> operator*(const Diag_Matrix<T, N> &a, const Up_Tri_Matrix<T,
             res(i, j) += a(i) * b(i, j);
         }
     return res;
-}
-
-// ========================== Up_Tri_Matrix =================================
-template <typename T, size_t N>
-template <size_t M>
-Up_Tri_Matrix<T, N>::Up_Tri_Matrix(const Up_Band_Matrix<T, N, M> &mat)
-    : Base_Tri_Matrix<T, N>{mat}
-{
-}
-
-template <typename T, size_t N>
-template <size_t M>
-Up_Tri_Matrix<T, N>::Up_Tri_Matrix(Up_Band_Matrix<T, N, M> &&mat)
-    : Base_Tri_Matrix<T, N>{mat}
-{
-}
-
-template <typename T, size_t N>
-Up_Tri_Matrix<T, N>::Up_Tri_Matrix(std::initializer_list<std::initializer_list<T>> ini)
-    : Base_Tri_Matrix<T, N>{}
-{
-    int count{1};
-    for (auto i = std::rbegin(ini); i != std::rend(ini); i++)
-    {
-        if (i->size() != count)
-        {
-            throw std::invalid_argument("Matrix::Matrix: wrong column number");
-        }
-        ++count;
-    }
-    // elem = new T[data_sz];
-
-    auto ini_r{ini.begin()};
-    for (std::size_t r = 0; r < N; r++)
-    {
-        auto ini_c{ini_r->begin()};
-        for (std::size_t c = r; c < N; c++)
-        {
-            (*this)(r, c) = *ini_c;
-            ++ini_c;
-        }
-        ++ini_r;
-    }
-}
-
-// -------------------- Up_Tri_Matrix: operator= ----------------------------
-template <typename T, size_t N>
-Up_Tri_Matrix<T, N> &Up_Tri_Matrix<T, N>::operator=(const Diag_Matrix<T, N> &mat)
-{
-    Base_Tri_Matrix<T, N>::operator=(mat);
-    return *this;
-}
-
-template <typename T, size_t N>
-Up_Tri_Matrix<T, N> &Up_Tri_Matrix<T, N>::operator=(Diag_Matrix<T, N> &&mat)
-{
-    Base_Tri_Matrix<T, N>::operator=(mat);
-    return *this;
-}
-
-template <typename T, size_t N>
-template <size_t M>
-Up_Tri_Matrix<T, N> &Up_Tri_Matrix<T, N>::operator=(const Up_Band_Matrix<T, N, M> &mat)
-{
-    Base_Tri_Matrix<T, N>::operator=(mat);
-    return *this;
-}
-
-template <typename T, size_t N>
-template <size_t M>
-Up_Tri_Matrix<T, N> &Up_Tri_Matrix<T, N>::operator=(Up_Band_Matrix<T, N, M> &&mat)
-{
-    Base_Tri_Matrix<T, N>::operator=(mat);
-    return *this;
-}
-
-// -------------------- Up_Tri_Matrix: row & column ----------------------------
-
-template <typename T, size_t N>
-T &Up_Tri_Matrix<T, N>::operator()(size_type row, size_type col)
-{
-    if (col < row)
-    {
-        throw std::out_of_range("Up_Tri_Matrix::operator(): trying to access empty area.");
-    }
-    else
-    {
-        return Base_Tri_Matrix<T, N>::operator()(col, row);
-    }
-}
-
-template <typename T, size_t N>
-const T &Up_Tri_Matrix<T, N>::operator()(size_type row, size_type col) const
-{
-    if (col < row)
-    {
-        return Base_Matrix<T, N, N>::zero;
-    }
-    else
-    {
-        return Base_Tri_Matrix<T, N>::operator()(col, row);
-    }
 }
 
 } // namespace Misc

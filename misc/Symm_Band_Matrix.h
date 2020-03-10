@@ -20,9 +20,9 @@ class Symm_Band_Matrix : public Base_Half_Band_Matrix<T, N, M>
 {
 public:
     using typename Base_Half_Band_Matrix<T, N, M>::size_type;
-    // using Base_Half_Band_Matrix<T, N, M>::Base_Half_Band_Matrix;
 
-    explicit Symm_Band_Matrix(T deft = T{});
+    explicit Symm_Band_Matrix(T deft = T{})
+        : Base_Half_Band_Matrix<T, N, M>{deft} {}
     Symm_Band_Matrix(const Symm_Band_Matrix &mat) = default;
     Symm_Band_Matrix(Symm_Band_Matrix &&mat) = default;
 
@@ -41,87 +41,53 @@ public:
          {2, 7, 9, 2, 5}
         }
      */
-    Symm_Band_Matrix(std::initializer_list<std::initializer_list<T>> ini);
+    Symm_Band_Matrix(std::initializer_list<std::initializer_list<T>> ini)
+        : Base_Half_Band_Matrix<T, N, M>{ini} {}
 
     Symm_Band_Matrix &operator=(const Symm_Band_Matrix &mat) = default;
     Symm_Band_Matrix &operator=(Symm_Band_Matrix &&mat) = default;
     template <size_t OLD_M>
-    Symm_Band_Matrix &operator=(const Symm_Band_Matrix<T, N, OLD_M> &mat);
+    Symm_Band_Matrix &operator=(const Symm_Band_Matrix<T, N, OLD_M> &mat)
+    {
+        Base_Half_Band_Matrix<T, N, M>::operator=(mat);
+        return *this;
+    }
     template <size_t OLD_M>
-    Symm_Band_Matrix &operator=(Symm_Band_Matrix<T, N, OLD_M> &&mat);
+    Symm_Band_Matrix &operator=(Symm_Band_Matrix<T, N, OLD_M> &&mat)
+    {
+        Base_Half_Band_Matrix<T, N, M>::operator=(mat);
+        return *this;
+    }
 
-    virtual T &operator()(size_type row, size_type col) override;
-    virtual const T &operator()(size_type row, size_type col) const override;
+    virtual T &operator()(size_type row, size_type col) override
+    {
+        if (col > row)
+        {
+            return Base_Half_Band_Matrix<T, N, M>::operator()(col, row);
+        }
+        else
+        {
+            return Base_Half_Band_Matrix<T, N, M>::operator()(row, col);
+        }
+    }
+    virtual const T &operator()(size_type row, size_type col) const override
+    {
+        if (col > row)
+        {
+            return Base_Half_Band_Matrix<T, N, M>::operator()(col, row);
+        }
+        else
+        {
+            return Base_Half_Band_Matrix<T, N, M>::operator()(row, col);
+        }
+    }
 
 private:
-    // using Base_Half_Band_Matrix<T, N, M>::rs;
-    // using Base_Half_Band_Matrix<T, N, M>::cs;
     using Base_Half_Band_Matrix<T, N, M>::elem;
     using Base_Half_Band_Matrix<T, N, M>::data_ln;
-    // const size_type h_bd_w; // half_band_width
 
-    // size_type elem_line_len() const { return 2 * rs - h_bd_w - 1; }
     // std::pair<size_type, size_type> row_col(size_type idx) const;
 };
-
-// ========================== Symm_Band_Matrix =================================
-
-template <typename T, size_t N, size_t M>
-Symm_Band_Matrix<T, N, M>::Symm_Band_Matrix(T deft)
-    : Base_Half_Band_Matrix<T, N, M>{deft}
-{
-}
-
-template <typename T, size_t N, size_t M>
-Symm_Band_Matrix<T, N, M>::Symm_Band_Matrix(std::initializer_list<std::initializer_list<T>> ini)
-    : Base_Half_Band_Matrix<T, N, M>{ini}
-{
-}
-
-// -------------------- Symm_Band_Matrix: operator= ----------------------------
-
-template <typename T, size_t N, size_t M>
-template <size_t OLD_M>
-Symm_Band_Matrix<T, N, M> &Symm_Band_Matrix<T, N, M>::operator=(const Symm_Band_Matrix<T, N, OLD_M> &mat)
-{
-    Base_Half_Band_Matrix<T, N, M>::operator=(mat);
-    return *this;
-}
-
-template <typename T, size_t N, size_t M>
-template <size_t OLD_M>
-Symm_Band_Matrix<T, N, M> &Symm_Band_Matrix<T, N, M>::operator=(Symm_Band_Matrix<T, N, OLD_M> &&mat)
-{
-    Base_Half_Band_Matrix<T, N, M>::operator=(mat);
-    return *this;
-}
-
-// -------------------- Symm_Band_Matrix: row & column ----------------------------
-template <typename T, size_t N, size_t M>
-T &Symm_Band_Matrix<T, N, M>::operator()(size_type row, size_type col)
-{
-    if (col > row)
-    {
-        return Base_Half_Band_Matrix<T, N, M>::operator()(col, row);
-    }
-    else
-    {
-        return Base_Half_Band_Matrix<T, N, M>::operator()(row, col);
-    }
-}
-
-template <typename T, size_t N, size_t M>
-const T &Symm_Band_Matrix<T, N, M>::operator()(size_type row, size_type col) const
-{
-    if (col > row)
-    {
-        return Base_Half_Band_Matrix<T, N, M>::operator()(col, row);
-    }
-    else
-    {
-        return Base_Half_Band_Matrix<T, N, M>::operator()(row, col);
-    }
-}
 
 } // namespace Misc
 

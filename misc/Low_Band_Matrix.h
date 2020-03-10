@@ -22,7 +22,7 @@ public:
     using typename Base_Half_Band_Matrix<T, N, M>::size_type;
     using Base_Half_Band_Matrix<T, N, M>::operator();
 
-    explicit Low_Band_Matrix(T deft = T{});
+    explicit Low_Band_Matrix(T deft = T{}) : Base_Half_Band_Matrix<T, N, M>{deft} {}
     Low_Band_Matrix(const Low_Band_Matrix &mat) = default;
     Low_Band_Matrix(Low_Band_Matrix &&mat) = default;
 
@@ -40,60 +40,29 @@ public:
          {2, 7, 9, 2, 5}
         }
      */
-    Low_Band_Matrix(std::initializer_list<std::initializer_list<T>> ini);
+    Low_Band_Matrix(std::initializer_list<std::initializer_list<T>> ini)
+        : Base_Half_Band_Matrix<T, N, M>{ini} {}
 
     Low_Band_Matrix &operator=(const Low_Band_Matrix &mat) = default;
     Low_Band_Matrix &operator=(Low_Band_Matrix &&mat) = default;
     template <size_t OLD_M>
-    Low_Band_Matrix &operator=(const Low_Band_Matrix<T, N, OLD_M> &mat);
+    Low_Band_Matrix &operator=(const Low_Band_Matrix<T, N, OLD_M> &mat)
+    {
+        Base_Half_Band_Matrix<T, N, M>::operator=(mat);
+        return *this;
+    }
     template <size_t OLD_M>
-    Low_Band_Matrix &operator=(Low_Band_Matrix<T, N, OLD_M> &&mat);
-
-    // T &operator()(size_type row, size_type col) override;
-    // const T &operator()(size_type row, size_type col) const override;
+    Low_Band_Matrix &operator=(Low_Band_Matrix<T, N, OLD_M> &&mat)
+    {
+        Base_Half_Band_Matrix<T, N, M>::operator=(mat);
+        return *this;
+    }
 
 private:
-    // using Base_Half_Band_Matrix<T, N, M>::rs;
-    // using Base_Half_Band_Matrix<T, N, M>::cs;
     using Base_Half_Band_Matrix<T, N, M>::elem;
     using Base_Half_Band_Matrix<T, N, M>::data_ln;
-    // const size_type h_bd_w; // half_band_width
-
-    // size_type elem_line_len() const { return 2 * rs - h_bd_w - 1; }
     // std::pair<size_type, size_type> row_col(size_type idx) const;
 };
-
-// ========================== Low_Band_Matrix =================================
-
-template <typename T, size_t N, size_t M>
-Low_Band_Matrix<T, N, M>::Low_Band_Matrix(T deft)
-    : Base_Half_Band_Matrix<T, N, M>{deft}
-{
-}
-
-template <typename T, size_t N, size_t M>
-Low_Band_Matrix<T, N, M>::Low_Band_Matrix(std::initializer_list<std::initializer_list<T>> ini)
-    : Base_Half_Band_Matrix<T, N, M>{ini}
-{
-}
-
-// -------------------- Low_Band_Matrix: operator= ----------------------------
-
-template <typename T, size_t N, size_t M>
-template <size_t OLD_M>
-Low_Band_Matrix<T, N, M> &Low_Band_Matrix<T, N, M>::operator=(const Low_Band_Matrix<T, N, OLD_M> &mat)
-{
-    Base_Half_Band_Matrix<T, N, M>::operator=(mat);
-    return *this;
-}
-
-template <typename T, size_t N, size_t M>
-template <size_t OLD_M>
-Low_Band_Matrix<T, N, M> &Low_Band_Matrix<T, N, M>::operator=(Low_Band_Matrix<T, N, OLD_M> &&mat)
-{
-    Base_Half_Band_Matrix<T, N, M>::operator=(mat);
-    return *this;
-}
 
 } // namespace Misc
 

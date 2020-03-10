@@ -22,29 +22,124 @@ class Base_Tri_Matrix : public Base_Matrix<T, N, N>
 public:
     using typename Base_Matrix<T, N, N>::size_type;
 
-    explicit Base_Tri_Matrix(T deft = T{});
+    explicit Base_Tri_Matrix(T deft = T{})
+        : Base_Matrix<T, N, N>{N / 2 + 1, deft} {}
     Base_Tri_Matrix(const Base_Tri_Matrix &mat) = default;
     Base_Tri_Matrix(Base_Tri_Matrix &&mat) = default;
-    Base_Tri_Matrix(const Diag_Matrix<T, N> &mat);
-    Base_Tri_Matrix(Diag_Matrix<T, N> &&mat);
+    Base_Tri_Matrix(const Diag_Matrix<T, N> &mat)
+        : Base_Matrix<T, N, N>{N / 2 + 1, T{}}
+    {
+        for (std::size_t i = 0; i < N; i++)
+        {
+            (*this)(i, i) = mat(i);
+        }
+    }
+    Base_Tri_Matrix(Diag_Matrix<T, N> &&mat)
+        : Base_Matrix<T, N, N>{N / 2 + 1, T{}}
+    {
+        for (std::size_t i = 0; i < N; i++)
+        {
+            (*this)(i, i) = std::move(mat(i));
+        }
+    }
     template <size_t M>
-    Base_Tri_Matrix(const Base_Half_Band_Matrix<T, N, M> &mat);
+    Base_Tri_Matrix(const Base_Half_Band_Matrix<T, N, M> &mat)
+        : Base_Matrix<T, N, N>{N / 2 + 1, T{}}
+    {
+        for (size_t del = 0; del <= M; del++)
+            for (size_t j = 0; j < N - del; j++)
+            {
+                (*this)(j + del, j) = mat.Base_Half_Band_Matrix<T, N, M>::operator()(j + del, j);
+            }
+    }
     template <size_t M>
-    Base_Tri_Matrix(Base_Half_Band_Matrix<T, N, M> &&mat);
-    Base_Tri_Matrix(std::initializer_list<std::initializer_list<T>> ini);
+    Base_Tri_Matrix(Base_Half_Band_Matrix<T, N, M> &&mat)
+        : Base_Matrix<T, N, N>{N / 2 + 1, T{}}
+    {
+        for (size_t del = 0; del <= M; del++)
+            for (size_t j = 0; j < N - del; j++)
+            {
+                (*this)(j + del, j) = std::move(mat.Base_Half_Band_Matrix<T, N, M>::operator()(j + del, j));
+            }
+    }
+    Base_Tri_Matrix(std::initializer_list<std::initializer_list<T>> ini)
+        : Base_Matrix<T, N, N>{N / 2 + 1, nullptr}
+    {
+        int count{1};
+        for (auto i = ini.begin(); i != ini.end(); i++)
+        {
+            if (i->size() != count)
+            {
+                throw std::invalid_argument("Matrix::Matrix: wrong column number");
+            }
+            ++count;
+        }
+
+        elem = new T[data_ln][N];
+        auto it = ini.begin();
+        for (std::size_t i = 0; i < N; i++)
+        {
+            std::move(it->begin(), it->end(), &(*this)(i, 0));
+            it++;
+        }
+    }
 
     Base_Tri_Matrix &operator=(const Base_Tri_Matrix &mat) = default;
     Base_Tri_Matrix &operator=(Base_Tri_Matrix &&mat) = default;
-    Base_Tri_Matrix &operator=(const Diag_Matrix<T, N> &mat);
-    Base_Tri_Matrix &operator=(Diag_Matrix<T, N> &&mat);
+    Base_Tri_Matrix &operator=(const Diag_Matrix<T, N> &mat)
+    {
+        T(*temp)
+        [N] = new T[data_ln][N]{};
+        delete[] elem;
+        elem = temp;
+        for (std::size_t i = 0; i < N; i++)
+        {
+            (*this)(i, i) = mat(i, i);
+        }
+        return *this;
+    }
+    Base_Tri_Matrix &operator=(Diag_Matrix<T, N> &&mat)
+    {
+        T(*temp)
+        [N] = new T[data_ln][N]{};
+        delete[] elem;
+        elem = temp;
+        for (std::size_t i = 0; i < N; i++)
+        {
+            (*this)(i, i) = std::move(mat(i, i));
+        }
+        return *this;
+    }
     template <size_t M>
-    Base_Tri_Matrix &operator=(const Base_Half_Band_Matrix<T, N, M> &mat);
+    Base_Tri_Matrix &operator=(const Base_Half_Band_Matrix<T, N, M> &mat)
+    {
+        T(*temp)
+        [N] = new T[data_ln][N]{};
+        delete[] elem;
+        elem = temp;
+        for (size_t del = 0; del <= M; del++)
+            for (size_t j = 0; j < N - del; j++)
+            {
+                (*this)(j + del, j) = mat.Base_Half_Band_Matrix<T, N, M>::operator()(j + del, j);
+            }
+        return *this;
+    }
     template <size_t M>
-    Base_Tri_Matrix &operator=(Base_Half_Band_Matrix<T, N, M> &&mat);
+    Base_Tri_Matrix &operator=(Base_Half_Band_Matrix<T, N, M> &&mat)
+    {
+        T(*temp)
+        [N] = new T[data_ln][N]{};
+        delete[] elem;
+        elem = temp;
+        for (size_t del = 0; del <= M; del++)
+            for (size_t j = 0; j < N - del; j++)
+            {
+                (*this)(j + del, j) = std::move(mat.Base_Half_Band_Matrix<T, N, M>::operator()(j + del, j));
+            }
+        return *this;
+    }
 
 protected:
-    // using Base_Matrix<T, N, N>::rs;
-    // using Base_Matrix<T, N, N>::cs;
     using Base_Matrix<T, N, N>::elem;
     using Base_Matrix<T, N, N>::data_ln;
 
@@ -52,173 +147,29 @@ protected:
     constexpr size_type head_i(size_type row) const { return (row >= (N - 1) / 2) ? (row - (N - 1) / 2) : (N / 2 - 1 - row); }
     constexpr size_type head_j(size_type row) const { return (row >= (N - 1) / 2) ? (0) : (N - 1 - row); }
 
-    virtual T &operator()(size_type row, size_type col) override;
-    virtual const T &operator()(size_type row, size_type col) const override;
+    virtual T &operator()(size_type row, size_type col) override
+    {
+        if (row < col)
+        {
+            throw std::out_of_range("Base_Tri_Matrix::operator(): trying to access empty area.");
+        }
+        else
+        {
+            return elem[head_i(row)][head_j(row) + col];
+        }
+    }
+    virtual const T &operator()(size_type row, size_type col) const override
+    {
+        if (row < col)
+        {
+            throw std::out_of_range("Base_Tri_Matrix::operator(): trying to access empty area.");
+        }
+        else
+        {
+            return elem[head_i(row)][head_j(row) + col];
+        }
+    }
 };
-
-// ========================== Base_Tri_Matrix =================================
-
-template <typename T, size_t N>
-Base_Tri_Matrix<T, N>::Base_Tri_Matrix(T deft)
-    : Base_Matrix<T, N, N>{N / 2 + 1, deft}
-{
-}
-
-template <typename T, size_t N>
-Base_Tri_Matrix<T, N>::Base_Tri_Matrix(const Diag_Matrix<T, N> &mat)
-    : Base_Matrix<T, N, N>{N / 2 + 1, T{}}
-{
-    for (std::size_t i = 0; i < N; i++)
-    {
-        (*this)(i, i) = mat(i);
-    }
-}
-
-template <typename T, size_t N>
-Base_Tri_Matrix<T, N>::Base_Tri_Matrix(Diag_Matrix<T, N> &&mat)
-    : Base_Matrix<T, N, N>{N / 2 + 1, T{}}
-{
-    for (std::size_t i = 0; i < N; i++)
-    {
-        (*this)(i, i) = std::move(mat(i));
-    }
-}
-
-template <typename T, size_t N>
-template <size_t M>
-Base_Tri_Matrix<T, N>::Base_Tri_Matrix(const Base_Half_Band_Matrix<T, N, M> &mat)
-    : Base_Matrix<T, N, N>{N / 2 + 1, T{}}
-{
-    for (size_t del = 0; del <= M; del++)
-        for (size_t j = 0; j < N - del; j++)
-        {
-            (*this)(j + del, j) = mat.Base_Half_Band_Matrix<T, N, M>::operator()(j + del, j);
-        }
-}
-
-template <typename T, size_t N>
-template <size_t M>
-Base_Tri_Matrix<T, N>::Base_Tri_Matrix(Base_Half_Band_Matrix<T, N, M> &&mat)
-    : Base_Matrix<T, N, N>{N / 2 + 1, T{}}
-{
-    for (size_t del = 0; del <= M; del++)
-        for (size_t j = 0; j < N - del; j++)
-        {
-            (*this)(j + del, j) = std::move(mat.Base_Half_Band_Matrix<T, N, M>::operator()(j + del, j));
-        }
-}
-
-template <typename T, size_t N>
-Base_Tri_Matrix<T, N>::Base_Tri_Matrix(std::initializer_list<std::initializer_list<T>> ini)
-    : Base_Matrix<T, N, N>{N / 2 + 1, nullptr}
-{
-    int count{1};
-    for (auto i = ini.begin(); i != ini.end(); i++)
-    {
-        if (i->size() != count)
-        {
-            throw std::invalid_argument("Matrix::Matrix: wrong column number");
-        }
-        ++count;
-    }
-
-    elem = new T[data_ln][N];
-    auto it = ini.begin();
-    for (std::size_t i = 0; i < N; i++)
-    {
-        std::move(it->begin(), it->end(), &(*this)(i, 0));
-        it++;
-    }
-}
-
-// -------------------- Base_Tri_Matrix: operator= ----------------------------
-
-template <typename T, size_t N>
-Base_Tri_Matrix<T, N> &Base_Tri_Matrix<T, N>::operator=(const Diag_Matrix<T, N> &mat)
-{
-    T(*temp)
-    [N] = new T[data_ln][N]{};
-    delete[] elem;
-    elem = temp;
-    for (std::size_t i = 0; i < N; i++)
-    {
-        (*this)(i, i) = mat(i, i);
-    }
-    return *this;
-}
-
-template <typename T, size_t N>
-Base_Tri_Matrix<T, N> &Base_Tri_Matrix<T, N>::operator=(Diag_Matrix<T, N> &&mat)
-{
-    T(*temp)
-    [N] = new T[data_ln][N]{};
-    delete[] elem;
-    elem = temp;
-    for (std::size_t i = 0; i < N; i++)
-    {
-        (*this)(i, i) = std::move(mat(i, i));
-    }
-    return *this;
-}
-
-template <typename T, size_t N>
-template <size_t M>
-Base_Tri_Matrix<T, N> &Base_Tri_Matrix<T, N>::operator=(const Base_Half_Band_Matrix<T, N, M> &mat)
-{
-    T(*temp)
-    [N] = new T[data_ln][N]{};
-    delete[] elem;
-    elem = temp;
-    for (size_t del = 0; del <= M; del++)
-        for (size_t j = 0; j < N - del; j++)
-        {
-            (*this)(j + del, j) = mat.Base_Half_Band_Matrix<T, N, M>::operator()(j + del, j);
-        }
-    return *this;
-}
-
-template <typename T, size_t N>
-template <size_t M>
-Base_Tri_Matrix<T, N> &Base_Tri_Matrix<T, N>::operator=(Base_Half_Band_Matrix<T, N, M> &&mat)
-{
-    T(*temp)
-    [N] = new T[data_ln][N]{};
-    delete[] elem;
-    elem = temp;
-    for (size_t del = 0; del <= M; del++)
-        for (size_t j = 0; j < N - del; j++)
-        {
-            (*this)(j + del, j) = std::move(mat.Base_Half_Band_Matrix<T, N, M>::operator()(j + del, j));
-        }
-    return *this;}
-
-// -------------------- Base_Tri_Matrix: row & column ----------------------------
-
-template <typename T, size_t N>
-T &Base_Tri_Matrix<T, N>::operator()(size_type row, size_type col)
-{
-    if (row < col)
-    {
-        throw std::out_of_range("Base_Tri_Matrix::operator(): trying to access empty area.");
-    }
-    else
-    {
-        return elem[head_i(row)][head_j(row) + col];
-    }
-}
-
-template <typename T, size_t N>
-const T &Base_Tri_Matrix<T, N>::operator()(size_type row, size_type col) const
-{
-    if (row < col)
-    {
-        throw std::out_of_range("Base_Tri_Matrix::operator(): trying to access empty area.");
-    }
-    else
-    {
-        return elem[head_i(row)][head_j(row) + col];
-    }
-}
 
 } // namespace Misc
 
