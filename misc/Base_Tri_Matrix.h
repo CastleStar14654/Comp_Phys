@@ -8,6 +8,7 @@
 #include "Base_Matrix.h"
 #include "Matrix.h"
 #include "Diag_Matrix.h"
+#include "Base_Half_Band_Matrix.h"
 
 // the namespace miscellany
 namespace Misc
@@ -26,12 +27,20 @@ public:
     Base_Tri_Matrix(Base_Tri_Matrix &&mat) = default;
     Base_Tri_Matrix(const Diag_Matrix<T, N> &mat);
     Base_Tri_Matrix(Diag_Matrix<T, N> &&mat);
+    template <size_t M>
+    Base_Tri_Matrix(const Base_Half_Band_Matrix<T, N, M> &mat);
+    template <size_t M>
+    Base_Tri_Matrix(Base_Half_Band_Matrix<T, N, M> &&mat);
     Base_Tri_Matrix(std::initializer_list<std::initializer_list<T>> ini);
 
     Base_Tri_Matrix &operator=(const Base_Tri_Matrix &mat) = default;
     Base_Tri_Matrix &operator=(Base_Tri_Matrix &&mat) = default;
     Base_Tri_Matrix &operator=(const Diag_Matrix<T, N> &mat);
     Base_Tri_Matrix &operator=(Diag_Matrix<T, N> &&mat);
+    template <size_t M>
+    Base_Tri_Matrix &operator=(const Base_Half_Band_Matrix<T, N, M> &mat);
+    template <size_t M>
+    Base_Tri_Matrix &operator=(Base_Half_Band_Matrix<T, N, M> &&mat);
 
 protected:
     // using Base_Matrix<T, N, N>::rs;
@@ -73,6 +82,30 @@ Base_Tri_Matrix<T, N>::Base_Tri_Matrix(Diag_Matrix<T, N> &&mat)
     {
         (*this)(i, i) = std::move(mat(i));
     }
+}
+
+template <typename T, size_t N>
+template <size_t M>
+Base_Tri_Matrix<T, N>::Base_Tri_Matrix(const Base_Half_Band_Matrix<T, N, M> &mat)
+    : Base_Matrix<T, N, N>{N / 2 + 1, T{}}
+{
+    for (size_t del = 0; del <= M; del++)
+        for (size_t j = 0; j < N - del; j++)
+        {
+            (*this)(j + del, j) = mat.Base_Half_Band_Matrix<T, N, M>::operator()(j + del, j);
+        }
+}
+
+template <typename T, size_t N>
+template <size_t M>
+Base_Tri_Matrix<T, N>::Base_Tri_Matrix(Base_Half_Band_Matrix<T, N, M> &&mat)
+    : Base_Matrix<T, N, N>{N / 2 + 1, T{}}
+{
+    for (size_t del = 0; del <= M; del++)
+        for (size_t j = 0; j < N - del; j++)
+        {
+            (*this)(j + del, j) = std::move(mat.Base_Half_Band_Matrix<T, N, M>::operator()(j + del, j));
+        }
 }
 
 template <typename T, size_t N>
@@ -127,6 +160,37 @@ Base_Tri_Matrix<T, N> &Base_Tri_Matrix<T, N>::operator=(Diag_Matrix<T, N> &&mat)
     }
     return *this;
 }
+
+template <typename T, size_t N>
+template <size_t M>
+Base_Tri_Matrix<T, N> &Base_Tri_Matrix<T, N>::operator=(const Base_Half_Band_Matrix<T, N, M> &mat)
+{
+    T(*temp)
+    [N] = new T[data_ln][N]{};
+    delete[] elem;
+    elem = temp;
+    for (size_t del = 0; del <= M; del++)
+        for (size_t j = 0; j < N - del; j++)
+        {
+            (*this)(j + del, j) = mat.Base_Half_Band_Matrix<T, N, M>::operator()(j + del, j);
+        }
+    return *this;
+}
+
+template <typename T, size_t N>
+template <size_t M>
+Base_Tri_Matrix<T, N> &Base_Tri_Matrix<T, N>::operator=(Base_Half_Band_Matrix<T, N, M> &&mat)
+{
+    T(*temp)
+    [N] = new T[data_ln][N]{};
+    delete[] elem;
+    elem = temp;
+    for (size_t del = 0; del <= M; del++)
+        for (size_t j = 0; j < N - del; j++)
+        {
+            (*this)(j + del, j) = std::move(mat.Base_Half_Band_Matrix<T, N, M>::operator()(j + del, j));
+        }
+    return *this;}
 
 // -------------------- Base_Tri_Matrix: row & column ----------------------------
 

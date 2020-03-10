@@ -6,8 +6,8 @@
 #include <iostream>
 
 #include "Base_Matrix.h"
-// #include "Matrix.h"
 #include "Base_Tri_Matrix.h"
+#include "Up_Band_Matrix.h"
 
 // the namespace miscellany
 namespace Misc
@@ -29,10 +29,20 @@ public:
 
     Up_Tri_Matrix(const Up_Tri_Matrix &mat) = default;
     Up_Tri_Matrix(Up_Tri_Matrix &&mat) = default;
+    template <size_t M>
+    Up_Tri_Matrix(const Up_Band_Matrix<T, N, M> &mat);
+    template <size_t M>
+    Up_Tri_Matrix(Up_Band_Matrix<T, N, M> &&mat);
     Up_Tri_Matrix(std::initializer_list<std::initializer_list<T>> ini);
 
     Up_Tri_Matrix &operator=(const Up_Tri_Matrix &mat) = default;
     Up_Tri_Matrix &operator=(Up_Tri_Matrix &&mat) = default;
+    Up_Tri_Matrix &operator=(const Diag_Matrix<T, N> &mat);
+    Up_Tri_Matrix &operator=(Diag_Matrix<T, N> &&mat);
+    template <size_t M>
+    Up_Tri_Matrix &operator=(const Up_Band_Matrix<T, N, M> &mat);
+    template <size_t M>
+    Up_Tri_Matrix &operator=(Up_Band_Matrix<T, N, M> &&mat);
 
     T &operator()(size_type row, size_type col) override;
     const T &operator()(size_type row, size_type col) const override;
@@ -47,7 +57,7 @@ Up_Tri_Matrix<T, N> operator*(const Up_Tri_Matrix<T, N> &a, const Up_Tri_Matrix<
     for (std::size_t j = 0; j < N; j++)
         for (std::size_t k = 0; k <= j; k++)
         {
-            T temp {b(k, j)};
+            T temp{b(k, j)};
             for (std::size_t i = k; i <= j; i++)
             {
                 res(i, j) += a(i, k) * temp;
@@ -81,6 +91,19 @@ Up_Tri_Matrix<T, N> operator*(const Diag_Matrix<T, N> &a, const Up_Tri_Matrix<T,
 }
 
 // ========================== Up_Tri_Matrix =================================
+template <typename T, size_t N>
+template <size_t M>
+Up_Tri_Matrix<T, N>::Up_Tri_Matrix(const Up_Band_Matrix<T, N, M> &mat)
+    : Base_Tri_Matrix<T, N>{mat}
+{
+}
+
+template <typename T, size_t N>
+template <size_t M>
+Up_Tri_Matrix<T, N>::Up_Tri_Matrix(Up_Band_Matrix<T, N, M> &&mat)
+    : Base_Tri_Matrix<T, N>{mat}
+{
+}
 
 template <typename T, size_t N>
 Up_Tri_Matrix<T, N>::Up_Tri_Matrix(std::initializer_list<std::initializer_list<T>> ini)
@@ -108,6 +131,37 @@ Up_Tri_Matrix<T, N>::Up_Tri_Matrix(std::initializer_list<std::initializer_list<T
         }
         ++ini_r;
     }
+}
+
+// -------------------- Up_Tri_Matrix: operator= ----------------------------
+template <typename T, size_t N>
+Up_Tri_Matrix<T, N> &Up_Tri_Matrix<T, N>::operator=(const Diag_Matrix<T, N> &mat)
+{
+    Base_Tri_Matrix<T, N>::operator=(mat);
+    return *this;
+}
+
+template <typename T, size_t N>
+Up_Tri_Matrix<T, N> &Up_Tri_Matrix<T, N>::operator=(Diag_Matrix<T, N> &&mat)
+{
+    Base_Tri_Matrix<T, N>::operator=(mat);
+    return *this;
+}
+
+template <typename T, size_t N>
+template <size_t M>
+Up_Tri_Matrix<T, N> &Up_Tri_Matrix<T, N>::operator=(const Up_Band_Matrix<T, N, M> &mat)
+{
+    Base_Tri_Matrix<T, N>::operator=(mat);
+    return *this;
+}
+
+template <typename T, size_t N>
+template <size_t M>
+Up_Tri_Matrix<T, N> &Up_Tri_Matrix<T, N>::operator=(Up_Band_Matrix<T, N, M> &&mat)
+{
+    Base_Tri_Matrix<T, N>::operator=(mat);
+    return *this;
 }
 
 // -------------------- Up_Tri_Matrix: row & column ----------------------------

@@ -4,8 +4,8 @@
 #include <iterator>
 
 #include "Base_Matrix.h"
-// #include "Matrix.h"
 #include "Base_Tri_Matrix.h"
+#include "Symm_Band_Matrix.h"
 
 // the namespace miscellany
 namespace Misc
@@ -27,15 +27,69 @@ public:
 
     Symm_Matrix(const Symm_Matrix &mat) = default;
     Symm_Matrix(Symm_Matrix &&mat) = default;
+    template <size_t M>
+    Symm_Matrix(const Symm_Band_Matrix<T, N, M> &mat);
+    template <size_t M>
+    Symm_Matrix(Symm_Band_Matrix<T, N, M> &&mat);
 
     Symm_Matrix &operator=(const Symm_Matrix &mat) = default;
     Symm_Matrix &operator=(Symm_Matrix &&mat) = default;
+    Symm_Matrix &operator=(const Diag_Matrix<T, N> &mat);
+    Symm_Matrix &operator=(Diag_Matrix<T, N> &&mat);
+    template <size_t M>
+    Symm_Matrix &operator=(const Symm_Band_Matrix<T, N, M> &mat);
+    template <size_t M>
+    Symm_Matrix &operator=(Symm_Band_Matrix<T, N, M> &&mat);
 
     T &operator()(size_type row, size_type col) override;
     const T &operator()(size_type row, size_type col) const override;
 };
 
 // ========================== Symm_Matrix =================================
+template <typename T, size_t N>
+template <size_t M>
+Symm_Matrix<T, N>::Symm_Matrix(const Symm_Band_Matrix<T, N, M> &mat)
+    : Base_Tri_Matrix<T, N>{mat}
+{
+}
+
+template <typename T, size_t N>
+template <size_t M>
+Symm_Matrix<T, N>::Symm_Matrix(Symm_Band_Matrix<T, N, M> &&mat)
+    : Base_Tri_Matrix<T, N>{mat}
+{
+}
+
+// -------------------- Symm_Matrix: operator= ----------------------------
+template <typename T, size_t N>
+Symm_Matrix<T, N> &Symm_Matrix<T, N>::operator=(const Diag_Matrix<T, N> &mat)
+{
+    Base_Tri_Matrix<T, N>::operator=(mat);
+    return *this;
+}
+
+template <typename T, size_t N>
+Symm_Matrix<T, N> &Symm_Matrix<T, N>::operator=(Diag_Matrix<T, N> &&mat)
+{
+    Base_Tri_Matrix<T, N>::operator=(mat);
+    return *this;
+}
+
+template <typename T, size_t N>
+template <size_t M>
+Symm_Matrix<T, N> &Symm_Matrix<T, N>::operator=(const Symm_Band_Matrix<T, N, M> &mat)
+{
+    Base_Tri_Matrix<T, N>::operator=(mat);
+    return *this;
+}
+
+template <typename T, size_t N>
+template <size_t M>
+Symm_Matrix<T, N> &Symm_Matrix<T, N>::operator=(Symm_Band_Matrix<T, N, M> &&mat)
+{
+    Base_Tri_Matrix<T, N>::operator=(mat);
+    return *this;
+}
 
 // -------------------- Symm_Matrix: row & column ----------------------------
 

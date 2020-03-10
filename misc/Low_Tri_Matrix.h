@@ -6,6 +6,7 @@
 #include "Base_Matrix.h"
 #include "Diag_Matrix.h"
 #include "Base_Tri_Matrix.h"
+#include "Low_Band_Matrix.h"
 
 // the namespace miscellany
 namespace Misc
@@ -24,14 +25,24 @@ private:
 public:
     using typename Base_Tri_Matrix<T, N>::size_type;
     using Base_Tri_Matrix<T, N>::Base_Tri_Matrix;
-    using Base_Tri_Matrix<T, N>::operator=;
     using Base_Tri_Matrix<T, N>::operator();
+
+    template <size_t M>
+    Low_Tri_Matrix(const Low_Band_Matrix<T, N, M> &mat);
+    template <size_t M>
+    Low_Tri_Matrix(Low_Band_Matrix<T, N, M> &&mat);
 
     Low_Tri_Matrix(const Low_Tri_Matrix &mat) = default;
     Low_Tri_Matrix(Low_Tri_Matrix &&mat) = default;
 
     Low_Tri_Matrix &operator=(const Low_Tri_Matrix &mat) = default;
     Low_Tri_Matrix &operator=(Low_Tri_Matrix &&mat) = default;
+    Low_Tri_Matrix &operator=(const Diag_Matrix<T, N> &mat);
+    Low_Tri_Matrix &operator=(Diag_Matrix<T, N> &&mat);
+    template <size_t M>
+    Low_Tri_Matrix &operator=(const Low_Band_Matrix<T, N, M> &mat);
+    template <size_t M>
+    Low_Tri_Matrix &operator=(Low_Band_Matrix<T, N, M> &&mat);
 
     const T &operator()(size_type row, size_type col) const override;
 };
@@ -81,6 +92,50 @@ Low_Tri_Matrix<T, N> operator*(const Diag_Matrix<T, N> &a, const Low_Tri_Matrix<
 }
 
 // ========================== Low_Tri_Matrix =================================
+template <typename T, size_t N>
+template <size_t M>
+Low_Tri_Matrix<T, N>::Low_Tri_Matrix(const Low_Band_Matrix<T, N, M> &mat)
+    : Base_Tri_Matrix<T, N>{mat}
+{
+}
+
+template <typename T, size_t N>
+template <size_t M>
+Low_Tri_Matrix<T, N>::Low_Tri_Matrix(Low_Band_Matrix<T, N, M> &&mat)
+    : Base_Tri_Matrix<T, N>{mat}
+{
+}
+
+// -------------------- Low_Tri_Matrix: operator= ----------------------------
+template <typename T, size_t N>
+Low_Tri_Matrix<T, N> &Low_Tri_Matrix<T, N>::operator=(const Diag_Matrix<T, N> &mat)
+{
+    Base_Tri_Matrix<T, N>::operator=(mat);
+    return *this;
+}
+
+template <typename T, size_t N>
+Low_Tri_Matrix<T, N> &Low_Tri_Matrix<T, N>::operator=(Diag_Matrix<T, N> &&mat)
+{
+    Base_Tri_Matrix<T, N>::operator=(mat);
+    return *this;
+}
+
+template <typename T, size_t N>
+template <size_t M>
+Low_Tri_Matrix<T, N> &Low_Tri_Matrix<T, N>::operator=(const Low_Band_Matrix<T, N, M> &mat)
+{
+    Base_Tri_Matrix<T, N>::operator=(mat);
+    return *this;
+}
+
+template <typename T, size_t N>
+template <size_t M>
+Low_Tri_Matrix<T, N> &Low_Tri_Matrix<T, N>::operator=(Low_Band_Matrix<T, N, M> &&mat)
+{
+    Base_Tri_Matrix<T, N>::operator=(mat);
+    return *this;
+}
 
 // -------------------- Low_Tri_Matrix: row & column ----------------------------
 
