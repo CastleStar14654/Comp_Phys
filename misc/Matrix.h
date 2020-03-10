@@ -78,6 +78,30 @@ Matrix<T, R, C> operator*(const Column<T, R, A>& a, const Row<T, B, C>& b)
     return res;
 }
 
+
+template <typename T, size_t R, size_t N, size_t C>
+Matrix<T, 1, C> operator*(const Row<T, R, N> &a, const Base_Matrix<T, N, C> &b)
+{
+    Matrix<T, 1, C> res{};
+    for (std::size_t i = 0; i < C; i++)
+    {
+        res(0, i) = a * b.column(i);
+    }
+    return res;
+}
+
+template <typename T, size_t R, size_t N, size_t C>
+Matrix<T, R, 1> operator*(const Base_Matrix<T, R, N> &a, const Column<T, N, C> &b)
+{
+    Matrix<T, R, 1> res{};
+    for (std::size_t i = 0; i < R; i++)
+    {
+        res(i, 0) = a.row(i) * b;
+    }
+    return res;
+}
+
+
 // =====================Matrix===============================
 
 template <typename T, size_t R, size_t C>
