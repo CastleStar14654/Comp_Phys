@@ -32,6 +32,24 @@ void _tridiagonal_decomposition(const Band_Matrix<T, N, 1> &in_mat,
 template <typename It>
 std::size_t _inversion_number(It b, It e);
 
+// IMPLEMENTATION, would change the input into an identity
+// return the inverse matrix of an Upper Triangular Matrix
+// using Gauss-Jordan method
+template <typename T, size_t N>
+Up_Tri_Matrix<T, N> _inv(Up_Tri_Matrix<T, N>& in_mat);
+
+// // IMPLEMENTATION, would change the input into an identity
+// // return the inverse matrix of a Lower Triangular Matrix
+// // using Gauss-Jordan method
+// template <typename T, size_t N>
+// Low_Tri_Matrix<T, N> _inv(Low_Tri_Matrix<T, N>& in_mat);
+
+// IMPLEMENTATION, would change the input into an identity
+// return the inverse matrix of a Symmetric Matrix
+// using Gauss-Jordan method
+// template <typename T, size_t N>
+// Symm_Matrix<T, N> _inv(Symm_Matrix<T, N>& in_mat);
+
 // ------------------ APIs ----------------------------
 
 // LU decomposition
@@ -99,6 +117,65 @@ void tri_factor(Band_Matrix<T, N, 1> &in_mat)
 {
     _tridiagonal_decomposition(in_mat, in_mat, in_mat);
 }
+
+// return the inverse matrix
+// using Gauss-Jordan method
+template <typename T, size_t N>
+Matrix<T, N, N> inv(const Base_Matrix<T, N, N>& in_mat);
+
+// return the inverse matrix of an Upper Triangular Matrix
+// using Gauss-Jordan method
+template <typename T, size_t N>
+Up_Tri_Matrix<T, N> inv(const Up_Tri_Matrix<T, N>& in_mat)
+{
+    Up_Tri_Matrix<T, N> temp {in_mat};
+    return _inv(temp);
+}
+
+// return the inverse matrix of a Lower Triangular Matrix
+// using Gauss-Jordan method
+template <typename T, size_t N>
+Low_Tri_Matrix<T, N> inv(const Low_Tri_Matrix<T, N>& in_mat);
+// {
+//     Low_Tri_Matrix<T, N> temp {in_mat};
+//     return _inv(temp);
+// }
+
+// // return the inverse matrix of a Symmetric Matrix
+// // using Gauss-Jordan method
+// template <typename T, size_t N>
+// Symm_Matrix<T, N> inv(const Symm_Matrix<T, N>& in_mat)
+// {
+//     Symm_Matrix<T, N> temp {in_mat};
+//     return _inv(temp);
+// }
+
+// return the inverse matrix of an Upper Band Matrix
+// using Gauss-Jordan method
+template <typename T, size_t N, size_t M>
+Up_Tri_Matrix<T, N> inv(const Up_Band_Matrix<T, N, M>& in_mat)
+{
+    Up_Tri_Matrix<T, N> temp {in_mat};
+    return _inv(temp);
+}
+
+// return the inverse matrix of a Lower Band Matrix
+// using Gauss-Jordan method
+template <typename T, size_t N, size_t M>
+Low_Tri_Matrix<T, N> inv(const Low_Band_Matrix<T, N, M>& in_mat)
+{
+    Low_Tri_Matrix<T, N> temp {in_mat};
+    return _inv(temp);
+}
+
+// // return the inverse matrix of a Symmetric Band Matrix
+// // using Gauss-Jordan method
+// template <typename T, size_t N, size_t M>
+// Symm_Matrix<T, N> inv(const Symm_Band_Matrix<T, N, M>& in_mat)
+// {
+//     Symm_Matrix<T, N> temp {in_mat};
+//     return _inv(temp);
+// }
 
 // ================== DEFINITIONS =====================
 
@@ -287,6 +364,192 @@ std::size_t _inversion_number(It b, It e)
     }
     return res;
 }
+
+// inverse matrix
+template <typename T, size_t N>
+Matrix<T, N, N> inv(const Base_Matrix<T, N, N>& in_mat)
+{
+    // temp will be transformed into an identity
+    Matrix<T, N, N> temp {in_mat};
+    // res will be returned
+    Matrix<T, N, N> res {};
+    for (size_t i = 0; i < N; i++)
+    {
+        res(i, i) = 1;
+    }
+
+    for (size_t i = 0; i < N; i++)
+    {
+        // find the pivot;
+        static size_t pivot_index;
+        static T pivot_value;
+        pivot_index = i;
+        pivot_value = std::abs(temp(i, i));
+        for (size_t p = i+1; p < N; p++)
+            if (std::abs(temp(p, i)) > pivot_value)
+            {
+                pivot_value = std::abs(temp(p, i));
+                pivot_index = p;
+            }
+        if (pivot_index != i)
+        {
+            std::swap(temp.data()[i], temp.data()[pivot_index]);
+            std::swap(res.data()[i], res.data()[pivot_index]);
+        }
+
+        // singular
+        static T t_ii;
+        t_ii = temp(i, i);
+        if (t_ii == 0)
+        {
+            throw std::runtime_error("inv(): divided by zero");
+        }
+
+        // refresh two matrices
+        // unnecessary calculations are avoided
+        for (size_t j = i+1; j < N; j++)
+        {
+            temp(i, j) /= t_ii;
+        }
+        for (size_t j = 0; j < N; j++)
+        {
+            res(i, j) /= t_ii;
+        }
+
+        for (size_t k = 0; k < i; k++)
+        {
+            static T t_ki;
+            t_ki = temp(k, i);
+            for (size_t j = 0; j < N; j++)
+            {
+                res(k, j) -= t_ki * res(i, j);
+            }
+            for (size_t j = i+1; j < N; j++)
+            {
+                temp(k, j) -= t_ki * temp(i, j);
+            }
+        }
+
+        for (size_t k = i+1; k < N; k++)
+        {
+            static T t_ki;
+            t_ki = temp(k, i);
+            for (size_t j = 0; j < N; j++)
+            {
+                res(k, j) -= t_ki * res(i, j);
+            }
+            for (size_t j = i+1; j < N; j++)
+            {
+                temp(k, j) -= t_ki * temp(i, j);
+            }
+        }
+    }
+    return res;
+}
+
+// IMPLEMENTATION, would change the input into an identity
+// return the inverse matrix of an Upper Triangular Matrix
+// using Gauss-Jordan method
+template <typename T, size_t N>
+Up_Tri_Matrix<T, N> _inv(Up_Tri_Matrix<T, N>& in_mat)
+{
+    // res will be returned
+    Up_Tri_Matrix<T, N> res {};
+    for (size_t i = 0; i < N; i++)
+    {
+        res(i, i) = 1;
+    }
+
+    for (size_t i = 0; i < N; i++)
+    {
+        // singular
+        static T t_ii;
+        t_ii = in_mat(i, i);
+        if (t_ii == 0)
+        {
+            throw std::runtime_error("inv(): divided by zero");
+        }
+
+        // refresh two matrices
+        // unnecessary calculations are avoided
+        for (size_t j = i+1; j < N; j++)
+        {
+            in_mat(i, j) /= t_ii;
+        }
+        for (size_t j = i; j < N; j++)
+        {
+            res(i, j) /= t_ii;
+        }
+
+        for (size_t k = 0; k < i; k++)
+        {
+            static T t_ki;
+            t_ki = in_mat(k, i);
+            for (size_t j = i; j < N; j++)
+            {
+                res(k, j) -= t_ki * res(i, j);
+            }
+            for (size_t j = i+1; j < N; j++)
+            {
+                in_mat(k, j) -= t_ki * in_mat(i, j);
+            }
+        }
+    }
+    return res;
+}
+
+// IMPLEMENTATION, would change the input into an identity
+// return the inverse matrix of a Lower Triangular Matrix
+// using Gauss-Jordan method
+template <typename T, size_t N>
+Low_Tri_Matrix<T, N> inv(const Low_Tri_Matrix<T, N>& in_mat)
+{
+    // res will be returned
+    Low_Tri_Matrix<T, N> res {};
+    for (size_t i = 0; i < N; i++)
+    {
+        res(i, i) = 1;
+    }
+
+    for (size_t i = 0; i < N; i++)
+    {
+        // singular
+        static T t_ii;
+        t_ii = in_mat(i, i);
+        if (t_ii == 0)
+        {
+            throw std::runtime_error("inv(): divided by zero");
+        }
+
+        // refresh two matrices
+        // unnecessary calculations are avoided
+        for (size_t j = 0; j <= i; j++)
+        {
+            res(i, j) /= t_ii;
+        }
+
+        for (size_t k = i+1; k < N; k++)
+        {
+            static T t_ki;
+            t_ki = in_mat(k, i);
+            for (size_t j = 0; j <= i; j++)
+            {
+                res(k, j) -= t_ki * res(i, j);
+            }
+        }
+    }
+    return res;
+}
+
+// IMPLEMENTATION, would change the input into an identity
+// return the inverse matrix of a Symmetric Matrix
+// using Gauss-Jordan method
+// template <typename T, size_t N>
+// Symm_Matrix<T, N> _inv(Symm_Matrix<T, N>& in_mat)
+// {
+
+// }
+
 
 } // namespace Misc
 
