@@ -26,21 +26,21 @@ public:
     Symm_Band_Matrix(const Symm_Band_Matrix &mat) = default;
     Symm_Band_Matrix(Symm_Band_Matrix &&mat) = default;
 
-    /* For example, the Matrix
-        [[2 6 2 0 0 0 0]
-         [6 5 3 7 0 0 0]
-         [2 3 5 4 9 0 0]
-         [0 7 4 5 4 2 0]
-         [0 0 9 4 2 3 5]
-         [0 0 0 2 3 1 6]
-         [0 0 0 0 5 6 7]
-        ]
-      should be input as
-        {{2, 5, 5, 5, 2, 1, 7},
-         {6, 3, 4, 4, 3, 6},
-         {2, 7, 9, 2, 5}
-        }
-     */
+    // For example, the Matrix
+    //    [[2 6 2 0 0 0 0]
+    //     [6 5 3 7 0 0 0]
+    //     [2 3 5 4 9 0 0]
+    //     [0 7 4 5 4 2 0]
+    //     [0 0 9 4 2 3 5]
+    //     [0 0 0 2 3 1 6]
+    //     [0 0 0 0 5 6 7]
+    //    ]
+    // should be input as
+    // {
+    //     {2, 5, 5, 5, 2, 1, 7},
+    //     {6, 3, 4, 4, 3, 6},
+    //     {2, 7, 9, 2, 5}
+    // }
     Symm_Band_Matrix(std::initializer_list<std::initializer_list<T>> ini)
         : Base_Half_Band_Matrix<T, N, M>{ini} {}
 

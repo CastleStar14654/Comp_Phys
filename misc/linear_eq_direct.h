@@ -36,13 +36,7 @@ std::size_t _inversion_number(It b, It e);
 // return the inverse matrix of an Upper Triangular Matrix
 // using Gauss-Jordan method
 template <typename T, size_t N>
-Up_Tri_Matrix<T, N> _inv(Up_Tri_Matrix<T, N>& in_mat);
-
-// // IMPLEMENTATION, would change the input into an identity
-// // return the inverse matrix of a Lower Triangular Matrix
-// // using Gauss-Jordan method
-// template <typename T, size_t N>
-// Low_Tri_Matrix<T, N> _inv(Low_Tri_Matrix<T, N>& in_mat);
+Up_Tri_Matrix<T, N> _inv(Up_Tri_Matrix<T, N> &in_mat);
 
 // IMPLEMENTATION, would change the input into an identity
 // return the inverse matrix of a Symmetric Matrix
@@ -54,46 +48,74 @@ Up_Tri_Matrix<T, N> _inv(Up_Tri_Matrix<T, N>& in_mat);
 
 // LU decomposition
 template <typename T, size_t N>
-void l_u_factor(const Base_Matrix<T, N, N> &in_mat,
-                Low_Tri_Matrix<T, N> &out_l,
-                Up_Tri_Matrix<T, N> &out_u)
+void lu_factor(const Base_Matrix<T, N, N> &in_mat,
+               Low_Tri_Matrix<T, N> &out_l,
+               Up_Tri_Matrix<T, N> &out_u)
 {
     _l_u_decomposition(in_mat, out_l, out_u);
 }
 
 template <typename T, size_t N>
-void l_u_factor(Base_Matrix<T, N, N> &in_mat)
+void lu_factor(Base_Matrix<T, N, N> &in_mat)
 {
     _l_u_decomposition(in_mat, in_mat, in_mat);
+}
+
+// Pivoted LU decomposition
+template <typename T, size_t N>
+void lu_factor(const Base_Matrix<T, N, N> &in_mat,
+               Low_Tri_Matrix<T, N> &out_l,
+               Up_Tri_Matrix<T, N> &out_u,
+               std::array<size_t, N> &pivot)
+{
+    _l_u_decomposition(in_mat, out_l, out_u, &pivot);
+}
+
+template <typename T, size_t N>
+void lu_factor(Base_Matrix<T, N, N> &in_mat,
+               std::array<size_t, N> &pivot)
+{
+    _l_u_decomposition(in_mat, in_mat, in_mat, &pivot);
 }
 
 // determinant
 template <typename T, size_t N>
 T det(const Base_Matrix<T, N, N> &in_mat);
 
+template <typename T, size_t N>
+T det(const Symm_Matrix<T, N> &in_mat)
+{
+    Low_Tri_Matrix<T, N> out_l{};
+    std::array<T, N> out_d{};
+    ldl_factor(in_mat, out_l, out_d);
+    T res{1};
+    for (size_t i = 0; i < N; i++)
+    {
+        res *= out_d[i];
+    }
+    return res;
+}
+
+template <typename T, size_t N, size_t M>
+T det(const Symm_Band_Matrix<T, N, M> &in_mat)
+{
+    Low_Tri_Matrix<T, N> out_l{};
+    std::array<T, N> out_d{};
+    ldl_factor(in_mat, out_l, out_d);
+    T res{1};
+    for (size_t i = 0; i < N; i++)
+    {
+        res *= out_d[i];
+    }
+    return res;
+}
+
 // inversion number of a container
 template <typename Container>
-std::size_t inv_num(const Container& c)
+std::size_t inv_num(const Container &c)
 {
-    std::vector<typename Container::value_type> v {c.begin(), c.end()};
+    std::vector<typename Container::value_type> v{c.begin(), c.end()};
     return _inversion_number(v.begin(), v.end());
-}
-
-// Pivoted LU decomposition
-template <typename T, size_t N>
-void l_u_factor(const Base_Matrix<T, N, N> &in_mat,
-                Low_Tri_Matrix<T, N> &out_l,
-                Up_Tri_Matrix<T, N> &out_u,
-                std::array<size_t, N> &pivot)
-{
-    _l_u_decomposition(in_mat, out_l, out_u, &pivot);
-}
-
-template <typename T, size_t N>
-void l_u_factor(Base_Matrix<T, N, N> &in_mat,
-                std::array<size_t, N> &pivot)
-{
-    _l_u_decomposition(in_mat, in_mat, in_mat, &pivot);
 }
 
 // Thomas tridiagonal decomposition
@@ -121,25 +143,21 @@ void tri_factor(Band_Matrix<T, N, 1> &in_mat)
 // return the inverse matrix
 // using Gauss-Jordan method
 template <typename T, size_t N>
-Matrix<T, N, N> inv(const Base_Matrix<T, N, N>& in_mat);
+Matrix<T, N, N> inv(const Base_Matrix<T, N, N> &in_mat);
 
 // return the inverse matrix of an Upper Triangular Matrix
 // using Gauss-Jordan method
 template <typename T, size_t N>
-Up_Tri_Matrix<T, N> inv(const Up_Tri_Matrix<T, N>& in_mat)
+Up_Tri_Matrix<T, N> inv(const Up_Tri_Matrix<T, N> &in_mat)
 {
-    Up_Tri_Matrix<T, N> temp {in_mat};
+    Up_Tri_Matrix<T, N> temp{in_mat};
     return _inv(temp);
 }
 
 // return the inverse matrix of a Lower Triangular Matrix
 // using Gauss-Jordan method
 template <typename T, size_t N>
-Low_Tri_Matrix<T, N> inv(const Low_Tri_Matrix<T, N>& in_mat);
-// {
-//     Low_Tri_Matrix<T, N> temp {in_mat};
-//     return _inv(temp);
-// }
+Low_Tri_Matrix<T, N> inv(const Low_Tri_Matrix<T, N> &in_mat);
 
 // // return the inverse matrix of a Symmetric Matrix
 // // using Gauss-Jordan method
@@ -153,19 +171,19 @@ Low_Tri_Matrix<T, N> inv(const Low_Tri_Matrix<T, N>& in_mat);
 // return the inverse matrix of an Upper Band Matrix
 // using Gauss-Jordan method
 template <typename T, size_t N, size_t M>
-Up_Tri_Matrix<T, N> inv(const Up_Band_Matrix<T, N, M>& in_mat)
+Up_Tri_Matrix<T, N> inv(const Up_Band_Matrix<T, N, M> &in_mat)
 {
-    Up_Tri_Matrix<T, N> temp {in_mat};
+    Up_Tri_Matrix<T, N> temp{in_mat};
     return _inv(temp);
 }
 
 // return the inverse matrix of a Lower Band Matrix
 // using Gauss-Jordan method
 template <typename T, size_t N, size_t M>
-Low_Tri_Matrix<T, N> inv(const Low_Band_Matrix<T, N, M>& in_mat)
+Low_Tri_Matrix<T, N> inv(const Low_Band_Matrix<T, N, M> &in_mat)
 {
-    Low_Tri_Matrix<T, N> temp {in_mat};
-    return _inv(temp);
+    Low_Tri_Matrix<T, N> temp{in_mat};
+    return inv(temp);
 }
 
 // // return the inverse matrix of a Symmetric Band Matrix
@@ -176,6 +194,48 @@ Low_Tri_Matrix<T, N> inv(const Low_Band_Matrix<T, N, M>& in_mat)
 //     Symm_Matrix<T, N> temp {in_mat};
 //     return _inv(temp);
 // }
+
+// LDL Decomposition
+template <typename T, size_t N>
+void ldl_factor(const Symm_Matrix<T, N> &in_mat,
+                Low_Tri_Matrix<T, N> &out_l,
+                std::array<T, N> &out_d);
+
+template <typename T, size_t N, size_t M>
+void ldl_factor(const Symm_Band_Matrix<T, N, M> &in_mat,
+                Low_Tri_Matrix<T, N> &out_l,
+                std::array<T, N> &out_d);
+
+// Cholesky Decomposition
+template <typename T, size_t N>
+void cholesky(const Symm_Matrix<T, N> &in_mat,
+              Low_Tri_Matrix<T, N> &out_l)
+{
+    std::array<T, N> out_d{};
+    ldl_factor(in_mat, out_l, out_d);
+    size_t count;
+    for (count = 0; count < N && out_d[count] >= 0; count++)
+    {
+        out_d[count] = std::sqrt(out_d[count]);
+    }
+    if (count != N)
+    {
+        throw std::runtime_error("cholesky(): non positive-semidefinite matrix");
+    }
+
+    for (size_t i = 0; i < N; i++)
+        for (size_t j = 0; j <= i; j++)
+        {
+            out_l(i, j) *= out_d[j];
+        }
+}
+
+template <typename T, size_t N, size_t M>
+void cholesky(const Symm_Band_Matrix<T, N, M> &in_mat,
+              Low_Tri_Matrix<T, N> &out_l)
+{
+    cholesky(Symm_Matrix<T, N>{in_mat}, out_l);
+}
 
 // ================== DEFINITIONS =====================
 
@@ -198,7 +258,7 @@ void _l_u_decomposition(const Base_Matrix<T, N, N> &in_mat,
             (*p_pivot)[i] = i;
         }
     // whether the in_mat should be referred via p_pivot
-    bool via {p_pivot && (&in_mat != &out_l)};
+    bool via{p_pivot && (&in_mat != &out_l)};
 
     // calculation
     for (size_t i = 0; i < N; i++)
@@ -310,19 +370,19 @@ void _tridiagonal_decomposition(const Band_Matrix<T, N, 1> &in_mat,
 template <typename T, size_t N>
 T det(const Base_Matrix<T, N, N> &in_mat)
 {
-    // l_u_factor in situ
-    Matrix<T, N, N> temp {in_mat};
+    // lu_factor in situ
+    Matrix<T, N, N> temp{in_mat};
     // using the pivoted one for higher precision
     std::array<size_t, N> pivot;
 
-    l_u_factor(temp, pivot);
-    T res {1};
+    lu_factor(temp, pivot);
+    T res{1};
     for (size_t i = 0; i < N; i++)
     {
         res *= temp(i, i);
     }
     // multiply the inversion number of the pivot matrix
-    return res*(1 - 2*int(inv_num(pivot)%2));
+    return res * (1 - 2 * int(inv_num(pivot) % 2));
 }
 
 // this function would sort the original container!
@@ -336,17 +396,17 @@ std::size_t _inversion_number(It b, It e)
         return 0;
     }
     // half-partition
-    It m {b + (e-b)/2};
+    It m{b + (e - b) / 2};
     // merge_sort two sub-array
     std::size_t res{_inversion_number(b, m)};
     res += _inversion_number(m, e);
 
     // copy two sub-array out
-    auto value {*b};
+    auto value{*b};
     std::vector<decltype(value)> left(b, m);
     std::vector<decltype(value)> right(m, e);
-    auto l {left.begin()};
-    auto r {right.begin()};
+    auto l{left.begin()};
+    auto r{right.begin()};
     // merge
     for (It current = b; current != e; ++current)
     {
@@ -367,12 +427,12 @@ std::size_t _inversion_number(It b, It e)
 
 // inverse matrix
 template <typename T, size_t N>
-Matrix<T, N, N> inv(const Base_Matrix<T, N, N>& in_mat)
+Matrix<T, N, N> inv(const Base_Matrix<T, N, N> &in_mat)
 {
     // temp will be transformed into an identity
-    Matrix<T, N, N> temp {in_mat};
+    Matrix<T, N, N> temp{in_mat};
     // res will be returned
-    Matrix<T, N, N> res {};
+    Matrix<T, N, N> res{};
     for (size_t i = 0; i < N; i++)
     {
         res(i, i) = 1;
@@ -385,7 +445,7 @@ Matrix<T, N, N> inv(const Base_Matrix<T, N, N>& in_mat)
         static T pivot_value;
         pivot_index = i;
         pivot_value = std::abs(temp(i, i));
-        for (size_t p = i+1; p < N; p++)
+        for (size_t p = i + 1; p < N; p++)
             if (std::abs(temp(p, i)) > pivot_value)
             {
                 pivot_value = std::abs(temp(p, i));
@@ -407,7 +467,7 @@ Matrix<T, N, N> inv(const Base_Matrix<T, N, N>& in_mat)
 
         // refresh two matrices
         // unnecessary calculations are avoided
-        for (size_t j = i+1; j < N; j++)
+        for (size_t j = i + 1; j < N; j++)
         {
             temp(i, j) /= t_ii;
         }
@@ -424,13 +484,13 @@ Matrix<T, N, N> inv(const Base_Matrix<T, N, N>& in_mat)
             {
                 res(k, j) -= t_ki * res(i, j);
             }
-            for (size_t j = i+1; j < N; j++)
+            for (size_t j = i + 1; j < N; j++)
             {
                 temp(k, j) -= t_ki * temp(i, j);
             }
         }
 
-        for (size_t k = i+1; k < N; k++)
+        for (size_t k = i + 1; k < N; k++)
         {
             static T t_ki;
             t_ki = temp(k, i);
@@ -438,7 +498,7 @@ Matrix<T, N, N> inv(const Base_Matrix<T, N, N>& in_mat)
             {
                 res(k, j) -= t_ki * res(i, j);
             }
-            for (size_t j = i+1; j < N; j++)
+            for (size_t j = i + 1; j < N; j++)
             {
                 temp(k, j) -= t_ki * temp(i, j);
             }
@@ -451,10 +511,10 @@ Matrix<T, N, N> inv(const Base_Matrix<T, N, N>& in_mat)
 // return the inverse matrix of an Upper Triangular Matrix
 // using Gauss-Jordan method
 template <typename T, size_t N>
-Up_Tri_Matrix<T, N> _inv(Up_Tri_Matrix<T, N>& in_mat)
+Up_Tri_Matrix<T, N> _inv(Up_Tri_Matrix<T, N> &in_mat)
 {
     // res will be returned
-    Up_Tri_Matrix<T, N> res {};
+    Up_Tri_Matrix<T, N> res{};
     for (size_t i = 0; i < N; i++)
     {
         res(i, i) = 1;
@@ -472,7 +532,7 @@ Up_Tri_Matrix<T, N> _inv(Up_Tri_Matrix<T, N>& in_mat)
 
         // refresh two matrices
         // unnecessary calculations are avoided
-        for (size_t j = i+1; j < N; j++)
+        for (size_t j = i + 1; j < N; j++)
         {
             in_mat(i, j) /= t_ii;
         }
@@ -489,7 +549,7 @@ Up_Tri_Matrix<T, N> _inv(Up_Tri_Matrix<T, N>& in_mat)
             {
                 res(k, j) -= t_ki * res(i, j);
             }
-            for (size_t j = i+1; j < N; j++)
+            for (size_t j = i + 1; j < N; j++)
             {
                 in_mat(k, j) -= t_ki * in_mat(i, j);
             }
@@ -502,10 +562,10 @@ Up_Tri_Matrix<T, N> _inv(Up_Tri_Matrix<T, N>& in_mat)
 // return the inverse matrix of a Lower Triangular Matrix
 // using Gauss-Jordan method
 template <typename T, size_t N>
-Low_Tri_Matrix<T, N> inv(const Low_Tri_Matrix<T, N>& in_mat)
+Low_Tri_Matrix<T, N> inv(const Low_Tri_Matrix<T, N> &in_mat)
 {
     // res will be returned
-    Low_Tri_Matrix<T, N> res {};
+    Low_Tri_Matrix<T, N> res{};
     for (size_t i = 0; i < N; i++)
     {
         res(i, i) = 1;
@@ -528,7 +588,7 @@ Low_Tri_Matrix<T, N> inv(const Low_Tri_Matrix<T, N>& in_mat)
             res(i, j) /= t_ii;
         }
 
-        for (size_t k = i+1; k < N; k++)
+        for (size_t k = i + 1; k < N; k++)
         {
             static T t_ki;
             t_ki = in_mat(k, i);
@@ -550,6 +610,95 @@ Low_Tri_Matrix<T, N> inv(const Low_Tri_Matrix<T, N>& in_mat)
 
 // }
 
+template <typename T, size_t N>
+void ldl_factor(const Symm_Matrix<T, N> &in_mat,
+                Low_Tri_Matrix<T, N> &out_l,
+                std::array<T, N> &out_d)
+{
+    Up_Tri_Matrix<T, N> temp_t{};
+
+    for (size_t i = 0; i < N; i++)
+    {
+        out_l(i, i) = 1;
+        for (size_t j = 0; j < i; j++)
+        {
+            static T t_jj;
+
+            t_jj = temp_t(j, j);
+            if (t_jj == 0)
+            {
+                temp_t(j, i) = 0;
+            }
+            else
+            {
+                temp_t(j, i) = in_mat(i, j);
+                for (size_t k = 0; k < j; k++)
+                {
+                    temp_t(j, i) -= out_l(i, k) * temp_t(k, j);
+                }
+            }
+
+            out_l(i, j) = (t_jj == 0) ? 0 : (temp_t(j, i) / temp_t(j, j));
+        }
+
+        temp_t(i, i) = in_mat(i, i);
+        for (size_t k = 0; k < i; k++)
+        {
+            temp_t(i, i) -= out_l(i, k) * temp_t(k, i);
+        }
+    }
+
+    for (size_t i = 0; i < N; i++)
+    {
+        out_d[i] = temp_t(i, i);
+    }
+}
+
+template <typename T, size_t N, size_t M>
+void ldl_factor(const Symm_Band_Matrix<T, N, M> &in_mat,
+                Low_Band_Matrix<T, N, M> &out_l,
+                std::array<T, N> &out_d)
+{
+    Up_Band_Matrix<T, N, M> temp_t{};
+
+    for (size_t i = 0; i < N; i++)
+    {
+        out_l(i, i) = 1;
+        static size_t limit;
+        limit = (i > M) ? (i - M) : 0;
+        for (size_t j = limit; j < i; j++)
+        {
+            static T t_jj;
+
+            t_jj = temp_t(j, j);
+            if (t_jj == 0)
+            {
+                temp_t(j, i) = 0;
+            }
+            else
+            {
+                temp_t(j, i) = in_mat(i, j);
+                for (size_t k = limit; k < j; k++)
+                {
+                    temp_t(j, i) -= out_l(i, k) * temp_t(k, j);
+                }
+            }
+
+            out_l(i, j) = (t_jj == 0) ? 0 : (temp_t(j, i) / temp_t(j, j));
+        }
+
+        temp_t(i, i) = in_mat(i, i);
+        for (size_t k = limit; k < i; k++)
+        {
+            temp_t(i, i) -= out_l(i, k) * temp_t(k, i);
+        }
+    }
+
+    for (size_t i = 0; i < N; i++)
+    {
+        out_d[i] = temp_t(i, i);
+    }
+}
 
 } // namespace Misc
 
