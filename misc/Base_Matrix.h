@@ -96,7 +96,7 @@ public:
     {
         for (size_t i = 0; i < R; i++)
         {
-            (*this)[i] = mat_row(i, 0);
+            (*this)[i] = mat_col(i, 0);
         }
         return *this;
     }
@@ -104,7 +104,7 @@ public:
     {
         for (size_t i = 0; i < R; i++)
         {
-            (*this)[i] = std::move(mat_row(i, 0));
+            (*this)[i] = std::move(mat_col(i, 0));
         }
         return *this;
     }

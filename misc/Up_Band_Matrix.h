@@ -41,7 +41,7 @@ public:
          {2, 7, 9, 2, 5}
         }
      */
-    Up_Band_Matrix(std::initializer_list<std::initializer_list<T>> ini);
+    Up_Band_Matrix(std::initializer_list<std::initializer_list<T>> ini)
     : Base_Half_Band_Matrix<T, N, M>{ini}{}
 
     Up_Band_Matrix &operator=(const Up_Band_Matrix &mat) = default;
