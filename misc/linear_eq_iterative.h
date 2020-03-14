@@ -175,11 +175,6 @@ inline int jacobi(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in
             }
         delta_norm = norm_1(out_x, prev_x);
         new_norm = norm_1(out_x);
-for (auto i : out_x)
-{
-    std::cout << i << '\t';
-}
-std::cout << std::endl;
 
         if (prev_norm && new_norm / prev_norm > not_conv_cri)
         {
@@ -248,11 +243,6 @@ inline int gauss_seidel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, 
             }
         delta_norm = norm_1(out_x, prev_x);
         new_norm = norm_1(out_x);
-for (auto i : out_x)
-{
-    std::cout << i << '\t';
-}
-std::cout << std::endl;
 
         if (prev_norm && new_norm / prev_norm > not_conv_cri)
         {
@@ -328,11 +318,6 @@ inline int suc_over_rel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, 
             }
         delta_norm = norm_1(out_x, prev_x);
         new_norm = norm_1(out_x);
-for (auto i : out_x)
-{
-    std::cout << i << '\t';
-}
-std::cout << std::endl;
 
         if (prev_norm && new_norm / prev_norm > not_conv_cri)
         {
@@ -386,11 +371,6 @@ inline int grad_des(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in_
         }
 
         res_norm = norm_1(residue);
-for (auto i : out_x)
-{
-    std::cout << i << '\t';
-}
-std::cout << std::endl;
 
         if (res_norm / res_b < rel_epsilon)
         {
@@ -444,11 +424,6 @@ inline int conj_grad(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in
         }
 
         res_norm = norm_1(residue);
-for (auto i : out_x)
-{
-    std::cout << i << '\t';
-}
-std::cout << std::endl;
 
         if (res_norm / res_b < rel_epsilon)
         {

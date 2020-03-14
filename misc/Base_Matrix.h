@@ -183,6 +183,30 @@ inline T operator*(const Row<T, R, N> &a, const Column<T, N, C> &b)
 
 // ================================================================================
 
+template <typename T, size_t R, size_t C>
+class Transpose: public Base_Matrix<T, R, C>
+{
+    const Base_Matrix<T, C, R>& orig;
+public:
+    using typename Base_Matrix<T, R, C>::size_type;
+
+    Transpose(const Base_Matrix<T, C, R> &mat)
+        : Base_Matrix<T, R, C>{0, nullptr}, orig{mat}
+    {
+    }
+
+    const T &operator()(size_type row, size_type col) const override
+    {
+        return orig(col, row);
+    }
+    T &operator()(size_type row, size_type col) override
+    {
+        return const_cast<Base_Matrix<T, C, R> &>(orig)(col, row);
+    }
+};
+
+// ================================================================================
+
 // Never initiate a Base_Matrix
 template <typename T, size_t R, size_t C>
 class Base_Matrix
@@ -261,6 +285,8 @@ public:
     const Row<T, R, C> operator[](size_type pos) const { return Row<T, R, C>(*this, pos); }
     Column<T, R, C> column(size_type pos) { return Column<T, R, C>(*this, pos); };
     const Column<T, R, C> column(size_type pos) const { return Column<T, R, C>(*this, pos); };
+
+    const Transpose<T, C, R> trans() const { return Transpose<T, C, R>(*this); };
 
     virtual T &operator()(size_type row, size_type col) = 0;
     virtual const T &operator()(size_type row, size_type col) const = 0;
