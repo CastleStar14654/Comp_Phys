@@ -76,7 +76,7 @@ public:
 // -------------------------------------------------------------------------
 
 template <typename T, size_t N>
-Diag_Matrix<T, N> operator*(const Diag_Matrix<T, N> &a, const Diag_Matrix<T, N> &b)
+inline Diag_Matrix<T, N> operator*(const Diag_Matrix<T, N> &a, const Diag_Matrix<T, N> &b)
 {
     Diag_Matrix<T, N> res{};
     for (std::size_t i = 0; i < N; i++)
@@ -87,7 +87,7 @@ Diag_Matrix<T, N> operator*(const Diag_Matrix<T, N> &a, const Diag_Matrix<T, N> 
 }
 
 template <typename T, size_t N>
-Matrix<T, N, N> operator*(const Diag_Matrix<T, N> &a, const Base_Matrix<T, N, N> &b)
+inline Matrix<T, N, N> operator*(const Diag_Matrix<T, N> &a, const Base_Matrix<T, N, N> &b)
 {
     Matrix<T, N, N> res{};
     for (std::size_t i = 0; i < N; i++)
@@ -102,7 +102,7 @@ Matrix<T, N, N> operator*(const Diag_Matrix<T, N> &a, const Base_Matrix<T, N, N>
 }
 
 template <typename T, size_t N>
-Matrix<T, N, N> operator*(const Base_Matrix<T, N, N> &a, const Diag_Matrix<T, N> &b)
+inline Matrix<T, N, N> operator*(const Base_Matrix<T, N, N> &a, const Diag_Matrix<T, N> &b)
 {
     Matrix<T, N, N> res{};
     for (std::size_t i = 0; i < N; i++)

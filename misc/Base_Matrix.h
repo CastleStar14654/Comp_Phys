@@ -9,6 +9,8 @@
 #include <algorithm>
 #include <stdexcept>
 #include <initializer_list>
+#include <iostream>
+#include <iomanip>
 
 // the namespace miscellany
 namespace Misc
@@ -27,7 +29,8 @@ public:
 
     constexpr size_type size() const { return C; }
 
-    Row(Base_Matrix<T, R, C> &mat, size_type row) : m{mat}, r{row} {}
+    Row(const Base_Matrix<T, R, C> &mat, size_type row)
+        : m{const_cast<Base_Matrix<T, R, C> &>(mat)}, r{row} {}
 
     T &operator[](size_type col) { return m(r, col); }
     const T &operator[](size_type col) const
@@ -74,6 +77,22 @@ private:
     size_type r;
 };
 
+template <typename T, size_t R, size_t C>
+inline std::ostream &operator<<(std::ostream &os, const Row<T, R, C> &row)
+{
+    os << "[";
+    if (C)
+    {
+        os << std::setw(8) << row[0];
+    }
+    for (std::size_t c = 1; c < C; c++)
+    {
+        os << "," << std::setw(8) << row[c];
+    }
+    os << "]";
+    return os;
+}
+
 // ====================== Column ======================
 
 template <typename T, size_t R, size_t C>
@@ -85,7 +104,8 @@ public:
 
     constexpr size_type size() const { return R; }
 
-    Column(Base_Matrix<T, R, C> &mat, size_type col) : m{mat}, c{col} {}
+    Column(const Base_Matrix<T, R, C> &mat, size_type col)
+        : m{const_cast<Base_Matrix<T, R, C> &>(mat)}, c{col} {}
 
     T &operator[](size_type row) { return m(row, c); }
     const T &operator[](size_type row) const
@@ -132,10 +152,26 @@ private:
     size_type c;
 };
 
+template <typename T, size_t R, size_t C>
+inline std::ostream &operator<<(std::ostream &os, const Column<T, R, C> &col)
+{
+    os << "[";
+    if (R)
+    {
+        os << std::setw(8) << col[0];
+    }
+    for (std::size_t r = 1; r < R; r++)
+    {
+        os << "," << std::setw(8) << col[r];
+    }
+    os << "]^T";
+    return os;
+}
+
 // ------------------------- operator * --------------------------
 
 template <typename T, size_t R, size_t N, size_t C>
-T operator*(const Row<T, R, N> &a, const Column<T, N, C> &b)
+inline T operator*(const Row<T, R, N> &a, const Column<T, N, C> &b)
 {
     T res{};
     for (std::size_t i = 0; i < N; i++)
@@ -243,21 +279,12 @@ template <typename T, size_t R, size_t C>
 constexpr T Base_Matrix<T, R, C>::zero;
 
 template <typename T, size_t R, size_t C>
-std::ostream &operator<<(std::ostream &os, const Base_Matrix<T, R, C> &mat)
+inline std::ostream &operator<<(std::ostream &os, const Base_Matrix<T, R, C> &mat)
 {
     os << "[\n";
     for (std::size_t r = 0; r < R; r++)
     {
-        os << "[";
-        if (C)
-        {
-            os << mat(r, 0);
-        }
-        for (std::size_t c = 1; c < C; c++)
-        {
-            os << "\t" << mat(r, c);
-        }
-        os << "]\n";
+        os << "    " << mat.row(r) << ",\n";
     }
     os << ']';
     return os;

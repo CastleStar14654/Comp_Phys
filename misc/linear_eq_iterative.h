@@ -19,7 +19,7 @@ namespace Misc
 // ================== DECLEARATIONS ==================
 
 template <typename T, size_t N>
-T norm_1(const std::array<T, N> &x)
+inline T norm_1(const std::array<T, N> &x)
 {
     T res{};
     for (auto &i : x)
@@ -30,7 +30,7 @@ T norm_1(const std::array<T, N> &x)
 }
 
 template <typename T, size_t N>
-T norm_1(const std::array<T, N> &x1, const std::array<T, N> &x2)
+inline T norm_1(const std::array<T, N> &x1, const std::array<T, N> &x2)
 {
     T res{};
     for (size_t i = 0; i < N; i++)
@@ -53,7 +53,7 @@ T norm_1(const std::array<T, N> &x1, const std::array<T, N> &x2)
 // max_times:   maximum iteration times;
 // rel_epsilon: when the relative error is less than this, iteration will be stopped
 template <typename T, size_t N>
-int jacobi(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
+inline int jacobi(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
            std::array<T, N> &out_x,
            bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-10);
 
@@ -70,7 +70,7 @@ int jacobi(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
 // max_times:   maximum iteration times;
 // rel_epsilon: when the relative error is less than this, iteration will be stopped
 template <typename T, size_t N>
-int gauss_seidel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
+inline int gauss_seidel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
                  std::array<T, N> &out_x,
                  bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-10);
 
@@ -88,7 +88,7 @@ int gauss_seidel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_
 // max_times:   maximum iteration times;
 // rel_epsilon: when the relative error is less than this, iteration will be stopped
 template <typename T, size_t N>
-int suc_over_rel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
+inline int suc_over_rel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
                  std::array<T, N> &out_x, T omega,
                  bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-10);
 
@@ -104,7 +104,7 @@ int suc_over_rel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_
 // max_times:   maximum iteration times;
 // rel_epsilon: when the relative error is less than this, iteration will be stopped
 template <typename T, size_t N>
-int grad_des(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in_b,
+inline int grad_des(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in_b,
              std::array<T, N> &out_x,
              bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-10);
 
@@ -120,14 +120,14 @@ int grad_des(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in_b,
 // max_times:   maximum iteration times;
 // rel_epsilon: when the relative error is less than this, iteration will be stopped
 template <typename T, size_t N>
-int conj_grad(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in_b,
+inline int conj_grad(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in_b,
               std::array<T, N> &out_x,
               bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-10);
 
 // ================== DEFINITIONS ==================
 
 template <typename T, size_t N>
-int jacobi(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
+inline int jacobi(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
            std::array<T, N> &out_x,
            bool sparse, size_t max_times, double rel_epsilon)
 {
@@ -196,7 +196,7 @@ std::cout << std::endl;
 }
 
 template <typename T, size_t N>
-int gauss_seidel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
+inline int gauss_seidel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
                  std::array<T, N> &out_x,
                  bool sparse, size_t max_times, double rel_epsilon)
 {
@@ -269,7 +269,7 @@ std::cout << std::endl;
 }
 
 template <typename T, size_t N>
-int suc_over_rel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
+inline int suc_over_rel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
                  std::array<T, N> &out_x, T omega,
                  bool sparse, size_t max_times, double rel_epsilon)
 {
@@ -349,7 +349,7 @@ std::cout << std::endl;
 }
 
 template <typename T, size_t N>
-int grad_des(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in_b,
+inline int grad_des(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in_b,
              std::array<T, N> &out_x,
              bool sparse, size_t max_times, double rel_epsilon)
 {
@@ -403,7 +403,7 @@ std::cout << std::endl;
 }
 
 template <typename T, size_t N>
-int conj_grad(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in_b,
+inline int conj_grad(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in_b,
               std::array<T, N> &out_x,
               bool sparse, size_t max_times, double rel_epsilon)
 {
