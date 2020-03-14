@@ -9,6 +9,7 @@
 #include <utility>
 #include <iterator>
 #include <iostream>
+#include <memory>
 
 #include "Matrix_Catalogue.h"
 
@@ -102,22 +103,21 @@ int jacobi(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
     T new_norm;
     T prev_norm{norm_1(prev_x)};
     static double not_conv_cri{2};
+
+    std::unique_ptr<Sparse_Matrix<T, N, N>> p_sparse_mat{};
     if (sparse)
     {
-        std::array<std::map<size_t, T>, N> sparse_mat;
-        for (size_t i = 0; i < N; i++)
-            for (size_t j = 0; j < N; j++)
-                if (in_mat(i, j) != T{})
-                {
-                    sparse_mat[i][j] = in_mat(i, j);
-                }
-        for (size_t count = 0; count < max_times; count++)
-        {
-            out_x = in_b;
+        p_sparse_mat = std::make_unique<Sparse_Matrix<T, N, N>>(in_mat);
+    }
+
+    for (size_t count = 0; count < max_times; count++)
+    {
+        out_x = in_b;
+        if (sparse)
             for (size_t i = 0; i < N; i++)
             {
                 T &obj{out_x[i]};
-                for (auto &p : sparse_mat[i])
+                for (auto &p : (*p_sparse_mat)[i])
                 {
                     if (p.first != i)
                     {
@@ -126,26 +126,7 @@ int jacobi(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
                 }
                 obj /= in_mat(i, i);
             }
-            delta_norm = norm_1(out_x, prev_x);
-            new_norm = norm_1(out_x);
-
-            if (prev_norm && new_norm / prev_norm > not_conv_cri)
-            {
-                return 2;
-            }
-            else if (prev_norm && delta_norm / prev_norm < rel_epsilon)
-            {
-                return 0;
-            }
-            prev_x = std::move(out_x);
-            prev_norm = new_norm;
-        }
-    }
-    else
-    {
-        for (size_t count = 0; count < max_times; count++)
-        {
-            out_x = in_b;
+        else
             for (size_t i = 0; i < N; i++)
             {
                 T &obj{out_x[i]};
@@ -159,25 +140,24 @@ int jacobi(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
                 }
                 obj /= in_mat(i, i);
             }
-            delta_norm = norm_1(out_x, prev_x);
-            new_norm = norm_1(out_x);
-for (auto i : out_x)
-{
-    std::cout << i << '\t';
-}
-std::cout << std::endl;
-
-            if (prev_norm && new_norm / prev_norm > not_conv_cri)
-            {
-                return 2;
-            }
-            else if (prev_norm && delta_norm / prev_norm < rel_epsilon)
-            {
-                return 0;
-            }
-            prev_x = std::move(out_x);
-            prev_norm = new_norm;
+        delta_norm = norm_1(out_x, prev_x);
+        new_norm = norm_1(out_x);
+        for (auto i : out_x)
+        {
+            std::cout << i << '\t';
         }
+        std::cout << std::endl;
+
+        if (prev_norm && new_norm / prev_norm > not_conv_cri)
+        {
+            return 2;
+        }
+        else if (prev_norm && delta_norm / prev_norm < rel_epsilon)
+        {
+            return 0;
+        }
+        prev_x = std::move(out_x);
+        prev_norm = new_norm;
     }
     return 1;
 }
@@ -192,22 +172,21 @@ int gauss_seidel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_
     T new_norm;
     T prev_norm{norm_1(prev_x)};
     static double not_conv_cri{2};
+
+    std::unique_ptr<Sparse_Matrix<T, N, N>> p_sparse_mat{};
     if (sparse)
     {
-        std::array<std::map<size_t, T>, N> sparse_mat;
-        for (size_t i = 0; i < N; i++)
-            for (size_t j = 0; j < N; j++)
-                if (in_mat(i, j) != T{})
-                {
-                    sparse_mat[i][j] = in_mat(i, j);
-                }
-        for (size_t count = 0; count < max_times; count++)
-        {
-            out_x = in_b;
+        p_sparse_mat = std::make_unique<Sparse_Matrix<T, N, N>>(in_mat);
+    }
+
+    for (size_t count = 0; count < max_times; count++)
+    {
+        out_x = in_b;
+        if (sparse)
             for (size_t i = 0; i < N; i++)
             {
                 T &obj{out_x[i]};
-                for (auto &p : sparse_mat[i])
+                for (auto &p : (*p_sparse_mat)[i])
                 {
                     if (p.first < i)
                     {
@@ -220,26 +199,7 @@ int gauss_seidel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_
                 }
                 obj /= in_mat(i, i);
             }
-            delta_norm = norm_1(out_x, prev_x);
-            new_norm = norm_1(out_x);
-
-            if (prev_norm && new_norm / prev_norm > not_conv_cri)
-            {
-                return 2;
-            }
-            else if (prev_norm && delta_norm / prev_norm < rel_epsilon)
-            {
-                return 0;
-            }
-            prev_x = std::move(out_x);
-            prev_norm = new_norm;
-        }
-    }
-    else
-    {
-        for (size_t count = 0; count < max_times; count++)
-        {
-            out_x = in_b;
+        else
             for (size_t i = 0; i < N; i++)
             {
                 T &obj{out_x[i]};
@@ -253,25 +213,24 @@ int gauss_seidel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_
                 }
                 obj /= in_mat(i, i);
             }
-            delta_norm = norm_1(out_x, prev_x);
-            new_norm = norm_1(out_x);
-for (auto i : out_x)
-{
-    std::cout << i << '\t';
-}
-std::cout << std::endl;
-
-            if (prev_norm && new_norm / prev_norm > not_conv_cri)
-            {
-                return 2;
-            }
-            else if (prev_norm && delta_norm / prev_norm < rel_epsilon)
-            {
-                return 0;
-            }
-            prev_x = std::move(out_x);
-            prev_norm = new_norm;
+        delta_norm = norm_1(out_x, prev_x);
+        new_norm = norm_1(out_x);
+        for (auto i : out_x)
+        {
+            std::cout << i << '\t';
         }
+        std::cout << std::endl;
+
+        if (prev_norm && new_norm / prev_norm > not_conv_cri)
+        {
+            return 2;
+        }
+        else if (prev_norm && delta_norm / prev_norm < rel_epsilon)
+        {
+            return 0;
+        }
+        prev_x = std::move(out_x);
+        prev_norm = new_norm;
     }
     return 1;
 }
@@ -291,22 +250,21 @@ int suc_over_rel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_
     T new_norm;
     T prev_norm{norm_1(prev_x)};
     static double not_conv_cri{2};
+
+    std::unique_ptr<Sparse_Matrix<T, N, N>> p_sparse_mat{};
     if (sparse)
     {
-        std::array<std::map<size_t, T>, N> sparse_mat;
-        for (size_t i = 0; i < N; i++)
-            for (size_t j = 0; j < N; j++)
-                if (in_mat(i, j) != T{})
-                {
-                    sparse_mat[i][j] = in_mat(i, j);
-                }
-        for (size_t count = 0; count < max_times; count++)
-        {
-            out_x = in_b;
+        p_sparse_mat = std::make_unique<Sparse_Matrix<T, N, N>>(in_mat);
+    }
+
+    for (size_t count = 0; count < max_times; count++)
+    {
+        out_x = in_b;
+        if (sparse)
             for (size_t i = 0; i < N; i++)
             {
                 T &obj{out_x[i]};
-                for (auto &p : sparse_mat[i])
+                for (auto &p : (*p_sparse_mat)[i])
                 {
                     if (p.first < i)
                     {
@@ -317,29 +275,10 @@ int suc_over_rel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_
                         obj -= p.second * prev_x[p.first];
                     }
                 }
-                obj *= omega/in_mat(i, i);
-                obj += (1-omega)*prev_x[i];
+                obj *= omega / in_mat(i, i);
+                obj += (1 - omega) * prev_x[i];
             }
-            delta_norm = norm_1(out_x, prev_x);
-            new_norm = norm_1(out_x);
-
-            if (prev_norm && new_norm / prev_norm > not_conv_cri)
-            {
-                return 2;
-            }
-            else if (prev_norm && delta_norm / prev_norm < rel_epsilon)
-            {
-                return 0;
-            }
-            prev_x = std::move(out_x);
-            prev_norm = new_norm;
-        }
-    }
-    else
-    {
-        for (size_t count = 0; count < max_times; count++)
-        {
-            out_x = in_b;
+        else
             for (size_t i = 0; i < N; i++)
             {
                 T &obj{out_x[i]};
@@ -351,28 +290,27 @@ int suc_over_rel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_
                 {
                     obj -= in_mat(i, j) * prev_x[j];
                 }
-                obj *= omega/in_mat(i, i);
-                obj += (1-omega)*prev_x[i];
+                obj *= omega / in_mat(i, i);
+                obj += (1 - omega) * prev_x[i];
             }
-            delta_norm = norm_1(out_x, prev_x);
-            new_norm = norm_1(out_x);
-for (auto i : out_x)
-{
-    std::cout << i << '\t';
-}
-std::cout << std::endl;
-
-            if (prev_norm && new_norm / prev_norm > not_conv_cri)
-            {
-                return 2;
-            }
-            else if (prev_norm && delta_norm / prev_norm < rel_epsilon)
-            {
-                return 0;
-            }
-            prev_x = std::move(out_x);
-            prev_norm = new_norm;
+        delta_norm = norm_1(out_x, prev_x);
+        new_norm = norm_1(out_x);
+        for (auto i : out_x)
+        {
+            std::cout << i << '\t';
         }
+        std::cout << std::endl;
+
+        if (prev_norm && new_norm / prev_norm > not_conv_cri)
+        {
+            return 2;
+        }
+        else if (prev_norm && delta_norm / prev_norm < rel_epsilon)
+        {
+            return 0;
+        }
+        prev_x = std::move(out_x);
+        prev_norm = new_norm;
     }
     return 1;
 }

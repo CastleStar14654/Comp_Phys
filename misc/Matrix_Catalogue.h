@@ -17,4 +17,6 @@
 #include "Symm_Band_Matrix.h"
 #include "Up_Band_Matrix.h"
 
+#include "Sparse_Matrix.h"
+
 #endif // MISC_MATRIX_CATALOGUE

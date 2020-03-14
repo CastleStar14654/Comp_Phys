@@ -175,9 +175,12 @@ public:
                 }
     }
     Base_Matrix(const Base_Matrix &mat)
-        : data_ln{mat.data_ln}, elem{new T[mat.data_ln][C]}
+        : data_ln{mat.data_ln}, elem{mat.elem?(new T[mat.data_ln][C]):nullptr}
     {
-        std::copy(mat.elem[0], mat.elem[data_ln], elem[0]);
+        if (mat.elem)
+        {
+            std::copy(mat.elem[0], mat.elem[data_ln], elem[0]);
+        }
     }
     Base_Matrix(Base_Matrix &&mat)
         : data_ln{mat.data_ln}, elem{mat.elem}
@@ -191,11 +194,14 @@ public:
     {
         if (this != &mat)
         {
-            if (this->data_ln != mat.data_ln)
+            if (data_ln != mat.data_ln)
             {
                 throw std::runtime_error("Base_Matrix assignment: different data_size");
             }
-            std::copy(mat.elem, mat.elem + data_ln, elem);
+            if (data_ln)
+            {
+                std::copy(mat.elem, mat.elem + data_ln, elem);
+            }
         }
         return *this;
     }
