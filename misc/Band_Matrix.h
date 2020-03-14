@@ -19,6 +19,7 @@ class Band_Matrix : public Base_Matrix<T, N, N>
 {
 public:
     using typename Base_Matrix<T, N, N>::size_type;
+    size_t half_band() const {return M;}
 
     explicit Band_Matrix(T deft = T{}) : Base_Matrix<T, N, N>{2 * M + 1, deft} {}
     Band_Matrix(const Band_Matrix &mat) = default;

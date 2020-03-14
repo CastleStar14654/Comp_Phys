@@ -19,14 +19,14 @@ namespace Misc
 
 template <typename T, size_t N>
 inline void _l_u_decomposition(const Base_Matrix<T, N, N> &in_mat,
-                        Base_Matrix<T, N, N> &out_l,
-                        Base_Matrix<T, N, N> &out_u,
-                        std::array<size_t, N> *pivot = nullptr);
+                               Base_Matrix<T, N, N> &out_l,
+                               Base_Matrix<T, N, N> &out_u,
+                               std::array<size_t, N> *pivot = nullptr);
 
 template <typename T, size_t N>
 inline void _tridiagonal_decomposition(const Band_Matrix<T, N, 1> &in_mat,
-                                Base_Matrix<T, N, N> &out_l,
-                                Base_Matrix<T, N, N> &out_u);
+                                       Base_Matrix<T, N, N> &out_l,
+                                       Base_Matrix<T, N, N> &out_u);
 
 // this function would sort the original container!
 template <typename It>
@@ -49,8 +49,8 @@ inline Up_Tri_Matrix<T, N> _inv(Up_Tri_Matrix<T, N> &in_mat);
 // LU decomposition
 template <typename T, size_t N>
 inline void lu_factor(const Base_Matrix<T, N, N> &in_mat,
-               Low_Tri_Matrix<T, N> &out_l,
-               Up_Tri_Matrix<T, N> &out_u)
+                      Low_Tri_Matrix<T, N> &out_l,
+                      Up_Tri_Matrix<T, N> &out_u)
 {
     _l_u_decomposition(in_mat, out_l, out_u);
 }
@@ -64,16 +64,16 @@ inline void lu_factor(Base_Matrix<T, N, N> &in_mat)
 // Pivoted LU decomposition
 template <typename T, size_t N>
 inline void lu_factor(const Base_Matrix<T, N, N> &in_mat,
-               Low_Tri_Matrix<T, N> &out_l,
-               Up_Tri_Matrix<T, N> &out_u,
-               std::array<size_t, N> &pivot)
+                      Low_Tri_Matrix<T, N> &out_l,
+                      Up_Tri_Matrix<T, N> &out_u,
+                      std::array<size_t, N> &pivot)
 {
     _l_u_decomposition(in_mat, out_l, out_u, &pivot);
 }
 
 template <typename T, size_t N>
 inline void lu_factor(Base_Matrix<T, N, N> &in_mat,
-               std::array<size_t, N> &pivot)
+                      std::array<size_t, N> &pivot)
 {
     _l_u_decomposition(in_mat, in_mat, in_mat, &pivot);
 }
@@ -99,7 +99,7 @@ inline T det(const Symm_Matrix<T, N> &in_mat)
 template <typename T, size_t N, size_t M>
 inline T det(const Symm_Band_Matrix<T, N, M> &in_mat)
 {
-    Low_Tri_Matrix<T, N> out_l{};
+    Low_Band_Matrix<T, N, M> out_l{};
     std::array<T, N> out_d{};
     ldl_factor(in_mat, out_l, out_d);
     T res{1};
@@ -121,15 +121,15 @@ inline std::size_t inv_num(const Container &c)
 // Thomas tridiagonal decomposition
 template <typename T, size_t N>
 inline void tri_factor(const Band_Matrix<T, N, 1> &in_mat,
-                Low_Band_Matrix<T, N, 1> &out_l,
-                Up_Band_Matrix<T, N, 1> &out_u)
+                       Low_Band_Matrix<T, N, 1> &out_l,
+                       Up_Band_Matrix<T, N, 1> &out_u)
 {
     _tridiagonal_decomposition(in_mat, out_l, out_u);
 }
 
 template <typename T, size_t N>
 inline void tri_factor(const Band_Matrix<T, N, 1> &in_mat,
-                Band_Matrix<T, N, 1> &out_mat)
+                       Band_Matrix<T, N, 1> &out_mat)
 {
     _tridiagonal_decomposition(in_mat, out_mat, out_mat);
 }
@@ -158,6 +158,17 @@ inline Up_Tri_Matrix<T, N> inv(const Up_Tri_Matrix<T, N> &in_mat)
 // using Gauss-Jordan method
 template <typename T, size_t N>
 inline Low_Tri_Matrix<T, N> inv(const Low_Tri_Matrix<T, N> &in_mat);
+
+template <typename T, size_t N>
+inline Diag_Matrix<T, N> inv(const Diag_Matrix<T, N> &in_mat)
+{
+    Diag_Matrix<T, N> res{};
+    for (size_t i = 0; i < N; i++)
+    {
+        res(i) = 1 / in_mat(i);
+    }
+    return res;
+}
 
 // // return the inverse matrix of a Symmetric Matrix
 // // using Gauss-Jordan method
@@ -198,18 +209,18 @@ inline Low_Tri_Matrix<T, N> inv(const Low_Band_Matrix<T, N, M> &in_mat)
 // LDL Decomposition
 template <typename T, size_t N>
 inline void ldl_factor(const Symm_Matrix<T, N> &in_mat,
-                Low_Tri_Matrix<T, N> &out_l,
-                std::array<T, N> &out_d);
+                       Low_Tri_Matrix<T, N> &out_l,
+                       std::array<T, N> &out_d);
 
 template <typename T, size_t N, size_t M>
 inline void ldl_factor(const Symm_Band_Matrix<T, N, M> &in_mat,
-                Low_Tri_Matrix<T, N> &out_l,
-                std::array<T, N> &out_d);
+                       Low_Band_Matrix<T, N, M> &out_l,
+                       std::array<T, N> &out_d);
 
 // Cholesky Decomposition
 template <typename T, size_t N>
 inline void cholesky(const Symm_Matrix<T, N> &in_mat,
-              Low_Tri_Matrix<T, N> &out_l)
+                     Low_Tri_Matrix<T, N> &out_l)
 {
     std::array<T, N> out_d{};
     ldl_factor(in_mat, out_l, out_d);
@@ -232,18 +243,34 @@ inline void cholesky(const Symm_Matrix<T, N> &in_mat,
 
 template <typename T, size_t N, size_t M>
 inline void cholesky(const Symm_Band_Matrix<T, N, M> &in_mat,
-              Low_Tri_Matrix<T, N> &out_l)
+                     Low_Band_Matrix<T, N, M> &out_l)
 {
-    cholesky(Symm_Matrix<T, N>{in_mat}, out_l);
+    std::array<T, N> out_d{};
+    ldl_factor(in_mat, out_l, out_d);
+    size_t count;
+    for (count = 0; count < N && out_d[count] >= 0; count++)
+    {
+        out_d[count] = std::sqrt(out_d[count]);
+    }
+    if (count != N)
+    {
+        throw std::runtime_error("cholesky(): non positive-semidefinite matrix");
+    }
+
+    for (size_t i = 0; i < N; i++)
+        for (size_t j = (i > M) ? (i - M) : 0; j <= i; j++)
+        {
+            out_l(i, j) *= out_d[j];
+        }
 }
 
 // ================== DEFINITIONS =====================
 
 template <typename T, size_t N>
 inline void _l_u_decomposition(const Base_Matrix<T, N, N> &in_mat,
-                        Base_Matrix<T, N, N> &out_l,
-                        Base_Matrix<T, N, N> &out_u,
-                        std::array<size_t, N> *p_pivot)
+                               Base_Matrix<T, N, N> &out_l,
+                               Base_Matrix<T, N, N> &out_u,
+                               std::array<size_t, N> *p_pivot)
 {
     // prepare the out_l
     if (&in_mat != &out_l && &out_l != &out_u)
@@ -332,8 +359,8 @@ inline void _l_u_decomposition(const Base_Matrix<T, N, N> &in_mat,
 
 template <typename T, size_t N>
 inline void _tridiagonal_decomposition(const Band_Matrix<T, N, 1> &in_mat,
-                                Band_Matrix<T, N, 1> &out_l,
-                                Band_Matrix<T, N, 1> &out_u)
+                                       Band_Matrix<T, N, 1> &out_l,
+                                       Band_Matrix<T, N, 1> &out_u)
 {
     // prepare the output matrix
     if (&out_l != &out_u)
@@ -612,8 +639,8 @@ inline Low_Tri_Matrix<T, N> inv(const Low_Tri_Matrix<T, N> &in_mat)
 
 template <typename T, size_t N>
 inline void ldl_factor(const Symm_Matrix<T, N> &in_mat,
-                Low_Tri_Matrix<T, N> &out_l,
-                std::array<T, N> &out_d)
+                       Low_Tri_Matrix<T, N> &out_l,
+                       std::array<T, N> &out_d)
 {
     Up_Tri_Matrix<T, N> temp_t{};
 
@@ -656,8 +683,8 @@ inline void ldl_factor(const Symm_Matrix<T, N> &in_mat,
 
 template <typename T, size_t N, size_t M>
 inline void ldl_factor(const Symm_Band_Matrix<T, N, M> &in_mat,
-                Low_Band_Matrix<T, N, M> &out_l,
-                std::array<T, N> &out_d)
+                       Low_Band_Matrix<T, N, M> &out_l,
+                       std::array<T, N> &out_d)
 {
     Up_Band_Matrix<T, N, M> temp_t{};
 
