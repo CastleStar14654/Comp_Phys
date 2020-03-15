@@ -1,6 +1,8 @@
 #ifndef MISC_MATRIX_CATALOGUE
 #define MISC_MATRIX_CATALOGUE
 
+#include <complex>
+
 #include "Base_Matrix.h"
 
 #include "Band_Matrix.h"
@@ -9,6 +11,7 @@
 #include "Matrix.h"
 
 #include "Base_Half_Band_Matrix.h"
+#include "Hermite_Matrix.h"
 #include "Low_Tri_Matrix.h"
 #include "Symm_Matrix.h"
 #include "Up_Tri_Matrix.h"
@@ -33,6 +36,17 @@ T operator*(const std::array<T, N> &a, const std::array<T, N> &b)
     return res;
 }
 
+template <typename T, size_t N>
+std::complex<T> operator*(const std::array<std::complex<T>, N> &a, const std::array<std::complex<T>, N> &b)
+{
+    std::complex<T> res{};
+    for (std::size_t i = 0; i < N; i++)
+    {
+        res += std::conj(a[i]) * b[i];
+    }
+    return res;
+}
+
 template <typename T, size_t N, size_t C>
 std::array<T, C> operator*(const std::array<T, N> &a, const Base_Matrix<T, N, C> &b)
 {
@@ -40,6 +54,21 @@ std::array<T, C> operator*(const std::array<T, N> &a, const Base_Matrix<T, N, C>
     for (std::size_t j = 0; j < N; j++)
     {
         T temp {a[j]};
+        for (std::size_t i = 0; i < C; i++)
+        {
+            res[i] += temp*b(j, i);
+        }
+    }
+    return res;
+}
+
+template <typename T, size_t N, size_t C>
+std::array<std::complex<T>, C> operator*(const std::array<std::complex<T>, N> &a, const Base_Matrix<std::complex<T>, N, C> &b)
+{
+    std::array<std::complex<T>, C> res{};
+    for (std::size_t j = 0; j < N; j++)
+    {
+        std::complex<T> temp {std::conj(a[j])};
         for (std::size_t i = 0; i < C; i++)
         {
             res[i] += temp*b(j, i);

@@ -165,7 +165,7 @@ inline Diag_Matrix<T, N> inv(const Diag_Matrix<T, N> &in_mat)
     Diag_Matrix<T, N> res{};
     for (size_t i = 0; i < N; i++)
     {
-        res(i) = 1 / in_mat(i);
+        res(i) = 1. / in_mat(i);
     }
     return res;
 }
@@ -276,7 +276,7 @@ inline void _l_u_decomposition(const Base_Matrix<T, N, N> &in_mat,
     if (&in_mat != &out_l && &out_l != &out_u)
         for (size_t i = 0; i < N; i++)
         {
-            out_l(i, i) = 1;
+            out_l(i, i) = 1.;
         }
     // prepare the pivot
     if (p_pivot)
@@ -338,7 +338,7 @@ inline void _l_u_decomposition(const Base_Matrix<T, N, N> &in_mat,
             }
         }
 
-        if (out_u(i, i) == 0)
+        if (out_u(i, i) == 0.)
         {
             throw std::runtime_error("_l_u_decomposition(): divided by zero");
         }
@@ -462,16 +462,16 @@ inline Matrix<T, N, N> inv(const Base_Matrix<T, N, N> &in_mat)
     Matrix<T, N, N> res{};
     for (size_t i = 0; i < N; i++)
     {
-        res(i, i) = 1;
+        res(i, i) = 1.;
     }
 
     for (size_t i = 0; i < N; i++)
     {
         // find the pivot;
         static size_t pivot_index;
-        static T pivot_value;
+        // static T pivot_value;
         pivot_index = i;
-        pivot_value = std::abs(temp(i, i));
+        auto pivot_value{std::abs(temp(i, i))};
         for (size_t p = i + 1; p < N; p++)
             if (std::abs(temp(p, i)) > pivot_value)
             {
@@ -487,7 +487,7 @@ inline Matrix<T, N, N> inv(const Base_Matrix<T, N, N> &in_mat)
         // singular
         static T t_ii;
         t_ii = temp(i, i);
-        if (t_ii == 0)
+        if (t_ii == 0.)
         {
             throw std::runtime_error("inv(): divided by zero");
         }
@@ -544,7 +544,7 @@ inline Up_Tri_Matrix<T, N> _inv(Up_Tri_Matrix<T, N> &in_mat)
     Up_Tri_Matrix<T, N> res{};
     for (size_t i = 0; i < N; i++)
     {
-        res(i, i) = 1;
+        res(i, i) = 1.;
     }
 
     for (size_t i = 0; i < N; i++)
@@ -552,7 +552,7 @@ inline Up_Tri_Matrix<T, N> _inv(Up_Tri_Matrix<T, N> &in_mat)
         // singular
         static T t_ii;
         t_ii = in_mat(i, i);
-        if (t_ii == 0)
+        if (t_ii == 0.)
         {
             throw std::runtime_error("inv(): divided by zero");
         }
@@ -595,7 +595,7 @@ inline Low_Tri_Matrix<T, N> inv(const Low_Tri_Matrix<T, N> &in_mat)
     Low_Tri_Matrix<T, N> res{};
     for (size_t i = 0; i < N; i++)
     {
-        res(i, i) = 1;
+        res(i, i) = 1.;
     }
 
     for (size_t i = 0; i < N; i++)
@@ -603,7 +603,7 @@ inline Low_Tri_Matrix<T, N> inv(const Low_Tri_Matrix<T, N> &in_mat)
         // singular
         static T t_ii;
         t_ii = in_mat(i, i);
-        if (t_ii == 0)
+        if (t_ii == 0.)
         {
             throw std::runtime_error("inv(): divided by zero");
         }
@@ -646,15 +646,15 @@ inline void ldl_factor(const Symm_Matrix<T, N> &in_mat,
 
     for (size_t i = 0; i < N; i++)
     {
-        out_l(i, i) = 1;
+        out_l(i, i) = 1.;
         for (size_t j = 0; j < i; j++)
         {
             static T t_jj;
 
             t_jj = temp_t(j, j);
-            if (t_jj == 0)
+            if (t_jj == 0.)
             {
-                temp_t(j, i) = 0;
+                temp_t(j, i) = 0.;
             }
             else
             {
@@ -665,7 +665,7 @@ inline void ldl_factor(const Symm_Matrix<T, N> &in_mat,
                 }
             }
 
-            out_l(i, j) = (t_jj == 0) ? 0 : (temp_t(j, i) / temp_t(j, j));
+            out_l(i, j) = (t_jj == 0.) ? 0. : (temp_t(j, i) / temp_t(j, j));
         }
 
         temp_t(i, i) = in_mat(i, i);
@@ -698,9 +698,9 @@ inline void ldl_factor(const Symm_Band_Matrix<T, N, M> &in_mat,
             static T t_jj;
 
             t_jj = temp_t(j, j);
-            if (t_jj == 0)
+            if (t_jj == 0.)
             {
-                temp_t(j, i) = 0;
+                temp_t(j, i) = 0.;
             }
             else
             {
@@ -711,7 +711,7 @@ inline void ldl_factor(const Symm_Band_Matrix<T, N, M> &in_mat,
                 }
             }
 
-            out_l(i, j) = (t_jj == 0) ? 0 : (temp_t(j, i) / temp_t(j, j));
+            out_l(i, j) = (t_jj == 0.) ? 0. : (temp_t(j, i) / temp_t(j, j));
         }
 
         temp_t(i, i) = in_mat(i, i);
