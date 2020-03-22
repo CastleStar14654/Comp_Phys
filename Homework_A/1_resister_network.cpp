@@ -450,7 +450,7 @@ inline void calc_hex()
 
     cout << "generating b... ";
     array<double, mat_side> b{};
-    size_t idx_b{_hex_index<N>(2*N-3, 0)};
+    size_t idx_b{_hex_index<N>(0, 2*N-3)};
     b[idx_b] = 1;
     cout << "finished" << endl;
 

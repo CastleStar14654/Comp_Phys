@@ -8,5 +8,6 @@
 __latexindent_temp.tex
 *.bbl
 *.blg
+*.toc
 Stroustrup_*
 .vscode
