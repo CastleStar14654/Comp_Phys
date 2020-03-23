@@ -22,10 +22,10 @@ inline void _up_back_sub(const Base_Matrix<T, N, N> &in_mat,
                          const std::array<T, N> &in_b,
                          std::array<T, N> &out_x)
 {
-    constexpr size_t M{B ? B : N};
+    constexpr size_t M{B ? B : N - 1};
     std::copy(in_b.begin(), in_b.end(), out_x.begin());
     size_t up_bound{N - 1};
-    for (size_t i = N - 1; i != 0; i--)
+    for (size_t i = N - 1; i != -1; i--)
     {
         if (in_mat(i, i) == 0)
         {
@@ -45,7 +45,7 @@ inline void _low_back_sub(const Base_Matrix<T, N, N> &in_mat,
                           const std::array<T, N> &in_b,
                           std::array<T, N> &out_x)
 {
-    constexpr size_t M{B ? B : N};
+    constexpr size_t M{B ? B : N - 1};
     std::copy(in_b.begin(), in_b.end(), out_x.begin());
     size_t low_bound{0};
     for (size_t i = 0; i < N; i++)
