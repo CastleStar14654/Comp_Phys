@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <complex>
+#include <chrono>
 #include <map>
 
 #include "../misc/Matrix_Catalogue.h"
@@ -12,6 +13,7 @@
 using namespace Misc;
 using namespace std;
 
+/*beg:square_api*/
 template <size_t N>
 inline void calc_square();
 template <size_t N>
@@ -22,7 +24,9 @@ template <size_t N>
 inline pair<size_t, size_t> _square_xy(size_t index);
 template <size_t N>
 inline vector<size_t> _square_connections(size_t index);
+/*end:square_api*/
 
+/*beg:triangle_api*/
 template <size_t N>
 inline void calc_triangle();
 template <size_t N>
@@ -33,7 +37,9 @@ template <size_t N>
 inline pair<size_t, size_t> _triangle_xy(size_t index);
 template <size_t N>
 inline vector<size_t> _triangle_connections(size_t index);
+/*end:triangle_api*/
 
+/*beg:hex_api*/
 template <size_t N>
 inline void calc_hex();
 template <size_t N>
@@ -44,6 +50,7 @@ template <size_t N>
 inline pair<size_t, size_t> _hex_xy(size_t index);
 template <size_t N>
 inline vector<size_t> _hex_connections(size_t index);
+/*end:hex_api*/
 
 enum class AC_Type
 {
@@ -54,10 +61,14 @@ enum class AC_Type
 template <size_t N>
 inline void calc_triangle_ac(double omega);
 template <size_t N>
-inline Symm_Band_Matrix<complex<double>, N *(N + 3) / 2, N + 1> triangle_ac_network(double omega, bool hermite=false);
+inline Symm_Band_Matrix<complex<double>, N *(N + 3) / 2, N + 1> triangle_ac_network(double omega, bool hermite = false);
 template <size_t N>
 inline map<size_t, AC_Type> _triangle_ac_connections(size_t index);
 
+template <size_t N>
+inline void timing(size_t repeat);
+
+/*beg:main*/
 int main()
 {
     cout << "==== SQUARE ====" << endl;
@@ -78,23 +89,31 @@ int main()
     for (size_t i = 0; i < 50; i++)
     {
         static double omega;
-        omega = 0.05 + 0.1*i;
+        omega = 0.05 + 0.1 * i;
         calc_triangle_ac<4>(omega);
     }
+    // cout << "==== TIMING ====" << endl;
+    // timing<1>(1000000);
+    // timing<4>(10000);
+    // timing<16>(1000);
+    // timing<64>(10);
 }
+/*end:main*/
 
+/*beg:calc_square*/
 template <size_t N>
 inline void calc_square()
 {
+    /*calc_square_1*/
     constexpr size_t mat_side{N * (N + 2)};
     constexpr size_t band_width{(N + 1)};
     cout << "===========================\n"
          << "N = " << N << endl;
-
+    /*calc_square_2*/
     cout << "generating coefficient matrix... ";
     auto mat_g{square_network<N>()};
     cout << "finished" << endl;
-
+    /*calc_square_3*/
     cout << "------- a, b ---------" << endl;
 
     cout << ">>> direct method --- ldl" << endl;
@@ -105,13 +124,13 @@ inline void calc_square()
     cout << "LDL factoring... ";
     ldl_factor(mat_g, l, d);
     cout << "finished ";
-
+    /*calc_square_4*/
     cout << "generating b... ";
     array<double, mat_side> b{};
     size_t idx_b{_square_index<N>(N, 0)};
     b[idx_b] = 1;
     cout << "finished ";
-
+    /*calc_square_5*/
     cout << "calculating x... ";
     array<double, mat_side> x1{};
     back_sub(l, b, x1);
@@ -120,7 +139,7 @@ inline void calc_square()
     cout << "finished" << endl;
 
     cout << ">>> U_ba = " << setprecision(16) << x1[idx_b] << endl;
-
+    /*calc_square_6*/
     cout << ">>> iterative method --- conjugate gradient" << endl;
 
     cout << "solving x... ";
@@ -135,7 +154,7 @@ inline void calc_square()
     {
         cerr << "not converged" << endl;
     }
-
+    /*calc_square_7*/
     cout << "------- a, c ---------" << endl;
 
     cout << ">>> direct method --- ldl" << endl;
@@ -170,7 +189,9 @@ inline void calc_square()
 
     cout << "=========== END ===========" << endl;
 }
+/*end:calc_square*/
 
+/*beg:square_network*/
 // the N-sides*N-sides network is like:
 //     N*(N+1)-1   N*(N+1)     ... ...     (N+1)^2 -2
 //     ...         ...         ... ...     ...
@@ -205,6 +226,7 @@ inline Symm_Band_Matrix<double, N *(N + 2), N + 1> square_network()
 
     return res;
 }
+/*end:square_network*/
 
 // the N-sides*N-sides network is like:
 // y ^  N*(N+1)-1   N*(N+1)     ... ...     (N+1)^2 -2
@@ -214,11 +236,13 @@ inline Symm_Band_Matrix<double, N *(N + 2), N + 1> square_network()
 //   -----------------------------------------------> x
 // also, point X is set as 0V, which is not indexed
 // this function return the index of a point (x, y)
+/*beg:_square_index*/
 template <size_t N>
 inline size_t _square_index(size_t x, size_t y)
 {
     return y * (N + 1) + x - 1;
 }
+/*end:_square_index*/
 
 // the N-sides*N-sides network is like:
 // y ^  N*(N+1)-1   N*(N+1)     ... ...     (N+1)^2 -2
@@ -228,13 +252,16 @@ inline size_t _square_index(size_t x, size_t y)
 //   -----------------------------------------------> x
 // also, point X is set as 0V, which is not indexed
 // this function return (x, y) of a point at index
+/*beg:_square_xy*/
 template <size_t N>
 inline pair<size_t, size_t> _square_xy(size_t index)
 {
     return {(index + 1) % (N + 1), (index + 1) / (N + 1)};
 }
+/*end:_square_xy*/
 
 // return connections with higher indices
+/*beg:_square_connections*/
 template <size_t N>
 inline vector<size_t> _square_connections(size_t index)
 {
@@ -250,6 +277,7 @@ inline vector<size_t> _square_connections(size_t index)
     }
     return res;
 }
+/*end:_square_connections*/
 
 // ==============================================================
 
@@ -275,13 +303,13 @@ inline void calc_triangle()
     cout << "LDL factoring... ";
     ldl_factor(mat_g, l, d);
     cout << "finished ";
-
+    /*beg:calc_triangle*/
     cout << "generating b... ";
     array<double, mat_side> b{};
     size_t idx_b{_triangle_index<N>(0, N)};
     b[idx_b] = 1;
     cout << "finished ";
-
+    /*end:calc_triangle*/
     cout << "calculating x... ";
     array<double, mat_side> x1{};
     back_sub(l, b, x1);
@@ -309,6 +337,7 @@ inline void calc_triangle()
     cout << "=========== END ===========" << endl;
 }
 
+/*beg:triangle_network_comment*/
 // the N-sides triangular network is like:
 //     N*(N+3)/2-1
 //     N*(N+3)/2-3 N*(N+3)/2-2
@@ -318,6 +347,7 @@ inline void calc_triangle()
 //     X           0           ... ...     N-2      N-1
 // then, point X is set as 0V
 // so, the return matrix is of (N*(N+3)/2) * (N*(N+3)/2)
+/*end:triangle_network_comment*/
 template <size_t N>
 inline Symm_Band_Matrix<double, N *(N + 3) / 2, N + 1> triangle_network()
 {
@@ -356,11 +386,13 @@ inline Symm_Band_Matrix<double, N *(N + 3) / 2, N + 1> triangle_network()
 //   -----------------------------------------------> x
 // also, point X is set as 0V, which is not indexed
 // this function return the index of a point (x, y)
+/*beg:_triangle_index*/
 template <size_t N>
 inline size_t _triangle_index(size_t x, size_t y)
 {
     return y * (2 * N + 3 - y) / 2 + x - 1;
 }
+/*end:_triangle_index*/
 
 // the N-sides triangular network is like:
 // y ^  N*(N+3)/2-1
@@ -372,6 +404,7 @@ inline size_t _triangle_index(size_t x, size_t y)
 //   -----------------------------------------------> x
 // also, point X is set as 0V, which is not indexed
 // this function return (x, y) of a point at index
+/*beg:_triangle_xy*/
 template <size_t N>
 inline pair<size_t, size_t> _triangle_xy(size_t index)
 {
@@ -384,8 +417,10 @@ inline pair<size_t, size_t> _triangle_xy(size_t index)
 
     return {x, y};
 }
+/*end:_triangle_xy*/
 
 // return connections with higher indices
+/*beg:_triangle_connections*/
 template <size_t N>
 inline vector<size_t> _triangle_connections(size_t index)
 {
@@ -405,6 +440,7 @@ inline vector<size_t> _triangle_connections(size_t index)
     }
     return res;
 }
+/*end:_triangle_connections*/
 
 // ==============================================================
 
@@ -430,13 +466,13 @@ inline void calc_hex()
     cout << "LDL factoring... ";
     ldl_factor(mat_g, l, d);
     cout << "finished ";
-
+    /*beg:calc_hex*/
     cout << "generating b... ";
     array<double, mat_side> b{};
-    size_t idx_b{_hex_index<N>(0, 2*N-3)};
+    size_t idx_b{_hex_index<N>(0, 2 * N - 3)};
     b[idx_b] = 1;
     cout << "finished ";
-
+    /*end:calc_hex*/
     cout << "calculating x... ";
     array<double, mat_side> x1{};
     back_sub(l, b, x1);
@@ -481,7 +517,7 @@ inline void calc_hex()
 template <size_t N>
 inline Symm_Band_Matrix<double, N *(N + 4), N + 1> hex_network()
 {
-    constexpr size_t mat_length{N *(N + 4)};
+    constexpr size_t mat_length{N * (N + 4)};
     Symm_Band_Matrix<double, mat_length, N + 1> res{};
     vector<size_t> connections;
 
@@ -506,6 +542,7 @@ inline Symm_Band_Matrix<double, N *(N + 4), N + 1> hex_network()
     return res;
 }
 
+/*beg:_hex_index_comment*/
 // the N-sides hexagonal network is like:
 //                ------------------------------------------> x
 //               /                  X
@@ -522,12 +559,14 @@ inline Symm_Band_Matrix<double, N *(N + 4), N + 1> hex_network()
 //    V y
 // also, point X is set as 0V, which is not indexed
 // this function return the index of a point (x, y)
+/*end:_hex_index_comment*/
 template <size_t N>
 inline size_t _hex_index(size_t x, size_t y)
 {
     size_t l{y / 2};
     return (l + y % 2) * (l + 2) + l + x;
 }
+/*end:_hex_index*/
 
 // the N-sides hexagonal network is like:
 //                ------------------------------------------> x
@@ -545,51 +584,55 @@ inline size_t _hex_index(size_t x, size_t y)
 //    V y
 // also, point X is set as 0V, which is not indexed
 // this function return (x, y) of a point at index
+/*beg:_hex_xy*/
 template <size_t N>
 inline pair<size_t, size_t> _hex_xy(size_t index)
 {
     size_t x{index};
     size_t y{0};
-    for (; x > 3+y; y+=2)
+    for (; x > 3 + y; y += 2)
     {
-        x -= 4+y;
+        x -= 4 + y;
     }
-    if (x > y/2+1)
+    if (x > y / 2 + 1)
     {
-        x -= y/2+2;
+        x -= y / 2 + 2;
         y++;
     }
-    if (y == 2*N)
+    if (y == 2 * N)
     {
         x--;
     }
     return {x, y};
 }
+/*end:_hex_xy*/
 
 // return connections with higher indices
+/*beg:_hex_connections*/
 template <size_t N>
 inline vector<size_t> _hex_connections(size_t index)
 {
     auto xy{_hex_xy<N>(index)};
     vector<size_t> res{};
-    if (index < N*(N+3)-1)
+    if (index < N * (N + 3) - 1)
     {
         res.push_back(_hex_index<N>(xy.first, xy.second + 1));
     }
 
-    if (xy.second == 2*N-1)
+    if (xy.second == 2 * N - 1)
     {
         if (xy.first > 0)
         {
-            res.push_back(_hex_index<N>(xy.first-1, xy.second + 1));
+            res.push_back(_hex_index<N>(xy.first - 1, xy.second + 1));
         }
     }
-    else if (xy.second%2)
+    else if (xy.second % 2)
     {
-        res.push_back(_hex_index<N>(xy.first+1, xy.second + 1));
+        res.push_back(_hex_index<N>(xy.first + 1, xy.second + 1));
     }
     return res;
 }
+/*end:_hex_connections*/
 
 // =============================================================
 
@@ -607,7 +650,7 @@ inline void calc_triangle_ac(double omega)
     auto mat_g_dagger{triangle_ac_network<N>(omega, true)};
     Hermite_Matrix<complex<double>, mat_side> mat_a;
     {
-        auto temp {mat_g_dagger*mat_g};
+        auto temp{mat_g_dagger * mat_g};
         for (size_t i = 0; i < mat_side; i++)
             for (size_t j = 0; j <= i; j++)
             {
@@ -625,7 +668,7 @@ inline void calc_triangle_ac(double omega)
     cout << ">>> direct method --- inv" << endl;
 
     cout << "inversing... ";
-    auto inv_g {inv(mat_g)};
+    auto inv_g{inv(mat_g)};
     cout << "finished ";
 
     cout << "generating b... ";
@@ -637,7 +680,7 @@ inline void calc_triangle_ac(double omega)
 
     cout << "calculating x... ";
     array<complex<double>, mat_side> x1{
-        inv_g*b};
+        inv_g * b};
     cout << "finished" << endl;
 
     cout << ">>> U_ba = " << setprecision(16) << x1[idx_b] << endl;
@@ -645,7 +688,7 @@ inline void calc_triangle_ac(double omega)
     cout << ">>> iterative method --- conjugate gradient" << endl;
 
     cout << "generating b... ";
-    b = mat_g_dagger*b;
+    b = mat_g_dagger * b;
     cout << "finished ";
 
     cout << "solving x... ";
@@ -692,10 +735,10 @@ inline Symm_Band_Matrix<complex<double>, N *(N + 3) / 2, N + 1> triangle_ac_netw
                 g = 1;
                 break;
             case AC_Type::inductance:
-                g = hermite?1i/omega:-1i/omega;
+                g = hermite ? 1i / omega : -1i / omega;
                 break;
             case AC_Type::capacitance:
-                g = hermite?-1i*omega:1i*omega;
+                g = hermite ? -1i * omega : 1i * omega;
                 break;
             default:
                 break;
@@ -709,11 +752,11 @@ inline Symm_Band_Matrix<complex<double>, N *(N + 3) / 2, N + 1> triangle_ac_netw
     // did not count point (0, 0)'s effect on point (1, 0) & (0, 1)
     // their diagonal item should ++
     {
-        auto i {_triangle_index<N>(1, 0)};
-        res(i, i) += hermite?-1i*omega:1i*omega;
+        auto i{_triangle_index<N>(1, 0)};
+        res(i, i) += hermite ? -1i * omega : 1i * omega;
     }
     {
-        auto i {_triangle_index<N>(0, 1)};
+        auto i{_triangle_index<N>(0, 1)};
         res(i, i) += 1;
     }
     return res;
@@ -739,3 +782,65 @@ inline map<size_t, AC_Type> _triangle_ac_connections(size_t index)
     }
     return res;
 }
+
+// ===============================================
+
+/*beg:timing*/
+template <size_t N>
+inline void timing(size_t repeat)
+{
+    constexpr size_t mat_side{N * (N + 2)};
+    constexpr size_t band_width{(N + 1)};
+    cout << "===========================\n"
+         << "N = " << N << endl;
+
+    cout << "generating coefficient matrix... ";
+    auto mat_g{square_network<N>()};
+    cout << "finished ";
+
+    cout << "generating b... ";
+    array<double, mat_side> b{};
+    size_t idx_b{_square_index<N>(N, 0)};
+    b[idx_b] = 1;
+    cout << "finished" << endl;
+
+    cout << "------- a, b ---------" << endl;
+
+    cout << ">>> direct method --- ldl" << endl;
+
+    auto t1 = chrono::steady_clock::now();
+    for (size_t i = 0; i < repeat; i++)
+    {
+        Low_Band_Matrix<double, mat_side, band_width> l{};
+        array<double, mat_side> d{};
+
+        ldl_factor(mat_g, l, d);
+
+        array<double, mat_side> x1{};
+        back_sub(l, b, x1);
+        back_sub(d, x1);
+        back_sub(l, x1, true);
+    }
+    auto t2 = chrono::steady_clock::now();
+
+    cout << "ldl*" << repeat << ": " <<
+        chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count()
+        << "ms" << endl;
+
+    cout << ">>> iterative method --- conjugate gradient" << endl;
+
+    t1 = chrono::steady_clock::now();
+    for (size_t i = 0; i < repeat; i++)
+    {
+        array<double, mat_side> x2{};
+        conj_grad(mat_g, b, x2, true);
+    }
+    t2 = chrono::steady_clock::now();
+
+    cout << "conj_grad*" << repeat << ": " <<
+        chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count()
+        << "ms" << endl;
+
+    cout << "=========== END ===========" << endl;
+}
+/*end:timing*/
