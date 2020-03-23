@@ -1,6 +1,7 @@
 #include <utility>
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include <complex>
 #include <map>
 
@@ -103,25 +104,19 @@ inline void calc_square()
 
     cout << "LDL factoring... ";
     ldl_factor(mat_g, l, d);
-    cout << "finished" << endl;
-
-    cout << "calculating L^-1... ";
-    Low_Tri_Matrix<double, mat_side> inv_l{inv(l)};
-    cout << "finished" << endl;
-
-    cout << "calculating D^-1... ";
-    Diag_Matrix<double, mat_side> d_i{inv(Diag_Matrix<double, mat_side>(d.begin(), d.end()))};
-    cout << "finished" << endl;
+    cout << "finished ";
 
     cout << "generating b... ";
     array<double, mat_side> b{};
     size_t idx_b{_square_index<N>(N, 0)};
     b[idx_b] = 1;
-    cout << "finished" << endl;
+    cout << "finished ";
 
     cout << "calculating x... ";
-    array<double, mat_side> x1{
-        (inv_l.trans() * (d_i * (inv_l * b)))};
+    array<double, mat_side> x1{};
+    back_sub(l, b, x1);
+    back_sub(d, x1);
+    back_sub(l, x1, true);
     cout << "finished" << endl;
 
     cout << ">>> U_ba = " << setprecision(16) << x1[idx_b] << endl;
@@ -149,10 +144,12 @@ inline void calc_square()
     b[idx_b] = 0;
     idx_b = _square_index<N>(N, N);
     b[idx_b] = 1;
-    cout << "finished" << endl;
+    cout << "finished ";
 
     cout << "calculating x... ";
-    x1 = (l.trans() * (d_i * (l * b)));
+    back_sub(l, b, x1);
+    back_sub(d, x1);
+    back_sub(l, x1, true);
     cout << "finished" << endl;
 
     cout << ">>> U_ca = " << setprecision(16) << x1[idx_b] << endl;
@@ -277,25 +274,19 @@ inline void calc_triangle()
 
     cout << "LDL factoring... ";
     ldl_factor(mat_g, l, d);
-    cout << "finished" << endl;
-
-    cout << "calculating L^-1... ";
-    Low_Tri_Matrix<double, mat_side> inv_l{inv(l)};
-    cout << "finished" << endl;
-
-    cout << "calculating D^-1... ";
-    Diag_Matrix<double, mat_side> d_i{inv(Diag_Matrix<double, mat_side>(d.begin(), d.end()))};
-    cout << "finished" << endl;
+    cout << "finished ";
 
     cout << "generating b... ";
     array<double, mat_side> b{};
     size_t idx_b{_triangle_index<N>(0, N)};
     b[idx_b] = 1;
-    cout << "finished" << endl;
+    cout << "finished ";
 
     cout << "calculating x... ";
-    array<double, mat_side> x1{
-        (inv_l.trans() * (d_i * (inv_l * b)))};
+    array<double, mat_side> x1{};
+    back_sub(l, b, x1);
+    back_sub(d, x1);
+    back_sub(l, x1, true);
     cout << "finished" << endl;
 
     cout << ">>> U_ba = " << setprecision(16) << x1[idx_b] << endl;
@@ -438,25 +429,19 @@ inline void calc_hex()
 
     cout << "LDL factoring... ";
     ldl_factor(mat_g, l, d);
-    cout << "finished" << endl;
-
-    cout << "calculating L^-1... ";
-    Low_Tri_Matrix<double, mat_side> inv_l{inv(l)};
-    cout << "finished" << endl;
-
-    cout << "calculating D^-1... ";
-    Diag_Matrix<double, mat_side> d_i{inv(Diag_Matrix<double, mat_side>(d.begin(), d.end()))};
-    cout << "finished" << endl;
+    cout << "finished ";
 
     cout << "generating b... ";
     array<double, mat_side> b{};
     size_t idx_b{_hex_index<N>(0, 2*N-3)};
     b[idx_b] = 1;
-    cout << "finished" << endl;
+    cout << "finished ";
 
     cout << "calculating x... ";
-    array<double, mat_side> x1{
-        (inv_l.trans() * (d_i * (inv_l * b)))};
+    array<double, mat_side> x1{};
+    back_sub(l, b, x1);
+    back_sub(d, x1);
+    back_sub(l, x1, true);
     cout << "finished" << endl;
 
     cout << ">>> U_ba = " << setprecision(16) << x1[idx_b] << endl;
@@ -534,7 +519,7 @@ inline Symm_Band_Matrix<double, N *(N + 4), N + 1> hex_network()
 //  2N-2 /   N(N+1)-2  N(N+1)-1  ... ... ...  N(N+2)-3  N(N+2)-2
 // 2N-1 /    N(N+2)-1  N(N+2) ... ... ... ... N(N+3)-2  N(N+3)-1
 //  2N /          N(N+3)  ... ... ... ... ... ... N(N+4)-1
-//   V y
+//    V y
 // also, point X is set as 0V, which is not indexed
 // this function return the index of a point (x, y)
 template <size_t N>
@@ -557,7 +542,7 @@ inline size_t _hex_index(size_t x, size_t y)
 //  2N-2 /   N(N+1)-2  N(N+1)-1  ... ... ...  N(N+2)-3  N(N+2)-2
 // 2N-1 /    N(N+2)-1  N(N+2) ... ... ... ... N(N+3)-2  N(N+3)-1
 //  2N /          N(N+3)  ... ... ... ... ... ... N(N+4)-1
-//   V y
+//    V y
 // also, point X is set as 0V, which is not indexed
 // this function return (x, y) of a point at index
 template <size_t N>
@@ -641,14 +626,14 @@ inline void calc_triangle_ac(double omega)
 
     cout << "inversing... ";
     auto inv_g {inv(mat_g)};
-    cout << "finished" << endl;
+    cout << "finished ";
 
     cout << "generating b... ";
     array<complex<double>, mat_side> b{};
     size_t idx_b{_triangle_index<N>(0, N)};
     b[idx_b] = 1.;
     // b = mat_g_dagger*b;
-    cout << "finished" << endl;
+    cout << "finished ";
 
     cout << "calculating x... ";
     array<complex<double>, mat_side> x1{
@@ -661,7 +646,7 @@ inline void calc_triangle_ac(double omega)
 
     cout << "generating b... ";
     b = mat_g_dagger*b;
-    cout << "finished" << endl;
+    cout << "finished ";
 
     cout << "solving x... ";
     array<complex<double>, mat_side> x2{};

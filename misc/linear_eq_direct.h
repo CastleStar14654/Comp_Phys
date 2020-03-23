@@ -17,6 +17,52 @@ namespace Misc
 // ================== DECLEARATIONS ==================
 // ------------------ implementations ----------------
 
+template <size_t B = 0, typename T, size_t N>
+inline void _up_back_sub(const Base_Matrix<T, N, N> &in_mat,
+                         const std::array<T, N> &in_b,
+                         std::array<T, N> &out_x)
+{
+    constexpr size_t M{B ? B : N};
+    std::copy(in_b.begin(), in_b.end(), out_x.begin());
+    size_t up_bound{N - 1};
+    for (size_t i = N - 1; i != 0; i--)
+    {
+        if (in_mat(i, i) == 0)
+        {
+            throw std::runtime_error("back_sub(): singular matrix");
+        }
+        up_bound = N - 1 > i + M ? i + M : N - 1;
+        for (size_t j = i + 1; j <= up_bound; j++)
+        {
+            out_x[i] -= in_mat(i, j) * out_x[j];
+        }
+        out_x[i] /= in_mat(i, i);
+    }
+}
+
+template <size_t B = 0, typename T, size_t N>
+inline void _low_back_sub(const Base_Matrix<T, N, N> &in_mat,
+                          const std::array<T, N> &in_b,
+                          std::array<T, N> &out_x)
+{
+    constexpr size_t M{B ? B : N};
+    std::copy(in_b.begin(), in_b.end(), out_x.begin());
+    size_t low_bound{0};
+    for (size_t i = 0; i < N; i++)
+    {
+        if (in_mat(i, i) == 0)
+        {
+            throw std::runtime_error("back_sub(): singular matrix");
+        }
+        low_bound = i > M ? i - M : 0;
+        for (size_t j = low_bound; j < i; j++)
+        {
+            out_x[i] -= in_mat(i, j) * out_x[j];
+        }
+        out_x[i] /= in_mat(i, i);
+    }
+}
+
 template <typename T, size_t N>
 inline void _l_u_decomposition(const Base_Matrix<T, N, N> &in_mat,
                                Base_Matrix<T, N, N> &out_l,
@@ -45,6 +91,173 @@ inline Up_Tri_Matrix<T, N> _inv(Up_Tri_Matrix<T, N> &in_mat);
 // Symm_Matrix<T, N> _inv(Symm_Matrix<T, N>& in_mat);
 
 // ------------------ APIs ----------------------------
+
+// back-substitution
+template <typename T, size_t N>
+inline void back_sub(const Diag_Matrix<T, N> &in_mat,
+                     std::array<T, N> &in_b)
+{
+    for (size_t i = 0; i < N; i++)
+    {
+        in_b[i] /= in_mat(i);
+    }
+}
+
+template <typename T, size_t N>
+inline void back_sub(const Diag_Matrix<T, N> &in_mat,
+                     const std::array<T, N> &in_b,
+                     std::array<T, N> &out_x)
+{
+    for (size_t i = 0; i < N; i++)
+    {
+        out_x[i] = in_b[i] / in_mat(i);
+    }
+}
+
+template <typename T, size_t N>
+inline void back_sub(const std::array<T, N> &in_mat,
+                     std::array<T, N> &in_b)
+{
+    for (size_t i = 0; i < N; i++)
+    {
+        in_b[i] /= in_mat[i];
+    }
+}
+
+template <typename T, size_t N>
+inline void back_sub(const std::array<T, N> &in_mat,
+                     const std::array<T, N> &in_b,
+                     std::array<T, N> &out_x)
+{
+    for (size_t i = 0; i < N; i++)
+    {
+        out_x[i] = in_b[i] / in_mat[i];
+    }
+}
+
+template <typename T, size_t N>
+inline void back_sub(const Up_Tri_Matrix<T, N> &in_mat,
+                     std::array<T, N> &in_b,
+                     bool reverse = false)
+{
+    if (reverse)
+    {
+        _low_back_sub(in_mat.trans(), in_b, in_b);
+    }
+    else
+    {
+        _up_back_sub(in_mat, in_b, in_b);
+    }
+}
+
+template <typename T, size_t N>
+inline void back_sub(const Up_Tri_Matrix<T, N> &in_mat,
+                     const std::array<T, N> &in_b,
+                     std::array<T, N> &out_x,
+                     bool reverse = false)
+{
+    if (reverse)
+    {
+        _low_back_sub(in_mat.trans(), in_b, out_x);
+    }
+    else
+    {
+        _up_back_sub(in_mat, in_b, out_x);
+    }
+}
+
+template <typename T, size_t N, size_t M>
+inline void back_sub(const Up_Band_Matrix<T, N, M> &in_mat,
+                     std::array<T, N> &in_b,
+                     bool reverse = false)
+{
+    if (reverse)
+    {
+        _low_back_sub<M>(in_mat.trans(), in_b, in_b);
+    }
+    else
+    {
+        _up_back_sub<M>(in_mat, in_b, in_b);
+    }
+}
+
+template <typename T, size_t N, size_t M>
+inline void back_sub(const Up_Band_Matrix<T, N, M> &in_mat,
+                     const std::array<T, N> &in_b,
+                     std::array<T, N> &out_x,
+                     bool reverse = false)
+{
+    if (reverse)
+    {
+        _low_back_sub<M>(in_mat.trans(), in_b, out_x);
+    }
+    else
+    {
+        _up_back_sub<M>(in_mat, in_b, out_x);
+    }
+}
+
+template <typename T, size_t N>
+inline void back_sub(const Low_Tri_Matrix<T, N> &in_mat,
+                     std::array<T, N> &in_b,
+                     bool reverse = false)
+{
+    if (reverse)
+    {
+        _up_back_sub(in_mat.trans(), in_b, in_b);
+    }
+    else
+    {
+        _low_back_sub(in_mat, in_b, in_b);
+    }
+}
+
+template <typename T, size_t N>
+inline void back_sub(const Low_Tri_Matrix<T, N> &in_mat,
+                     const std::array<T, N> &in_b,
+                     std::array<T, N> &out_x,
+                     bool reverse = false)
+{
+    if (reverse)
+    {
+        _up_back_sub(in_mat.trans(), in_b, out_x);
+    }
+    else
+    {
+        _low_back_sub(in_mat, in_b, out_x);
+    }
+}
+
+template <typename T, size_t N, size_t M>
+inline void back_sub(const Low_Band_Matrix<T, N, M> &in_mat,
+                     std::array<T, N> &in_b,
+                     bool reverse = false)
+{
+    if (reverse)
+    {
+        _up_back_sub<M>(in_mat.trans(), in_b, in_b);
+    }
+    else
+    {
+        _low_back_sub<M>(in_mat, in_b, in_b);
+    }
+}
+
+template <typename T, size_t N, size_t M>
+inline void back_sub(const Low_Band_Matrix<T, N, M> &in_mat,
+                     const std::array<T, N> &in_b,
+                     std::array<T, N> &out_x,
+                     bool reverse = false)
+{
+    if (reverse)
+    {
+        _up_back_sub<M>(in_mat.trans(), in_b, out_x);
+    }
+    else
+    {
+        _low_back_sub<M>(in_mat, in_b, out_x);
+    }
+}
 
 // LU decomposition
 template <typename T, size_t N>

@@ -1,0 +1,196 @@
+本人将一些基本的矩阵类型以及相关算法写为\textsf{C++}头文件以方便调用。
+本附录将简要介绍可用的接口。
+所有的类以及函数均定义于命名空间\texttt{Misc}中，故下文不将\texttt{Misc::}显式写出。
+
+可以通过引入\texttt{"Matrix\_Catalogue.h"}头文件引入所有矩阵类型以及有关运算符重载。
+可以通过引入\texttt{"linear\_eq\_direct.h"}与\texttt{"linear\_eq\_iterative.h"}头文件调用矩阵的直接解法与迭代解法。
+
+\section{矩阵}
+所有的矩阵类型都继承自虚基类\texttt{template <typename T, size\_t R, size\_t C> class Base\_Matrix}，其中模板参数\texttt{T}为数据类型，\texttt{R}, \texttt{C}分别为行数和列数。
+注意，\textbf{所有矩阵规模参数都需要编译时指定}。
+继承树为
+{
+\small
+\begin{verbatim}
+Base_Matrix<T, R, C> 虚基类
+|Band_Matrix<T, N, M> 长宽为N，半带宽为M的带状矩阵
+||Base_Half_Band_Matrix<T, N, M> 虚基类，长宽为N，半带宽为M
+|||Low_Band_Matrix<T, N, M> 长宽为N，半带宽为M的下三角带状矩阵
+|||Symm_Band_Matrix<T, N, M> 长宽为N，半带宽为M的对称带状矩阵
+|||Up_Band_Matrix<T, N, M> 长宽为N，半带宽为M的上三角带状矩阵
+|Base_Tri_Matrix<T, N> 虚基类，长宽为N
+||Hermite_Matrix<T, N> 厄密矩阵，长宽为N
+||Low_Tri_Matrix<T, N> 下三角矩阵，长宽为N
+||Symm_Matrix<T, N> 对称矩阵，长宽为N
+||Up_Tri_Matrix<T, N> 上三角矩阵，长宽为N
+|Diag_Matrix<T, N> 对角矩阵，长宽为N
+|Matrix<T, R, C> 一般矩阵，R行C列
+|Sparse_Matrix<T, R, C> 稀疏矩阵；同时继承自std::array<std::map<size_t, T>, R>
+\end{verbatim}
+}
+
+所有矩阵均提供的接口有
+{
+\linespread{1.0}
+\begin{lstlisting}
+Row<T, R, C> row(size_type pos);
+const Row<T, R, C> row(size_type pos) const; // 返回某一行
+Row<T, R, C> operator[](size_type pos);
+const Row<T, R, C> operator[](size_type pos) const; // 同row()
+Column<T, R, C> column(size_type pos);
+const Column<T, R, C> column(size_type pos) const; // 返回某一列
+
+const Transpose<T, C, R> trans() const; // 返回仅作为右值的转置
+
+T &operator()(size_type row, size_type col);
+const T &operator()(size_type row, size_type col); // 返回元素
+
+using p_ta = T (*)[C];
+p_ta data();
+const p_ta data() const; // 返回内部存储数据的指针
+constexpr size_type size() const; // 返回作为一个矩阵的元素个数
+size_type data_size() const; // 返回存储的元素个数
+size_type data_lines() const; // 返回存储的元素行数
+constexpr size_type rows() const; // 返回矩阵行数
+constexpr size_type cols() const; // 返回矩阵列数
+std::pair<size_type, size_type> shape() const; // 返回矩阵形状
+\end{lstlisting}
+}
+
+\texttt{row()}和\texttt{column()}方法返回\texttt{Row<T, R, C>}或\texttt{Column<T, R, C>}对象，可作为左值或右值。
+可以通过\texttt{[]}下标运算符取或修改原矩阵的元素。
+
+使用标准库类型\texttt{std::array<T, N>}作为矢量。
+
+重载了矩阵间、矩阵与\texttt{Row}或\texttt{Column}或\texttt{array}之间的\texttt{*}运算符，可进行矩阵乘法。
+
+所有矩阵均支持默认初始化，可以提供一个默认值。
+如不提供，默认为0。
+
+定义了一些类型间转换，可以把一些特殊的矩阵转化为更一般的矩阵。
+比如，\texttt{Diag\_Matrix}可以转换为\texttt{Band\_Matrix}、\texttt{Up\_Tri\_Matrix}等等矩阵。
+
+同时还定义了通过初始化器的列表初始化以便字面指定矩阵。
+下面主要介绍一下这一初始化的使用。
+
+\subsection{带状矩阵\texttt{Band\_Matrix}等}
+需要沿对角线方向从右上到左下逐行输入，比如
+{
+\small
+\begin{verbatim}
+{
+    {4, 6, 8, 3, 7},
+    {3, 4, 7, 7, 4, 4},
+    {2, 5, 5, 5, 2, 1, 7},
+    {6, 3, 4, 4, 3, 6},
+    {2, 7, 9, 2, 5}
+}
+\end{verbatim}
+}
+会得到矩阵\[
+    \mqty(
+        2&3&4&0&0&0&0\\
+        6&5&4&6&0&0&0\\
+        2&3&5&7&8&0&0\\
+        0&7&4&5&7&3&0\\
+        0&0&9&4&2&4&7\\
+        0&0&0&2&3&1&4\\
+        0&0&0&0&5&6&7
+    ).
+\]
+输入格式错误会引发运行时错误。
+
+对于半带状矩阵以及对称带状矩阵，初始化器的输入顺序为\textbf{从对角线向非零一侧}。
+
+\subsection{三角矩阵\texttt{Base\_Tri\_Matrix}等}
+水平从上到下依次输入半侧元素。
+比如，
+{
+\small
+\begin{verbatim}
+{
+    {4},
+    {3, 4},
+    {2, 1, 7},
+    {6, 3, 4, 6},
+    {2, 7, 9, 2, 5}
+}
+\end{verbatim}
+}
+会得到下三角矩阵\[
+    \mqty(
+        4&&&&\\
+        3&4&&&\\
+        2&1&7&&\\
+        6&3&4&6&\\
+        2&7&9&2&5
+    )
+\]
+或对称矩阵\[
+    \mqty(
+        4&3&2&6&2\\
+        3&4&1&3&7\\
+        2&1&7&4&9\\
+        6&3&4&6&2\\
+        2&7&9&2&5
+    ).
+\]
+
+但对应的上三角矩阵需要这样输入，
+{\small
+\begin{verbatim}
+{
+    {2, 7, 9, 2, 5},
+    {6, 3, 4, 6},
+    {2, 1, 7},
+    {3, 4},
+    {4}
+}
+\end{verbatim}
+}
+得到\[
+    \mqty(
+        2&7&9&2&5\\
+        0&6&3&4&6\\
+        0&0&2&1&7\\
+        0&0&0&3&4\\
+        0&0&0&0&4
+    ).
+\]
+
+\subsection{对角矩阵\texttt{Diag\_Matrix}}
+直接在一个初始化器列表内输入所有对角元即可。
+也可通过提供一对迭代器初始化。
+
+\section{矩阵的直接解法}
+\texttt{"linear\_eq\_direct.h"}中主要是对矩阵进行分解的算法，提供\begin{enumerate}
+    \item LU分解 \texttt{lu\_factor()}
+    \item LDL分解 \texttt{ldl\_factor()}
+    \item Gauss-Jordan法求逆矩阵 \texttt{inv()}；对特殊矩阵也会调用用其他算法
+    \item 三对角矩阵追赶法 \texttt{tri\_factor()}
+    \item Cholesky分解 \texttt{cholesky}
+    \item 行列式计算 \texttt{det()}
+\end{enumerate}
+
+所有算法（除\texttt{det()}）外均提供原处修改的接口与非原处修改接口。
+如果仅传入待分解矩阵，那么会进行原处修改；如果也传入了输出矩阵，那么不会修改原矩阵。
+
+\texttt{det()}函数会返回行列式的值。
+
+\section{矩阵的迭代解法}
+\texttt{"linear\_eq\_iterative.h"}中主要是对线性方程组进行迭代求解的算法，提供\begin{enumerate}
+    \item Jacobi迭代法 \texttt{jacobi()}
+    \item Gauss-Seidel迭代法 \texttt{gauss\_seidel()}
+    \item 超松弛迭代法 \texttt{suc\_over\_rel()}
+    \item 共轭梯度法 \texttt{grad\_des()}
+\end{enumerate}
+
+所有算法的接口是基本统一的，参数列表如下\begin{enumerate}
+    \item \verb|const Base_Matrix<T, N, N> &in_mat| 系数矩阵
+    \item \verb|const std::array<T, N> &in_b| 非齐次项
+    \item \verb|std::array<T, N> &out_x| 解向量的初始值；输出的解向量
+    \item \verb|T omega| 仅超松弛迭代使用的系数
+    \item \verb|bool sparse = false| 是否为稀疏矩阵；如是，那么有优化
+    \item \verb|size_t max_times = 1000| 最大迭代次数
+    \item \verb|double rel_epsilon = 1e-15| 判停标准：残差与初始残差的1-范数之比小于此值时即停止
+\end{enumerate}
