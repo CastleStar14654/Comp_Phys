@@ -131,6 +131,7 @@ inline int grad_des(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in_
                     std::array<T, N> &out_x,
                     bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-15);
 
+/*beg:conj_grad_dec*/
 // conjugate gradient method method to solve eqs Ax = b
 // ---------- return ------------
 // int
@@ -146,6 +147,7 @@ template <typename T, size_t N>
 inline int conj_grad(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in_b,
                      std::array<T, N> &out_x,
                      bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-15);
+/*end:conj_grad_dec*/
 
 // ================== DEFINITIONS ==================
 
@@ -405,6 +407,7 @@ inline int grad_des(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in_
     return 1;
 }
 
+/*beg:conj_grad_imp*/
 template <typename T, size_t N>
 inline int conj_grad(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in_b,
                      std::array<T, N> &out_x,
@@ -467,6 +470,7 @@ inline int conj_grad(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in
     }
     return 1;
 }
+/*end:conj_grad_imp*/
 
 template <typename T, size_t N>
 inline int conj_grad(const Hermite_Matrix<std::complex<T>, N> &in_mat, const std::array<std::complex<T>, N> &in_b,
@@ -537,7 +541,7 @@ inline int grad_des(const Symm_Band_Matrix<T, N, M> &in_mat, const std::array<T,
              bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-15)
 {
     return grad_des(Symm_Matrix<T, N>(in_mat), in_b, out_x,
-                    sparse, max_times, rel_epsilon);
+                    true, max_times, rel_epsilon);
 }
 
 template <typename T, size_t N, size_t M>
@@ -546,7 +550,7 @@ inline int conj_grad(const Symm_Band_Matrix<T, N, M> &in_mat, const std::array<T
               bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-15)
 {
     return conj_grad(Symm_Matrix<T, N>(in_mat), in_b, out_x,
-                     sparse, max_times, rel_epsilon);
+                     true, max_times, rel_epsilon);
 }
 
 } // namespace Misc

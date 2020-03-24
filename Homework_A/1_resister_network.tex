@@ -1,0 +1,600 @@
+本题要求使用矩阵的迭代法与直接解法对\autoref{fig:network} 所示的三类无源电阻网格的某给定两点间的电阻进行求解，并比较迭代法与直接解法的用时差别。
+其中，矩阵是根据基尔霍夫第二定律
+\begin{equation}\label{eq:Kirchhoff}
+    \sum_{j\neq i} {g_{ij}(U_i-U_j)} = I_i,\quad i=1,2,\cdots,n
+\end{equation}
+得到的。
+此式中各符号的含义会在后文详述。
+
+\begin{figure}
+    \centering
+    \subfloat[规模为4的方型网格]{
+        \label{fig:network_square}
+        \includegraphics[width=.3\textwidth]{figures/square.pdf}
+        }
+        \subfloat[规模为4的三角型网格]{
+            \label{fig:network_triangle}
+        \includegraphics[width=.3\textwidth]{figures/triangle.pdf}
+        }
+        \subfloat[规模为4的六边形型网格]{
+            \label{fig:network_hexagon}
+            \includegraphics[width=.3\textwidth]{figures/hexagon.pdf}
+    }
+    \caption{题给的三种电阻网络}
+    \label{fig:network}
+\end{figure}
+
+题目要求对多种规模（边数为1\footnote{六边形型网格对周期数为1的情况不作要求；该情况显然$R_\text{ab}=0$}、4、16、64）的各边阻值为单位1的网格，求解\autoref{fig:network} 中ab或ac\footnote{仅方型有}间的阻值。
+此外，第4小问还要求做出\autoref{fig:network_triangle} 中的三角网络在水平连线均变为单位电容、斜向右下的连线变为单位电感时ab间等效阻抗的频率响应曲线。
+
+下面，我将结合程序\verb|1_resister_network.cpp|，逐步介绍
+\begin{inparaenum}
+    \item 基尔霍夫第二定律；
+    \item 网格抽象为矩阵的建模方法；
+    \item 计算过程简述；
+    \item 计算结果与耗时情况；
+    \item 三角$RLC$网格的频率响应
+\end{inparaenum}。
+
+\section{基尔霍夫第二定律}
+
+设一个无源网格中有$n$个节点，根据电荷守恒以及欧姆定律，可以合理推得由外部流入节点$i$的电流$I_i$等于由$i$流向所有与其相连的节点的总电流。
+而各支路的电流（设流向节点$j$）都可利用欧姆定律表示为电势差$U_i-U_j$与导纳$g_{ij}$之积。
+因而我们得到式 \eqref{eq:Kirchhoff}\begin{equation}
+    \sum_{j\neq i} {g_{ij}(U_i-U_j)} = I_i,\quad i=1,2,\cdots,n.\tag{\ref{eq:Kirchhoff}}
+\end{equation}
+
+可将各节点的电势表示为一个$n$维矢量$\vb*{U}$，外界流入电流表示为$\vb*{I}$。
+那么，上式可改写为\begin{equation}
+    \sum_{j}\sum_{k\neq i}{g_{ik}\delta_{ij}}U_j
+        -\sum_{j\neq i}g_{ij}U_j = I_i,
+\end{equation}
+亦即\begin{gather}
+    \vb{G}\vb*{U} = \vb*{I},\\
+    \vb{G}_{ij} =
+    \begin{cases}
+        \sum_{k\neq i}g_{ik},& i=j,\\
+        -g_{ij},&   i\neq j.
+    \end{cases}
+    \label{eq:Gij}
+\end{gather}
+
+注意到，电势零点是可以任意选取的，这意味着$\vb{G}$的秩必为$n-1$。
+通过将某点电势取为0，将该点对应的导纳矩阵行与列删去，我们得到一个非奇异矩阵。
+
+求解某两点间电阻，即等价于在一点输入单位电流、一点输出单位电流，求两点电势差。
+此即线性方程求解问题。
+
+\section{导纳矩阵建模}
+我们需要求解的电路网格见\autoref{fig:network}。
+三种网格的建模思路其实都很类似，我将从最简单的方型网络开始。
+
+\subsection{方型网格}
+首先定义如何表示格点在网格中的位置。
+记a点为$(0,0)$，$y$轴向上延伸，$x$坐标则以一行中最左边的格点为0。
+
+再定义将网格变为矩阵的编号方式。
+从左下角开始，取点a为电势零点，不编号；然后从左至右、从下到上依次进行编号。
+\autoref{fig:network_square} 为周期数为4时的编号示例。
+
+使用的接口声明如下：
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:square_api-end:square_api]{1_resister_network.cpp}
+}
+\verb|calc_square()|为具体进行计算的函数，模板参数\texttt{N}为网格空间周期数；
+\verb|square_network()| 为生成导纳矩阵$\vb{G}$的函数；
+\verb|_square_index()| 与 \verb|_square_xy()| 分别根据一个格点在网格中的位置得到编号或根据编号得到在网格中的位置；
+\verb|_square_connections(index)|返回所有与格点\texttt{index}相连的且编号大于\texttt{index}的格点的编号的\texttt{std::vector}。
+
+\paragraph{\texttt{square\_network()}}\label{para:sq_network}
+的定义如下：
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:square_network-end:square_network]{1_resister_network.cpp}
+}
+如同函数前注释中解释的，$\vb{G}$的规模应为$(\text{\texttt{N}}^2+2\text{\texttt{N}})\times(\text{\texttt{N}}^2+2\text{\texttt{N}})$。
+故将矩阵行数定义为常量表达式\verb|mat_length|。
+同时，$\vb{G}$一定为半带宽为$\text{\texttt{N}}+1$的对称矩阵（一个格点最多与和它相差$\text{\texttt{N}}+1$的格点相连），故将返回矩阵定义为\verb|Symm_Band_Matrix<double, mat_length, N + 1>|。
+
+对网格中编号为\verb|i|的格点进行循环。
+找出与其相连的编号大于\verb|i|的格点的编号存入\verb|connections|。
+那么，根据式 \eqref{eq:Gij}，\verb|i|对应的矩阵对角元要增加这些格点的个数（由于阻值是单位1）。
+同时，\verb|connections|中每一个\verb|j|对应一个$g_{ij}=-1$。
+
+由于每次只考虑编号大于\verb|i|的格点，循环不重不漏，除了点$(0,0)$。
+故我们再将与$(0,0)$直接相连的两点的对角元加1。
+
+\paragraph{\texttt{\_square\_index()}与\texttt{\_square\_xy()}}
+的定义如下：
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:_square_index-end:_square_index]{1_resister_network.cpp}
+    \lstinputlisting[linerange=beg:_square_xy-end:_square_xy]{1_resister_network.cpp}
+}
+
+两者的实现都十分直接，不多赘述。
+
+\paragraph{\texttt{\_square\_connections()}}
+的定义如下：
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:_square_connections-end:_square_connections]{1_resister_network.cpp}
+}
+如果此格点不在一行的最右边，那么其与它右边的点相连；
+如果此格点不在一列的最上边，那么其与它上边的点相连。
+
+\subsection{三角型网格}\label{ssec:triangle}
+首先定义如何表示格点在网格中的位置。
+记a点为$(0,0)$，$y$轴向上延伸，将一行中最左边的格点的$x$坐标记为0。
+
+再定义将网格变为矩阵的编号方式。
+从左下角开始，取点a为电势零点，不编号；然后从左至右、从下到上依次进行编号。
+\autoref{fig:network_triangle} 为周期数为4时的编号示例。
+
+使用的接口声明如下：
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:triangle_api-end:triangle_api]{1_resister_network.cpp}
+}
+各函数的功能与方型的类似。
+
+\paragraph{\texttt{triangle\_network()}}\label{para:tri_net}
+与方型的\verb|square_network()|十分接近。
+函数前的注释{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:triangle_network_comment-end:triangle_network_comment]{1_resister_network.cpp}
+}清楚地说明了$\vb{G}$的规模为$\frac{\text{\texttt{N}}\times(\text{\texttt{N}}+3)}{2}\times\frac{\text{\texttt{N}}\times(\text{\texttt{N}}+3)}{2}$。
+类似 \nameref{para:sq_network}，矩阵半带宽也为$\text{\texttt{N}}+1$。
+
+\paragraph{\texttt{\_triangle\_index()}与\texttt{\_triangle\_xy()}}
+的定义如下：{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:_triangle_index-end:_triangle_index]{1_resister_network.cpp}
+    \lstinputlisting[linerange=_triangle_xy-end:_triangle_xy]{1_resister_network.cpp}
+}\verb|_triangle_index()| 为一个简单的等差数列求和。
+\verb|_triangle_xy()| 则是逐步将满的行从 \verb|index| 中减去，直到一对合理的$(x,y)$值。
+
+\paragraph{\texttt{\_triangle\_connections()}}
+的定义如下：
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:_triangle_connections-end:_triangle_connections]{1_resister_network.cpp}
+}
+如果此格点不在一行的最右边，那么其与它右边的点相连；
+如果此格点不在一列的最上边且不在一行的最右边，那么其与它上边的点相连；
+如果此格点不在一行的最左边，那么其与它左上方的点相连。
+
+\subsection{六边形型网格}
+为方便实现，六边形型网格的编号方式与前面的不大相同。
+从左下角开始，仍取点a为电势零点；然后从右下至左上、从左下到右上依次进行编号。
+\autoref{fig:network_hexagon} 为周期数为4时的编号示例。
+
+下面定义如何表示格点在网格中的位置。
+这段函数注释比较清楚地标明了坐标架：
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:_hex_index_comment-end:_hex_index_comment]{1_resister_network.cpp}
+}
+这里将\autoref{fig:network_hexagon} 中的网格顺时针旋转了120\textdegree 。
+$x=0$的点为每一行中编号最小的；
+点$(0,0)$为编号为0的点。
+
+使用的接口声明如下：
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:hex_api-end:hex_api]{1_resister_network.cpp}
+}
+各函数的功能与方型的类似。
+
+\paragraph{\texttt{hex\_network()}}
+与方型的\verb|square_network()|十分接近。
+$\vb{G}$的规模为$(\text{\texttt{N}}\times(\text{\texttt{N}}+4))\times(\text{\texttt{N}}\times(\text{\texttt{N}}+4))$。
+类似 \nameref{para:sq_network}，矩阵半带宽也为$\text{\texttt{N}}+1$。
+
+点$(0,0)$与$(0,1)$和a点直接相连，结尾有考虑这一特殊情况。
+
+\paragraph{\texttt{\_hex\_index()}与\texttt{\_hex\_xy()}}
+的定义如下：{
+    \linespread{1.0}
+    \lstinputlisting[linerange=end:_hex_index_comment-end:_hex_index]{1_resister_network.cpp}
+    \lstinputlisting[linerange=beg:_hex_xy-end:_hex_xy]{1_resister_network.cpp}
+}
+注意到，若将$y$为奇数与偶数的行两两凑成一对，它们的元素个数仍然组成一个等差数列$\{4,6,8,\cdots,2\text{\texttt{N}}+2\}$。
+变量\verb|l|存储了$(\text{\texttt{x}},\text{\texttt{y}})$在这一“等差数列”中的位置。
+由等差数列求和可知，直到上一奇数行尾止，元素个数为$\frac{(4+(2l+2))l}{2}=l^2+3l$。
+
+然后，如果$y$为奇数，还要加上$y-1$行的$l+2$。
+再加上$x$的贡献，故最终\verb|_hex_index()|得到\begin{equation}
+    l(l+2)+l+y\bmod 2 \times(l+2)+x = (l+y\bmod 2)(l+2)+l+x.
+\end{equation}
+
+\verb|_hex_xy()| 则是逐步将满的行从 \verb|index| 中减去，直到一对合理的$(x,y)$值。
+对于$y=2N$的情况，由于定义，$x$要减去1。
+
+\paragraph{\texttt{\_triangle\_connections()}}
+的定义如下：
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:_hex_connections-end:_hex_connections]{1_resister_network.cpp}
+}
+
+注意到，网格可以抽象为\autoref{fig:abs_hex_network}。
+如果此格点编号大于27（$N(N+3)-1$），那么其与$y$比它大1的点相连；
+如果此格点在倒数第二行且不在最左边，那么其与$y$比它大1、$x$比它小1的点相连；
+如果此格点在奇数行，那么其与$y$比它大1、$x$比它大1的点相连。
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\textwidth]{figures/abs_hexagon.pdf}
+    \caption{抽象化的六边形型网格。注意到点14与点17均可作为b}
+    \label{fig:abs_hex_network}
+\end{figure}
+
+\section{电阻计算过程}
+下面将介绍上面给出的各\verb|calc_*<N>()|函数的实现。
+详细介绍的将是方型网格；其他网格与之十分类似。
+
+\subsection{方型网格\texttt{calc\_square<N>()}}
+\label{ssec:calc_square}
+此函数为函数模板，模板参数\verb|size_t N|为空间周期数。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:calc_square-calc_square_1]{1_resister_network.cpp}
+}
+
+下面看具体实现。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=calc_square_1-calc_square_2]{1_resister_network.cpp}
+}
+为方便，定义常量表达式\verb|mat_side|为系数矩阵边长；\verb|band_width|为半带宽。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=calc_square_2-calc_square_3]{1_resister_network.cpp}
+}
+使用前面介绍的 \nameref{para:sq_network} 生成系数矩阵$\vb{G}$。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=calc_square_3-calc_square_4]{1_resister_network.cpp}
+}
+首先计算$R_\text{ab}$。
+先使用\textbf{基于LDL分解的直接解法}。
+定义半带状矩阵\verb|l|与数组\verb|d|存储分解结果。
+
+LDL分解的具体实现 \verb|ldl_factor()| 会在\autoref{ssec:ldl} 中详述。
+总之，该分解将对称正定矩阵$\vb{A}$分解为
+\begin{equation}\label{eq:ldl}
+    \vb{A} = \vb{L}\vb{D}\vb{L}^T,
+\end{equation}
+那么矩阵方程$\vb{A}\vb*{x}=\vb*{b}$就变成了
+\begin{equation}\label{eq:after_ldl}
+    \vb{L}\qty(\vb{D}\qty(\vb{L}^T\vb*{x})) = \vb*{b},
+\end{equation}
+可用三角矩阵的回代算法求解。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=calc_square_4-calc_square_5]{1_resister_network.cpp}
+}
+生成非齐次项$\vb*{b}$.
+先将其初始化为0矢量。
+获得b点$(N,0)$的编号，然后将$\vb*{b}$的该分量设为1，表明流入单位电流。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=calc_square_5-calc_square_6]{1_resister_network.cpp}
+}
+计算并输出，通过三次回代将式 \eqref{eq:after_ldl} 中的三个简单矩阵依次消去。
+由于将a点电势设为0，b点的电势在单位电流的时候即为$R_\text{ab}$。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=calc_square_6-calc_square_7]{1_resister_network.cpp}
+}
+再使用\textbf{基于共轭梯度法的迭代解法}。
+函数 \verb|conj_grad()| 使用返回值报告是否成功求解。
+共轭梯度法的具体实现会在\autoref{ssec:conj_grad}中详述。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=calc_square_7-end:calc_square]{1_resister_network.cpp}
+}
+后面对$R_\text{ac}$的求解与前面求解$R_\text{ab}$步骤几乎完全一致，故不再更多解释。
+
+\subsection{三角型网格\texttt{calc\_triangle<N>()}}
+与\autoref{ssec:calc_square} 几乎完全一致，唯一的区别是流入电流的位置不同：
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:calc_triangle-end:calc_triangle]{1_resister_network.cpp}
+}
+
+\subsection{六边形型网格\texttt{calc\_hex<N>()}}
+与\autoref{ssec:calc_square} 几乎完全一致，唯一的区别是流入电流的位置\footnote{这里其实使用了与b点等价的另一点。亦即\autoref{fig:abs_hex_network} 中的14而非17。}不同：
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:calc_hex-end:calc_hex]{1_resister_network.cpp}
+}
+
+\subsection{LDL分解\texttt{ldl\_factor()}}
+\label{ssec:ldl}
+LDL分解
+\begin{equation}\tag{\ref{eq:ldl}}
+    \vb{A} = \vb{L}\vb{D}\vb{L}^T.
+\end{equation}
+令$\vb{T} = \vb{D}\vb{L}^T$，则$\vb{T}$的对角元即为$\vb{D}$。
+它们的元素满足
+\begin{equation}
+    t_{ji} = a_{ij} - \sum_{k=0}^{j-1} l_{ik}t_{kj},\quad
+    l_{ij} = \frac{t_{ji}}{d_{j}},\quad
+    d_{i} = a_{ii} - \sum_{k=0}^{i-1} l_{ik}t_{ki}.
+\end{equation}
+按$d_0,l_{10},d_1,l_{20},l_{21},d_2,l_{30},l_{31},l_{32},d_3,\cdots$的顺序求解即可。
+
+对于带状矩阵，可以通过避免不必要的求和来减少运算。
+下面给出带状对称矩阵的LDL分解运算。
+（位于\texttt{misc/linear\_eq\_direct.h}中）
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:ldl_factor-end:ldl_factor]{../misc/linear_eq_direct.h}
+}
+\verb|temp_t|存储矩阵$\vb{T}$；
+\verb|limit|存储每个子循环中$j$的求和下界——0与$i-\text{texttt{M}}$中的大者；
+\verb|t_jj|则是为了减少不必要的成员访问。
+
+此外，针对对角元$d_j=0$的情况，只需将$\vb{L}$的对应列取为0即可。
+
+\subsection{共轭梯度法\texttt{conj\_grad()}}
+\label{ssec:conj_grad}
+函数接口如下。
+（位于\texttt{misc/linear\_eq\_iterative.h}中）
+默认在残差与初始残差的范数之比为\texttt{rel\_epsilon}$=1\times 10^{-15}$时停止迭代，并返回0。
+若到\texttt{max\_times}$=1000$仍没能停止，返回1。
+此外，\texttt{sparse}参数控制是否将$\vb{A}$视作稀疏矩阵。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:conj_grad_dec-end:conj_grad_dec]{../misc/linear_eq_iterative.h}
+}
+共轭梯度法的基本想法是不断地确定$\vb*{x}$的搜索方向$\vb*{p}$，并使残差$\vb*{r}=\vb*{b}-\vb{A}\vb*{x}$在此方向上取最小。
+随后，在$\vb*{p}$与$\vb*{r}$张成的平面上寻找新的$\vb*{p}$。
+其利用向量正交性质优化后的伪代码见\autoref{fig:ldl}。
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.7\textwidth,page=93]{../chap_3_net.pdf}
+    \caption{LDL分解的伪代码}
+    \label{fig:ldl}
+\end{figure}
+
+实现如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:conj_grad_imp-end:conj_grad_imp]{../misc/linear_eq_iterative.h}
+}
+其中，为减少运算，使用\verb|Ap|暂存$\vb{A}\vb*{p}$的结果；
+使用\verb|rr|暂存$\vb*{r}^T\vb*{r}$的结果。
+
+\section{计算结果}
+将各计算结果总结于\autoref{tab:R_ab_result}。
+使用的数据类型为\texttt{double}，其相对精度大约至$10^{-16}$，故在输出时，将最大有效位数设置为了16。
+
+\begin{table}
+\centering
+\caption{各网格的电阻计算结果}
+\label{tab:R_ab_result}
+\begin{tabular}{ccll}
+    \toprule
+    & \texttt{N} & \multicolumn{1}{c}{直接解法} & \multicolumn{1}{c}{迭代解法} \\
+    \midrule
+    \multirow{4}{*}{方型$R_\text{ab}$}   & 1          & 0.75                     & 0.75                     \\
+     & 4  & 1.901515151515153 & 1.901515151515151 \\
+     & 16 & 3.463587937288163 & 3.463587937288109 \\
+     & 64 & 5.171646779478962 & 5.171646779479373 \\
+    \hline
+    \multirow{4}{*}{方型$R_\text{ac}$}   & 1          & 1                        & 0.9999999999999999       \\
+     & 4  & 2.136363636363636 & 2.136363636363637 \\
+     & 16 & 3.685592463430818 & 3.685592463430749 \\
+     & 64 & 5.392376786288083 & 5.39237678628829  \\
+    \hline
+    \multirow{4}{*}{三角$R_\text{ab}$}  & 1          & 0.6666666666666666       & 0.6666666666666666       \\
+     & 4  & 1.67479674796748  & 1.67479674796748  \\
+     & 16 & 3.024372524685346 & 3.024372524685373 \\
+     & 64 & 4.503230022407012 & 4.503230022407678 \\
+    \hline
+    \multirow{3}{*}{六边形$R_\text{ab}$} & 4          & 2.819373942470396        & 2.819373942470387        \\
+     & 16 & 6.534376528387103 & 6.534376528387018 \\
+     & 64 & 10.83543674481138 & 10.83543674481063 \\
+    \bottomrule
+\end{tabular}
+\end{table}
+
+可以发现，两种结果十分接近，但在最后几位略有差别。
+这反映了浮点数运算过程中引入的误差。
+同时，\texttt{N}越大，这一偏差也相应增大。
+这与矩阵规模越大，进行的运算次数越多是有关的。
+
+\subsection{耗时情况与分析}
+主函数\verb|main()|如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:main-end:main]{1_resister_network.cpp}
+}
+测试得到耗时约为2.7~s。
+在使用编译参数~\texttt{-O3}进行优化且接通电源时，耗时约为0.9~s。
+
+下面考察两种方法的耗时差别。
+在\verb|calc_square()|的基础上定义计时测试函数\verb|timing()|如下，并取消\verb|main()|结尾部分的注释进行计时测试。
+使用的时钟为\verb|<chrono>|中的单向时钟\verb|chrono::steady_clock|。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:timing-end:timing]{1_resister_network.cpp}
+}
+计时结果如\autoref{tab:timing} 所示。
+计算单次运行用时，用双对数坐标绘制于\autoref{fig:timing}。
+图中也展示了进行幂函数拟合后的结果。
+
+\begin{table}
+\centering
+\caption{对方型网格的$R_\text{ab}$用不同方式进行求解的用时测量}
+\label{tab:timing}
+\begin{tabular}{ccP{4.0}P{5.0}}
+    \toprule
+    \texttt{N} & \texttt{repeat} & \multicolumn{1}{c}{直接解法 (ms)}& \multicolumn{1}{c}{迭代解法 (ms)} \\ \midrule
+    1 & $10^6$ & 815       & 2888      \\
+    2 & $10^6$ & 3352      & 14321     \\
+    4 & $10^4$ & 218       & 816       \\
+    8 & $10^4$ & 1595      & 6664      \\
+    16& $10^3$ & 1604      & 4824      \\
+    64& $10^1$ & 2764    & 5158      \\
+    128& $2$ & 8531    & 16996      \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/timing.pdf}
+    \caption{对方型网格的$R_\text{ab}$用不同方式进行求解的用时测量}
+    \label{fig:timing}
+\end{figure}
+
+容易发现，在这些测试用例下，直接解法均比迭代解法快速；但是，迭代解法的复杂度约为$O(n^{3.05})$，是优于直接解法的$O(n^{3.22})$的。
+根据拟合结果，可以推测在\texttt{N} $\approx 6000$时会发生反超。
+但可惜的是，\texttt{N} $= 256$时本人计算机的内存便不足以支撑运算，无法验证这一点。
+
+那么，迭代解法用时偏长是否可能与我将终止判据（相对误差小于$10^{-15}$）设得过小有关呢？
+我对此进行实验，将判据改为$10^{-8}$，但迭代解法用时并没有显著缩短。
+
+\textbf{总结：}\begin{inparaenum}
+    \item 迭代解法复杂度低于直接解法；
+    \item 但迭代解法在小规模数据下不如直接解法快。
+\end{inparaenum}
+
+\section{三角\texorpdfstring{$RLC$}{RLC}网格的频率响应}
+三角网格的交流电情形基本基于\autoref{ssec:triangle}，但仍使用了几个不同的函数，如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:ac_api-end:ac_api]{1_resister_network.cpp}
+}
+定义了枚举类\verb|Ac_Type|以增加可读性；此外针对复数做了一些改动。
+
+\subsection{交流网格的实现}
+\paragraph{\texttt{\_triangle\_ac\_connections()}}
+的返回值不再是一个\verb|vector|，而是同时保存了连线的空间信息与元件信息的\texttt{map<size\_t, AC\_Type>}，以便提示\texttt{triangle\_ac\_network()}生成什么样的元件。函数定义如下。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:ac_conn-end:ac_conn]{1_resister_network.cpp}
+}
+
+\paragraph{\texttt{triangle\_ac\_network()}}
+再利用\texttt{\_triangle\_ac\_connections()}生成网格。
+该函数整体上与 \nameref{para:tri_net} 十分接近，定义如下：
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:ac_net-end:ac_net]{1_resister_network.cpp}
+}
+主要区别为：
+\begin{compactenum}
+    \item 提供参数\verb|hermite|以生成厄密共轭的系数矩阵；
+    \item 根据\texttt{\_triangle\_ac\_connections()}返回的\texttt{AC\_Type}的值确定电容、电感还是电阻；
+    \item 接收参数\texttt{omega}作为交流电的圆频率。
+\end{compactenum}
+
+\subsection{响应曲线的计算与结果}
+\paragraph{\texttt{calc\_triangle\_ac()}}
+的实现与之前有所不同。
+
+交流电下产生的系数矩阵是一个对称复矩阵，而复的LDL分解要求一个厄密矩阵，且算法与实数情况有较大不同。
+鉴于要求的矩阵规模较小，故直接解法使用高斯约当消元法求逆。
+
+共轭梯度法迭代也要求厄密矩阵，故使用$\vb{G}^\dagger\vb{G}$替代$\vb{G}$，使用$\vb{G}^\dagger\vb*{b}$替代$\vb*{b}$。
+同时，共轭梯度法中的所有转置运算都被替换为求厄密共轭。
+
+函数定义如下：
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:ac_calc-end:ac_calc]{1_resister_network.cpp}
+}
+
+直接解法与迭代解法的结果十分接近，故仅取直接解法的结果列于\autoref{tab:ac} 中。
+可以发现，在$\omega=1$附近，虚部的符号发生了改变。
+绘制图像于\autoref{fig:ac_res} 中。
+
+\begin{longtable}{cll}
+    \caption{三角型网格在不同的角频率$\omega$下的阻抗}
+    \label{tab:ac}\\
+    \toprule
+    $\omega$ & \multicolumn{1}{c}{实部}& \multicolumn{1}{c}{虚部} \\
+    \midrule
+    \endfirsthead
+    \multicolumn{3}{l}{接上页} \\
+    \toprule
+    $\omega$ & \multicolumn{1}{c}{实部}& \multicolumn{1}{c}{虚部} \\
+    \midrule
+    \endhead
+    \bottomrule
+    \multicolumn{3}{r}{接下页} \\
+    \endfoot
+    \bottomrule
+    \endlastfoot
+    0.05&	2.086570517377066&  \multicolumn{1}{@{$-$}l}{0.03697452355659513}\\
+    0.15&	2.105590723198735&  \multicolumn{1}{@{$-$}l}{0.1292639140107299}\\
+    0.25&	2.116312012793758&  \multicolumn{1}{@{$-$}l}{0.2613200206792055}\\
+    0.35&	2.089046293761019&  \multicolumn{1}{@{$-$}l}{0.4314963859144606}\\
+    0.45&	2.000152657164885&  \multicolumn{1}{@{$-$}l}{0.6294205602210458}\\
+    0.55&	1.820938280388908&  \multicolumn{1}{@{$-$}l}{0.8395385724838142}\\
+    0.65&	1.511673777909439&  \multicolumn{1}{@{$-$}l}{1.019674292104832}\\
+    0.75&	1.05922940811744&   \multicolumn{1}{@{$-$}l}{1.072184275825388}\\
+    0.85&	0.5393755324216926& \multicolumn{1}{@{$-$}l}{0.8886779197097765}\\
+    0.95&	0.08562948250802678&    \multicolumn{1}{@{$-$}l}{0.386328021169947}\\
+    1.05&	0.07809376057427178&    0.3694391489922765\\
+    1.15&	0.439752147816773&  0.819426665811231\\
+    1.25&	0.8002429070290147& 1.014324319972504\\
+    1.35&	1.105754417601758&  1.075977616913043\\
+    1.45&	1.347357192295445&  1.062758845386196\\
+    1.55&	1.530122196546158&  1.012898907626556\\
+    1.65&	1.665960840831235&  0.9491265287520781\\
+    1.75&	1.766970639544693&  0.8830669088315197\\
+    1.85&	1.842816453039244&  0.8199255073122849\\
+    1.95&	1.900520408503763&  0.7616633450148784\\
+    2.05&	1.945013936696054&  0.7087376809319406\\
+    2.15&	1.979742895951405&  0.6609617168771185\\
+    2.25&	2.007136475411896&  0.617905830610615\\
+    2.35&	2.028932965855138&  0.579077196060318\\
+    2.45&	2.046397654716548&  0.5439959964838148\\
+    2.55&	2.060467405063928&  0.5122244130065424\\
+    2.65&	2.071847178436657&  0.4833745621845713\\
+    2.75&	2.081075313834781&  0.4571074652310582\\
+    2.85&	2.088568387232175&  0.4331285753546922\\
+    2.95&	2.094652567441202&  0.4111823425027696\\
+    3.05&	2.099585907409738&  0.3910468793872911\\
+    3.15&	2.103574451311726&  0.3725291393382476\\
+    3.25&	2.106784052592502&  0.355460720822583\\
+    3.35&	2.109349169132848&  0.3396942857754414\\
+    3.45&	2.111379494858376&  0.3251005295764186\\
+    3.55&	2.112965020158815&  0.3115656269562989\\
+    3.65&	2.114179935671448&  0.2989890800790772\\
+    3.75&	2.115085673771645&  0.2872819029663876\\
+    3.85&	2.115733299647044&  0.276365085933262\\
+    3.95&	2.116165406453527&  0.2661682928825249\\
+    4.05&	2.116417628584686&  0.2566287524356488\\
+    4.15&	2.116519858176469&  0.2476903107786637\\
+    4.25&	2.116497229061063&  0.2393026198277187\\
+    4.35&	2.116370917088055&  0.231420439012023\\
+    4.45&	2.116158794418082&  0.2240030327959009\\
+    4.55&	2.115875966941544&  0.2170136491698679\\
+    4.65&	2.115535217598628&  0.2104190668675873\\
+    4.75&	2.115147373523699&  0.2041892011231947\\
+    4.85&	2.114721611212198&  0.1982967594631869\\
+    4.95&	2.114265711027013&  0.1927169404031023\\
+\end{longtable}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=.95\textwidth]{figures/ac_res.pdf}
+    \caption{交流电网格的响应曲线}
+    \label{fig:ac_res}
+\end{figure}
+
+观察\autoref{fig:ac_res}，可以很明显地发现，这一网格存在一个共振频率：$\omega=1$。
+
+\section{总结}
+本题中，本人使用线性方程组的直接解法与迭代解法求解了\autoref{fig:network} 所示的多种不同规模的电阻网格的电阻，结果列于\autoref{tab:R_ab_result} 中。
+对两种方法的耗时以及复杂度做了简要分析，反映于\autoref{fig:timing}、\autoref{tab:timing} 中。
+
+此外，对含交流元件的三角网格的频率响应做了计算，结果见\autoref{fig:ac_res}、\autoref{tab:ac}。

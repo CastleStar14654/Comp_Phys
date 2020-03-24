@@ -1,0 +1,174 @@
+\documentclass{standalone}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{warpcol}
+\usepackage{array}
+\usepackage{esint}
+\usepackage{subfig}
+\usepackage{rotating}
+\usepackage{booktabs}
+\usepackage{paralist}
+\usepackage{graphicx}
+\usepackage{physics}
+\usepackage{ucs}
+\usepackage{indentfirst}
+\usepackage{tikz}
+\usepackage{colortbl}
+\usepackage{xcolor}
+\usepackage{xeCJK}
+    \setCJKmainfont[BoldFont={Noto Serif CJK SC Bold},ItalicFont={FangSong}]{Noto Serif CJK SC}
+    \setCJKsansfont[BoldFont={Noto Sans CJK SC Bold},ItalicFont={KaiTi}]{Noto Sans CJK SC}
+    \setCJKmonofont[BoldFont={Noto Sans Mono CJK SC Bold}]{Noto Sans Mono CJK SC}
+
+\DeclareUnicodeCharacter{"00B0}{\textdegree}
+\DeclareUnicodeCharacter{"2103}{\textcelsius}
+\DeclareUnicodeCharacter{"00B5}{\textmu}
+
+\pgfsetxvec{\pgfpoint{2em}{0}}
+\pgfsetyvec{\pgfpoint{0}{2em}}
+
+\usetikzlibrary{angles,patterns,datavisualization,plotmarks,arrows.meta,datavisualization.formats.functions,decorations.markings}
+
+\begin{document}
+\begin{tikzpicture}
+    \datavisualization[
+    scientific axes,
+    y axis={
+        grid,
+        label={$R$/$\phi$}, attribute=y,
+        include value = {-1.4, 2.2},
+        ticks={euro about strategy, minor steps between steps=4, style={/pgf/number format/fixed, /pgf/number format/fixed zerofill, /pgf/number format/precision=2}},
+        scaling=-1.5 at 0em and 2.5 at 20em
+    },
+    x axis={
+        grid,
+        label={$\omega$}, attribute=omega,
+        include value = {0,5},
+        ticks={euro about strategy, minor steps between steps=4, style={/pgf/number format/fixed, /pgf/number format/fixed zerofill, /pgf/number format/precision=2}},
+        scaling=0 at 0em and 5 at 35em
+    },
+    legend=above,
+    visualize as smooth line=line1,
+        line1={style=densely dotted, label in legend={text={阻抗大小$R$}}},
+    visualize as smooth line=line1_,
+        line1_={style=densely dotted},
+    visualize as smooth line=line2,
+        line2={style=densely dashed, label in legend={text={相位$\phi$}}},
+    visualize as smooth line=line2_,
+        line2_={style=densely dashed},
+    ]
+    data[set=line1] {
+        omega, y
+        0.05, 2.08689809
+        0.15, 2.1095548
+        0.25, 2.132384742
+        0.35, 2.133144052
+        0.45, 2.096850232
+        0.55, 2.005153669
+        0.65, 1.823428988
+        0.75, 1.507164908
+        0.85, 1.03955491
+        0.95, 0.395704117
+    }
+    data[set=line1_] {
+        omega, y
+        1.05, 0.37760286
+        1.15, 0.929968823
+        1.25, 1.291991694
+        1.35, 1.542861194
+        1.45, 1.716050048
+        1.55, 1.835003579
+        1.65, 1.917359301
+        1.75, 1.975346149
+        1.85, 2.016990411
+        1.95, 2.04746401
+        2.05, 2.070117947
+        2.15, 2.087163704
+        2.25, 2.100096295
+        2.35, 2.109952459
+        2.45, 2.117469009
+        2.55, 2.123181522
+        2.65, 2.127487179
+        2.75, 2.130685734
+        2.85, 2.133006861
+        2.95, 2.134628843
+        3.05, 2.135691608
+        3.15, 2.136306025
+        3.25, 2.13656064
+        3.35, 2.13652665
+        3.45, 2.136261624
+        3.55, 2.135812332
+        3.65, 2.135216914
+        3.75, 2.13450657
+        3.85, 2.133706881
+        3.95, 2.132838856
+        4.05, 2.131919768
+        4.15, 2.13096382
+        4.25, 2.129982691
+        4.35, 2.128985974
+        4.45, 2.127981532
+        4.55, 2.126975795
+        4.65, 2.125973998
+        4.75, 2.124980386
+        4.85, 2.123998375
+        4.95, 2.123030691
+    }
+    data[set=line2] {
+        omega, y
+        0.05, -0.017718382
+        0.15, -0.061313857
+        0.25, -0.122857083
+        0.35, -0.203687409
+        0.45, -0.30487538
+        0.55, -0.432002744
+        0.65, -0.593428975
+        0.75, -0.791476152
+        0.85, -1.025288391
+        0.95, -1.352673045
+    }
+    data[set=line2_] {
+        omega, y
+        1.05, 1.362478349
+        1.15, 1.078253908
+        1.25, 0.902834623
+        1.35, 0.771750772
+        1.45, 0.667857562
+        1.55, 0.584745793
+        1.65, 0.517855045
+        1.75, 0.463458155
+        1.85, 0.418630256
+        1.95, 0.381166268
+        2.05, 0.349433763
+        2.15, 0.32222664
+        2.25, 0.298647014
+        2.35, 0.27801806
+        2.45, 0.259822071
+        2.55, 0.243657025
+        2.65, 0.229206095
+        2.75, 0.216216105
+        2.85, 0.204482118
+        2.95, 0.193836289
+        3.05, 0.184139672
+        3.15, 0.175276131
+        3.25, 0.167147747
+        3.35, 0.159671308
+        3.45, 0.152775596
+        3.55, 0.146399271
+        3.65, 0.140489185
+        3.75, 0.134999054
+        3.85, 0.129888371
+        3.95, 0.125121529
+        4.05, 0.120667106
+        4.15, 0.116497266
+        4.25, 0.112587267
+        4.35, 0.108915048
+        4.45, 0.105460877
+        4.55, 0.102207059
+        4.65, 0.099137684
+        4.75, 0.096238411
+        4.85, 0.093496285
+        4.95, 0.090899577
+    }
+    ;
+\end{tikzpicture}
+\end{document}

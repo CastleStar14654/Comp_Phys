@@ -894,6 +894,7 @@ inline void ldl_factor(const Symm_Matrix<T, N> &in_mat,
     }
 }
 
+/*beg:ldl_factor*/
 template <typename T, size_t N, size_t M>
 inline void ldl_factor(const Symm_Band_Matrix<T, N, M> &in_mat,
                        Low_Band_Matrix<T, N, M> &out_l,
@@ -939,6 +940,7 @@ inline void ldl_factor(const Symm_Band_Matrix<T, N, M> &in_mat,
         out_d[i] = temp_t(i, i);
     }
 }
+/*end:ldl_factor*/
 
 } // namespace Misc
 

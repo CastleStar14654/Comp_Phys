@@ -164,6 +164,7 @@ std::pair<size_type, size_type> shape() const; // 返回矩阵形状
 
 \section{矩阵的直接解法}
 \texttt{"linear\_eq\_direct.h"}中主要是对矩阵进行分解的算法，提供\begin{enumerate}
+    \item 三角矩阵回代 \texttt{back_sub()}
     \item LU分解 \texttt{lu\_factor()}
     \item LDL分解 \texttt{ldl\_factor()}
     \item Gauss-Jordan法求逆矩阵 \texttt{inv()}；对特殊矩阵也会调用用其他算法

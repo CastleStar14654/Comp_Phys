@@ -1,0 +1,111 @@
+\documentclass{standalone}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{warpcol}
+\usepackage{array}
+\usepackage{esint}
+\usepackage{subfig}
+\usepackage{rotating}
+\usepackage{booktabs}
+\usepackage{paralist}
+\usepackage{graphicx}
+\usepackage{physics}
+\usepackage{ucs}
+\usepackage{indentfirst}
+\usepackage{tikz}
+\usepackage{colortbl}
+\usepackage{xcolor}
+\usepackage{xeCJK}
+    \setCJKmainfont[BoldFont={Noto Serif CJK SC Bold},ItalicFont={FangSong}]{Noto Serif CJK SC}
+    \setCJKsansfont[BoldFont={Noto Sans CJK SC Bold},ItalicFont={KaiTi}]{Noto Sans CJK SC}
+    \setCJKmonofont[BoldFont={Noto Sans Mono CJK SC Bold}]{Noto Sans Mono CJK SC}
+
+\DeclareUnicodeCharacter{"00B0}{\textdegree}
+\DeclareUnicodeCharacter{"2103}{\textcelsius}
+\DeclareUnicodeCharacter{"00B5}{\textmu}
+
+\pgfsetxvec{\pgfpoint{2em}{0}}
+\pgfsetyvec{\pgfpoint{0}{2em}}
+
+\usetikzlibrary{angles,patterns,datavisualization,plotmarks,arrows.meta,datavisualization.formats.functions,decorations.markings}
+
+\begin{document}
+\begin{tikzpicture}
+    \datavisualization[
+    scientific axes,
+    x axis={
+        logarithmic,
+        grid,
+        label={\texttt{N}}, attribute=N,
+        include value = {0.95,140},
+        ticks={step=0.60206},
+        scaling=1 at 0em and 140 at 35em
+    },
+    y axis={
+        logarithmic,
+        grid,
+        label={$t$ (\textmu s)}, attribute=t,
+        include value = {0.1,10000000},
+        scaling=0.1 at 0em and 1000000 at 20em
+    },
+    legend=above,
+    visualize as smooth line=line12,
+        line12={style=densely dotted, label in legend={text={}}},
+    visualize as scatter=sca12,
+        sca12={style={mark=+}, label in legend={text={直接解法}}},
+    visualize as smooth line=line34,
+        line34={style=densely dashed, label in legend={text={}}},
+    visualize as scatter=sca34,
+        sca34={style={mark=x}, label in legend={text={迭代解法}}},
+    ]
+    data[set=line12] {
+        N, t
+        1, 0.3536
+        2, 3.300284003
+        4, 30.80281251
+        8, 287.494427
+        16, 2683.295414
+        32, 25044.22209
+        64, 233747.3008
+        128, 2181652.934
+    }
+    data[set=sca12] {
+        N, t
+        1, 8.15E-01
+        2, 3.35E+00
+        4, 2.18E+01
+        8, 1.60E+02
+        16, 1.60E+03
+        32, 1.97E+04
+        64, 2.76E+05
+        128, 4.27E+06
+    }
+    data[set=line34] {
+        N, t
+        1, 1.5915
+        2, 13.18556199
+        4, 109.2422525
+        8, 905.0709973
+        16, 7498.50439
+        32, 62125.03577
+        64, 514705.3158
+        128, 4264328.524
+    }
+    data[set=sca34] {
+        N, t
+        1, 2.89E+00
+        2, 1.43E+01
+        4, 8.16E+01
+        8, 6.66E+02
+        16, 4.82E+03
+        32, 4.46E+04
+        64, 5.16E+05
+        128, 8.50E+06
+    }
+    info {
+        \node at (visualization cs: N=8, t=1e6)  {$\frac{t}{1\ \text{\textmu s}} = 1.592\times\text{\texttt{N}}^{3.0505}, r=0.9965$};
+        \node at (visualization cs: N=16, t=1)  {$\frac{t}{1\ \text{\textmu s}} = 0.3536\times\text{\texttt{N}}^{3.2224}, r=0.9953$};
+    }
+    ;
+\end{tikzpicture}
+\end{document}

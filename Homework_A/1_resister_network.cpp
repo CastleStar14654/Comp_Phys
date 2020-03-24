@@ -52,6 +52,7 @@ template <size_t N>
 inline vector<size_t> _hex_connections(size_t index);
 /*end:hex_api*/
 
+/*beg:ac_api*/
 enum class AC_Type
 {
     resister,
@@ -61,9 +62,11 @@ enum class AC_Type
 template <size_t N>
 inline void calc_triangle_ac(double omega);
 template <size_t N>
-inline Symm_Band_Matrix<complex<double>, N *(N + 3) / 2, N + 1> triangle_ac_network(double omega, bool hermite = false);
+inline Symm_Band_Matrix<complex<double>, N *(N + 3) / 2, N + 1>
+triangle_ac_network(double omega, bool hermite = false);
 template <size_t N>
 inline map<size_t, AC_Type> _triangle_ac_connections(size_t index);
+/*end:ac_api*/
 
 template <size_t N>
 inline void timing(size_t repeat);
@@ -94,9 +97,13 @@ int main()
     }
     // cout << "==== TIMING ====" << endl;
     // timing<1>(1000000);
+    // timing<2>(1000000);
     // timing<4>(10000);
+    // timing<8>(10000);
     // timing<16>(1000);
+    // timing<32>(1000);
     // timing<64>(10);
+    // timing<128>(2);
 }
 /*end:main*/
 
@@ -636,6 +643,7 @@ inline vector<size_t> _hex_connections(size_t index)
 
 // =============================================================
 
+/*beg:ac_calc*/
 template <size_t N>
 inline void calc_triangle_ac(double omega)
 {
@@ -675,7 +683,7 @@ inline void calc_triangle_ac(double omega)
     array<complex<double>, mat_side> b{};
     size_t idx_b{_triangle_index<N>(0, N)};
     b[idx_b] = 1.;
-    // b = mat_g_dagger*b;
+
     cout << "finished ";
 
     cout << "calculating x... ";
@@ -706,6 +714,7 @@ inline void calc_triangle_ac(double omega)
 
     cout << "=========== END ===========" << endl;
 }
+/*end:ac_calc*/
 
 // the N-sides triangular network is like:
 //     N*(N+3)/2-1
@@ -716,8 +725,10 @@ inline void calc_triangle_ac(double omega)
 //     X           0           ... ...     N-2      N-1
 // then, point X is set as 0V
 // so, the return matrix is of (N*(N+3)/2) * (N*(N+3)/2)
+/*beg:ac_net*/
 template <size_t N>
-inline Symm_Band_Matrix<complex<double>, N *(N + 3) / 2, N + 1> triangle_ac_network(double omega, bool hermite)
+inline Symm_Band_Matrix<complex<double>, N *(N + 3) / 2, N + 1>
+triangle_ac_network(double omega, bool hermite)
 {
     constexpr size_t mat_length{N * (N + 3) / 2};
     Symm_Band_Matrix<complex<double>, mat_length, N + 1> res{};
@@ -761,8 +772,10 @@ inline Symm_Band_Matrix<complex<double>, N *(N + 3) / 2, N + 1> triangle_ac_netw
     }
     return res;
 }
+/*end:ac_net*/
 
 // return connections with higher indices
+/*beg:ac_conn*/
 template <size_t N>
 inline map<size_t, AC_Type> _triangle_ac_connections(size_t index)
 {
@@ -782,6 +795,7 @@ inline map<size_t, AC_Type> _triangle_ac_connections(size_t index)
     }
     return res;
 }
+/*end:ac_conn*/
 
 // ===============================================
 
@@ -823,9 +837,8 @@ inline void timing(size_t repeat)
     }
     auto t2 = chrono::steady_clock::now();
 
-    cout << "ldl*" << repeat << ": " <<
-        chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count()
-        << "ms" << endl;
+    cout << "ldl*" << repeat << ": " << chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
+         << "ms" << endl;
 
     cout << ">>> iterative method --- conjugate gradient" << endl;
 
@@ -837,9 +850,8 @@ inline void timing(size_t repeat)
     }
     t2 = chrono::steady_clock::now();
 
-    cout << "conj_grad*" << repeat << ": " <<
-        chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count()
-        << "ms" << endl;
+    cout << "conj_grad*" << repeat << ": " << chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
+         << "ms" << endl;
 
     cout << "=========== END ===========" << endl;
 }
