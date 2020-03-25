@@ -11,3 +11,5 @@ __latexindent_temp.tex
 *.toc
 Stroustrup_*
 .vscode
+*.eps
+*.xlsx
