@@ -147,12 +147,12 @@ def main():
         plt.savefig(f'p9.6_{ry}_{count}.eps'); plt.clf()
         # plt.show()
         count += 1
-    end: problem_6
+    # end: problem_6
 
     # problem_7
-    rs = [0, 0.317, 0.719, 0.8328, 0.85848,
+    rs = [0.317, 0.719, 0.8328, 0.85848,
           0.864062, 0.865252, 0.8655092, 0.8655637]
-    delta = [n - p for n, p in zip(rs[2:], rs[1:-1])]
+    delta = [n - p for n, p in zip(rs[1:], rs[:-1])]
     Fs = [p/n for n, p in zip(delta[1:], delta[:-1])]
     print(sum(Fs)/len(Fs))
     print(delta)

@@ -1,0 +1,125 @@
+\documentclass[a4paper,unicode]{report}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{textgreek}
+\usepackage{esint}
+\usepackage{subfig}
+\usepackage{rotating}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{paralist}
+\usepackage{titlesec}
+\usepackage{graphicx}
+\usepackage{physics}
+\usepackage{ucs}
+\usepackage{listings}
+\usepackage{multirow}
+\usepackage{tablefootnote}
+\usepackage{indentfirst}
+\usepackage{tikz}
+\usepackage{warpcol}
+\usepackage[pdftitle=计算物理第一次大作业,pdfauthor=林旭辰,bookmarksnumbered=true]{hyperref}
+\usepackage{natbib}
+\usepackage{xcolor}
+\usepackage{xeCJK}
+    \setCJKmainfont[BoldFont={Noto Serif CJK SC Bold},ItalicFont={FangSong}]{Noto Serif CJK SC}
+    \setCJKsansfont[BoldFont={Noto Sans CJK SC Bold},ItalicFont={KaiTi}]{Noto Sans CJK SC}
+    \setCJKmonofont[BoldFont={Noto Sans Mono CJK SC Bold}]{Noto Sans Mono CJK SC}
+
+\title{计算物理第一次大作业}
+\author{物理学院\quad 林旭辰\quad 1800011324}
+% \date{2019年5月25日}
+
+\DeclareUnicodeCharacter{"00B0}{\textdegree}
+
+\renewcommand{\today}{\number\year 年\number\month 月\number\day 日}
+\renewcommand{\refname}{参考文献}
+\renewcommand{\abstractname}{摘要}
+\renewcommand{\contentsname}{目录}
+\renewcommand{\figurename}{图}
+\renewcommand{\tablename}{表}
+\renewcommand{\appendixname}{附录}
+\renewcommand{\chaptername}{第}
+\newcommand{\chapterendname}{章}
+
+\renewcommand\appendix{\par
+  \setcounter{chapter}{0}%
+  \setcounter{section}{0}%
+  \renewcommand\chaptertitlename{\appendixname}%
+  \renewcommand\thechapter{\Alph{chapter}}%
+  \renewcommand\chapterendname{}}
+
+\renewcommand{\equationautorefname}{式}
+\renewcommand{\figureautorefname}{图}
+\newcommand{\subfigureautorefname}{子图}
+\renewcommand{\tableautorefname}{表}
+\renewcommand{\subsectionautorefname}{小节}
+% \newcommand{\mythmautorefname}{定理}
+\renewcommand{\sectionautorefname}{\S}
+
+% \newtheorem{mythm}{定理}
+
+\lstset{
+    basicstyle=\scriptsize\ttfamily\color{black}, % print whole listing small
+    keywordstyle=\color{teal}\bfseries,
+    identifierstyle=, % nothing happens
+    commentstyle=\color{gray}\ttfamily, % white comments
+    stringstyle=\color{violet}, % typewriter type for strings
+    showstringspaces=true,
+    numbers=left,
+    numberstyle=\tiny\color{brown},
+    stepnumber=2,
+    numbersep=5pt,
+    firstnumber=auto,
+    frame=lines,
+    language=[11]C++,
+    rangeprefix=/*,
+    rangesuffix=*/,
+    includerangemarker=false
+}
+
+% \pgfsetxvec{\pgfpoint{0.02cm}{0}}
+% \pgfsetyvec{\pgfpoint{0}{0.1em}}
+
+% \usetikzlibrary{datavisualization,plotmarks,datavisualization.formats.functions}
+% \usetikzlibrary{math,fpu,datavisualization}
+% \graphicspath{{figure/}}
+\linespread{1.3}
+
+\titleformat{\chapter}[display]{\huge\bfseries}{\chaptertitlename\ \thechapter\ \chapterendname}{20pt}{\Huge}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\begin{center}
+    \textbf{编译与运行环境说明}
+\end{center}
+
+本地操作系统版本为\textsf{Windows 10 x64 1909 (18363.720)}。
+
+第一题电阻网络使用\textsf{C++}编写，编译器为Windows下的\texttt{g++ 9.3.0} (Rev2, Built by MSYS2 project)，标准为\textsf{C++14}。
+除标准库外未使用其他库。
+最后用于计时等操作的程序的编译命令为\begin{verbatim}
+    g++ -std=c++14 -o <可执行文件名> <源文件名>
+\end{verbatim}
+综合使用\textsf{GNU time}程序以及\texttt{<chrono>}库进行计时。
+计时时，计算机连接电源。
+
+第二题Logistic模型使用\textsf{Python}编写，解释器为Windows下的\texttt{Python 3.8.1} (tags/v3.8.1:1b293b6, Dec 18 2019, 23:11:46) [MSC v.1916 64 bit (AMD64)] on win32。
+除为绘图而调用的\texttt{matplotlib.pyplot} (3.2.0)外未使用其他第三方库。
+使用了标准库\texttt{random}以生成随机数。
+
+\chapter{电阻网络}
+\input{1_resister_network.tex}
+
+\chapter{Logistic模型}
+\input{2_logistic.tex}
+
+\appendix
+
+\chapter{\texttt{Misc}数值库接口}
+\input{../misc/misc.tex}
+
+\end{document}

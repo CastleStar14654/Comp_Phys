@@ -1,0 +1,517 @@
+\lstset{
+    language=Python,
+    rangeprefix=\#\ ,
+    rangesuffix=\ \#,
+}
+迭代关系
+\begin{equation}
+    x_{n+1} = f(x_n) = rx_n\qty(1-x_n)
+\end{equation}
+定义了Logistic模型，其中的$f(x)$被称为Logistic函数。
+本题将研究该序列聚点的分形与震荡行为随可调参数$r$的变化。
+
+下面将结合程序 \verb|2_logistic.py|，依题目要求进行说明。
+
+定义函数 \verb|g()|，为$f(x)$中除了系数$r$之外的部分。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=gx-end:gx]{2_logistic.py}
+}
+定义生成器函数 \verb|logistic_generator()|，以方便高效地生成序列。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=log_gen-end:log_gen]{2_logistic.py}
+}
+
+\section{单聚点情况}\label{sec:single}
+首先取$r=0.5, 1.5$，观察序列$\{x_n\}$的迭代情况。
+有关代码如下。
+各个$r$值均使用随机生成的10个$x_0$作为初始值。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=problem_1-end:problem_1]{2_logistic.py}
+}
+
+生成的数据图像见\autoref{fig:problem_1}。
+可以看到，\hyperref[fig:problem_1_0.5]{$r=0.5$} 时，序列极快地收敛到0；
+\hyperref[fig:problem_1_1.5]{$r=1.5$} 时，序列也较快地收敛到$\frac{1}{3}$。
+
+\begin{figure}
+    \centering
+    \subfloat[$r=0.5$]{
+        \label{fig:problem_1_0.5}
+        \includegraphics[width=0.48\textwidth]{figures/p1_0.5.pdf}
+    }
+    \subfloat[$r=1.5$]{
+        \label{fig:problem_1_1.5}
+        \includegraphics[width=0.48\textwidth]{figures/p1_1.5.pdf}
+    }
+    \caption{$r=0.5, 1.5$时Logistic函数的迭代行为}
+    \label{fig:problem_1}
+\end{figure}
+
+\section{单聚点收敛分析}
+若序列$\{x_n\}$仅有一个聚点$x^*$，那么$x^*$一定有
+\begin{equation}
+    x^* = f(x^*) = rx^*(1-x^*).
+\end{equation}
+显然，两根分别为$0$与$1-\frac{1}{r}$。
+
+\subsection{收敛条件}
+作为聚点，其一定满足稳定条件——亦即，相对于该点的小偏移并不会导致序列发散。
+或者说，偏差$x_n-x^*$应随着$n$的增大而减小。
+注意到，偏差
+\begin{equation}
+    x_{n+1} - x^* = f(x_n) - f(x^*),
+\end{equation}
+那么前后的误差之比为
+\begin{equation}\label{eq:error}
+    \qty|\frac{x_{n+1} - x^*}{x_{n} - x^*}|
+    = \qty|\frac{f(x_n) - f(x^*)}{x_{n} - x^*}|.
+\end{equation}
+
+如果序列收敛，那么该比例定在$x_n\to x^*$时不大于1。
+考虑导数的定义，那么有
+\begin{equation}
+    \qty|f'(x^*)| \le 1.
+\end{equation}
+此即序列收敛到$x^*$的必要条件。
+
+\subsection{计算聚点\texorpdfstring{$x^*$}{x*}与\texorpdfstring{$r$}{r}的关系}
+易得，$f'(x) = r(1-2x)$。
+代入两根$0$与$1-\frac{1}{r}$，得到$r$与$2-r$。
+由于聚点处那么，
+\begin{equation}\label{eq:prob_2_res}
+    x^* = \begin{cases}
+        r,& 0\le r\le 1,\\
+        2-r,&   1<r\le 3.
+    \end{cases}
+\end{equation}
+
+使用如下程序数值计算不同$r$的聚点
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=problem_2-end:problem_2]{2_logistic.py}
+}
+\verb|N| 为在$r$单位长度上取多少数据点。
+认为收敛较快，将$x_{1000}$作为聚点使用。
+数据图见\autoref{fig:problem_2}。
+可以看到，这与式 \eqref{eq:prob_2_res} 中给出的解析表达是一致的。
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/p2_2.98.pdf}
+    \caption{$0\le r\le 3$时的序列收敛点$x^*$}
+    \label{fig:problem_2}
+\end{figure}
+
+\subsection{收敛阶与收敛速度}
+由式 \eqref{eq:error} 可以看到，
+\begin{equation}\label{eq:conv_speed}
+    \lim_{n\to\infty} \qty|\frac{x_{n+1} - x^*}{x_{n} - x^*}| = \qty|f'(x^*)|.
+\end{equation}
+
+根据收敛阶与收敛速度的定义，可以得到，收敛阶为$1$，收敛速度$s = -\log_{10}\qty|f'(x^*)|$。
+
+\section{双聚点情况}
+上一节中在式 \eqref{eq:prob_2_res} 已经得到在$r>r_1=3$时两个根均无法成为聚点。
+取$r=r_1+0.1=3.1$，随机生成三个$x_0$，观察序列情况。
+程序如下，数据图见\autoref{fig:problem_3}。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=problem_3-end:problem_3]{2_logistic.py}
+}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/p3_3.1.pdf}
+    \caption{$r = 3.1$时的Logistic序列}
+    \label{fig:problem_3}
+\end{figure}
+
+容易发现，序列出现了周期为2的震荡行为。
+两个聚点分别为0.764与0.558。
+
+\section{双聚点收敛分析}\label{sec:double_conv}
+序列$\{x_n\}$出现了震荡行为，周期为2。
+那么，任何一个聚点$x^*$都应有
+\begin{equation}
+    x^* = f(f(x^*)) = r^2x^*(1-x^*)\qty(1-rx^*(1-x^*)).
+\end{equation}
+显然，该方程有4个根。
+
+这些根中的聚点一定满足稳定条件。
+考虑其中一个子序列$\{x_{2k}\}$，偏差$x_{2k}-x_1^*$应随着$k$的增大而减小。
+
+注意到，偏差
+\begin{equation}
+    x_{2k+2} - x_1^* = f(f(x_{2k})) - f(f(x_1^*)),
+\end{equation}
+那么前后的偏差之比为
+\begin{equation}\label{eq:error_double}
+    \qty|\frac{x_{2k+2} - x_1^*}{x_{2k} - x_1^*}|
+    = \qty|\frac{f(f(x_{2k})) - f(f(x_1^*))}{x_{2k} - x_1^*}|.
+\end{equation}
+
+如果子序列收敛，那么该比例定在$x_{2k}\to x_1^*$时不大于1。
+考虑导数的定义，那么有
+\begin{equation}
+    \qty|\dv{f(f(x))}{x}|_{x=x_1^*} \le 1.
+\end{equation}
+根据链式法则，以及$x_1^* = f(x_2^*)$，$x_2^* = f(x_1^*)$，上式即
+\begin{equation}
+    \qty|\dv{f(u)}{u}_{u=x_2^*}|\qty|\dv{f(x)}{x}_{x=x_1^*}| = \qty|f'(x_1^*)f'(x_2^*)| \le 1.
+\end{equation}
+此即子序列收敛到$x_1^*$的必要条件。
+注意到，此式中$x_1^*$与$x_2^*$对称，故另一聚点的收敛条件也为此。
+
+使用如下程序数值计算不同$r$的聚点
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=problem_4-end:problem_4]{2_logistic.py}
+}
+\verb|N| 为在$r$单位长度上取多少数据点。
+认为收敛较快，将$x_{1000}$附近的两个数据作为聚点使用。
+使用了\textsf{Python}的集合数据类型以消除重复。
+数据图见\autoref{fig:problem_4}。
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/p4_3.43.pdf}
+    \caption{二周期震荡的序列收敛点$x^*$}
+    \label{fig:problem_4}
+\end{figure}
+
+\section{更大的振荡周期以及收敛速度}
+\subsection{振荡周期增加}
+绘制\autoref{fig:problem_4} 时，已经发现在$r\gtrsim 3.44$时，周期会不再是二。
+下面取$r=3.5, 3.55$，给出周期为4与8的序列。
+为避免图片杂乱，仅使用了一个随机的$x_0$，且不再添加连线。
+代码如下，数据图见\autoref{fig:problem_5_cycle}。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=problem_5-mid:problem_5]{2_logistic.py}
+}
+
+\begin{figure}
+    \centering
+    \subfloat[$r=3.5$，周期为4]{
+        \label{fig:problem_5_3.5}
+        \includegraphics[width=0.48\textwidth]{figures/p5_3.5.pdf}
+    }
+    \subfloat[$r=3.55$，周期为8]{
+        \label{fig:problem_5_3.55}
+        \includegraphics[width=0.48\textwidth]{figures/p5_3.55.pdf}
+    }
+    \caption{$r=3.5, 3.55$时Logistic函数的迭代行为}
+    \label{fig:problem_5_cycle}
+\end{figure}
+
+\subsection{描述收敛速度}
+根据 \autoref{sec:double_conv} 推广式 \eqref{eq:conv_speed}，容易得到在振荡周期为$T$时，任一个收敛子序列满足
+\begin{equation}
+    \lim_{n\to\infty} \qty|\frac{x_{n+T} - x_i^*}{x_{n} - x_i^*}| = \qty|f'(x_1^*)f'(x_2^*)\cdots f'(x_T^*)|,
+\end{equation}
+其中$x_i^*$为收敛到的第$i$个聚点。
+可以发现，等式右边的比例系数（记为$C(r)$）是对$r$相同的所有收敛子序列都一致的。
+
+虽然正式定义的收敛速度为$-\log_{10} C(r)$，但仍可把$C(r)$直接作为收敛速度的度量。
+下面定义的函数 \verb|converge_speed()| 能够对给定的$r$估算收敛系数$C(r)$。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=converge_speed-end:converge_speed]{2_logistic.py}
+}
+函数分为四部分。
+\texttt{skip}参数决定从$x_\text{\texttt{skip}}$开始计算收敛速率（因为太前面的$x_n$变化过于剧烈）。
+\begin{compactitem}
+    \item[计算周期$T$] 生成前$n$（默认为30000）个数据，截取最后512个（周期更大的忽略）转换为\texttt{set}。利用该数据类型元素互不重复性质得到周期。
+    \item[计算$x^*$] 此应为与$x_\text{\texttt{skip}}$在同一子序列中的$n$最大的$x_n$。
+    \item[计算偏差] 不断计算子序列中的$x_n$与$x^*$的偏差，并计算该偏差减小的比例系数。若碰到偏差为0的情况，跳出循环。
+    \item[计算速率平均值] 若得到大于1的速率，说明发散，仍返回1；若结果列表为空，说明一开始偏差即为0，即收敛极快，返回0。
+\end{compactitem}
+
+在区间$[0,4)$上取了400个点计算收敛速率，代码如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=mid:problem_5-end:problem_5]{2_logistic.py}
+}
+结果见\autoref{fig:conv_speed}。
+可以发现，
+\begin{compactenum}
+    \item 该曲线大致上呈周期逐步减小的锯齿状。
+    \item $C(r)=1$的位置与振荡周期的分叉点是一致的，说明此处收敛极慢。
+    \item 在$r\gtrsim 3.6$时，几乎恒发散。
+\end{compactenum}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=.8\textwidth]{figures/p5_speed_line.pdf}
+    \caption{收敛系数$C(r)$}
+    \label{fig:conv_speed}
+\end{figure}
+
+\section{后续\texorpdfstring{$x^*$}{x*}的震荡}
+绘制完整的\autoref{fig:problem_4} 于\autoref{fig:problem_6_full}。
+将绘图区的左下边界依次设为各分叉点，绘图于\autoref{fig:problem_6_right}。
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/p6_4_0.pdf}
+    \caption{序列收敛点$x^*$随$r$的关系}
+    \label{fig:problem_6_full}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \subfloat[周期1]{
+        \label{fig:problem_6_right_0}
+        \includegraphics[width=0.48\textwidth]{figures/p6_4_1.pdf}
+    }
+    \subfloat[周期2]{
+        \label{fig:problem_6_right_1}
+        \includegraphics[width=0.48\textwidth]{figures/p6_4_2.pdf}
+    }
+    \\
+    \subfloat[周期4]{
+        \label{fig:problem_6_right_2}
+        \includegraphics[width=0.48\textwidth]{figures/p6_4_3.pdf}
+    }
+    \subfloat[周期8]{
+        \label{fig:problem_6_right_3}
+        \includegraphics[width=0.48\textwidth]{figures/p6_4_4.pdf}
+    }
+    \caption{序列收敛点$x^*$随$r$的关系，左下角取为各分叉点。子图标题中的周期指图片中最左侧的那条分支的周期数}
+    \label{fig:problem_6_right}
+\end{figure}
+
+可以发现，这些数据图呈现出自相似行为，并且局限在$x^*<\frac{r}{4}$的区域。
+但是，这些规律的分叉线占全图的比例越来越小——原因应该是无穷周期分叉点并不是在$r=4$，而是在$r_\infty \approx 3.57$附近。
+
+因此，将绘图区的右边界设为$r_\infty$（使用\texttt{matplotlib}的绘图窗口测量，为3.56994592），重新绘图于\autoref{fig:problem_6_part}。
+这种绘图方式使自相似十分明显。
+
+\begin{figure}
+    \centering
+    \subfloat[周期1]{
+        \label{fig:problem_6_part_0}
+        \includegraphics[width=0.31\textwidth]{figures/p6_3.56994592_1.pdf}
+    }
+    \subfloat[周期2]{
+        \label{fig:problem_6_part_1}
+        \includegraphics[width=0.31\textwidth]{figures/p6_3.56994592_2.pdf}
+    }
+    \subfloat[周期4]{
+        \label{fig:problem_6_part_2}
+        \includegraphics[width=0.31\textwidth]{figures/p6_3.56994592_3.pdf}
+    }
+    \\
+    \subfloat[周期8]{
+        \label{fig:problem_6_part_3}
+        \includegraphics[width=0.31\textwidth]{figures/p6_3.56994592_4.pdf}
+    }
+    \subfloat[周期16]{
+        \label{fig:problem_6_part_4}
+        \includegraphics[width=0.31\textwidth]{figures/p6_3.56994592_5.pdf}
+    }
+    \subfloat[周期32]{
+        \label{fig:problem_6_part_5}
+        \includegraphics[width=0.31\textwidth]{figures/p6_3.56994592_6.pdf}
+    }
+    \\
+    \subfloat[周期64]{
+        \label{fig:problem_6_part_6}
+        \includegraphics[width=0.31\textwidth]{figures/p6_3.56994592_7.pdf}
+    }
+    \subfloat[周期128]{
+        \label{fig:problem_6_part_7}
+        \includegraphics[width=0.31\textwidth]{figures/p6_3.56994592_8.pdf}
+    }
+    \caption{序列收敛点$x^*$随$r$的关系，左下角取为各分叉点。子图标题中的周期指图片中最左侧的那条分支的周期数。仅绘制了自相似部分}
+    \label{fig:problem_6_part}
+\end{figure}
+
+\section{自相似行为}
+下面考察上一节中给出的自相似行为。
+对各分叉点的$r$进行测量，结果如\autoref{tab:r_and_F} 所示。
+相邻分叉点的间距$\Delta r$近似以比例4.6缩小。
+通过不断放大绘图，得到$r_\infty \approx 3.56994592$。
+
+\begin{table}
+    \centering
+    \caption{各分叉点处的$r$值}
+    \label{tab:r_and_F}
+    \begin{tabular}{lll}
+    \toprule
+    \multicolumn{1}{c}{$r$} & \multicolumn{1}{c}{$\Delta r$} & \multicolumn{1}{c}{$F$} \\ \midrule
+    1.000 & 2.000 & 4.45 \\
+    3.000 & 0.449 & 4.73 \\
+    3.449 & 0.0949 & 4.65 \\
+    3.5439 & 0.0204 & 4.59 \\
+    3.5643 & 0.00444 & 4.70 \\
+    3.56874 & 0.000944 & 4.62 \\
+    3.569684 & 0.000204 & 4.49 \\
+    3.569888 & 0.0000454 & 4.87 \\
+    3.5699334 & 0.00000931 &  \\
+    3.56994271 & \multicolumn{1}{r}{平均:}& 4.6 \\ \bottomrule
+    \end{tabular}
+\end{table}
+
+查阅资料发现，这实际上形成了Logistic map\footnote{\url{https://en.wikipedia.org/w/index.php?title=Logistic_map&oldid=946693424}}。
+相邻$\Delta r$之比的极限为Feigenbaum constant $\delta\approx 4.66920$，$r_\infty \approx 3.56995$。
+可以发现，我对$r_\infty$的测量是比较精确的。
+
+\section{\texorpdfstring{$r=4$}{r=4}时的解析解}
+$r=4$时，序列为
+\begin{equation}
+    x_{n+1} = f(x_n) = 4x_n(1-x_n).
+\end{equation}
+记$x_n = \sin^2 y_n$，则
+\begin{equation}
+    \sin^2 y_{n+1} = 4\sin^2 y_n\cos^2 y_n = \sin[2](2y_n).
+\end{equation}
+
+不妨让$y_n \in [0, \pi]$，那么
+\begin{equation}\label{eq:y_at_4}
+    y_{n+1} = 2y_n \bmod \pi.
+\end{equation}
+由于2为有理数，而$\pi$为无理数，式 \eqref{eq:y_at_4} 几乎不可能获得周期性，除非$y_0$为$\pi$的倍数。
+既然$\{y_n\}$无周期性，$\{x_n\}$也无周期性。
+
+\section{使用其它函数}
+选取$g(x) = \sin(\pi x)$，将$f(x)$替换为$rg(x)$重新进行前述计算。
+程序文件见 \verb|2_logistic_sin.py|。
+由于程序本身十分接近，故不再引用代码进行解释。
+
+\subsection{单聚点情况}
+前面 \autoref{sec:single} 中选取的$r=0.5, 1.5$分别对应单聚点时方程$x=f(x)$的两个根。
+在$g(x) = \sin(\pi x)$时，选取对应点为0.1与0.5。
+序列行为见\autoref{fig:problem_9.1}。
+
+\begin{figure}
+    \centering
+    \subfloat[$r=0.1$]{
+        \label{fig:problem_9.1_0.15}
+        \includegraphics[width=0.48\textwidth]{figures/p9.1_0.1.pdf}
+    }
+    \subfloat[$r=0.5$]{
+        \label{fig:problem_9.1_0.5}
+        \includegraphics[width=0.48\textwidth]{figures/p9.1_0.5.pdf}
+    }
+    \caption{$r=0.1, 0.5$时$r\sin(\pi x)$函数的迭代行为}
+    \label{fig:problem_9.1}
+\end{figure}
+
+可以看到，$r=0.1$时序列收敛到0，$r=0.5$时，序列收敛到0.5附近。
+绘制单聚点时聚点$x^*$随$r$的关系于\autoref{fig:problem_9.2}，与\autoref{fig:problem_2} 十分相似。
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/p9.2_0.7133333333333334.pdf}
+    \caption{$0\le r\le 0.72$时的序列收敛点$x^*$}
+    \label{fig:problem_9.2}
+\end{figure}
+
+根据单聚点条件$|f'(x^*)| \le 1$，可得到单聚点的$r$值上限$r_1$满足：
+\begin{equation}
+    r_1=-\frac{1}{\pi\cos u},\quad \text{其中 }u+\tan u=0.
+\end{equation}
+近似解得$r_1=0.71996$。
+
+\subsection{双聚点情况}
+前面得到，在$r>r_1=0.71996$时，序列无法收敛到单值。
+取$r=0.82$，随机选取几个初值计算序列，绘制于\autoref{fig:problem_9.3}。
+序列也出现了周期为 2 的震荡行为。
+
+\begin{figure}
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/p9.3_0.82.pdf}
+        \caption{$r = 0.82$时的双聚点序列}
+        \label{fig:problem_9.3}
+    \end{minipage}
+    \hspace{2pt}
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/p9.4_0.82.pdf}
+        \caption{二周期震荡的序列收敛点$x^*$}
+        \label{fig:problem_9.4}
+    \end{minipage}
+\end{figure}
+
+补充双周期震荡时的聚点于\autoref{fig:problem_9.4}。
+
+\subsection{更大的振荡周期以及收敛速度}
+取$r=0.84, 0.86$，序列震荡周期变为4与8。
+（见\autoref{fig:problem_9.5_cycle}）
+
+\begin{figure}
+    \centering
+    \subfloat[$r=3.5$，周期为4]{
+        \label{fig:problem_9.5_0.84}
+        \includegraphics[width=0.48\textwidth]{figures/p9.5_0.84.pdf}
+    }
+    \subfloat[$r=3.55$，周期为8]{
+        \label{fig:problem_9.5_0.86}
+        \includegraphics[width=0.48\textwidth]{figures/p9.5_0.86.pdf}
+    }
+    \caption{$r=3.5, 3.55$时Logistic函数的迭代行为}
+    \label{fig:problem_9.5_cycle}
+\end{figure}
+
+按前面的定义计算收敛系数$C(r)$（$0\le r\le 1$），见\autoref{fig:problem_9_conv_speed}。
+可以发现，图像行为与\autoref{fig:conv_speed} 十分相像。
+
+\begin{figure}
+    \centering
+    \includegraphics[width=.8\textwidth]{figures/p9.5_speed_line.pdf}
+    \caption{收敛系数$C(r)$}
+    \label{fig:problem_9_conv_speed}
+\end{figure}
+
+\subsection{自相似行为}
+绘制完整的\autoref{fig:problem_9.4} 于\autoref{fig:problem_9.6_full}。
+与前面的Logistic map十分相像。
+稍取几个分叉点观察自相似行为，见\autoref{fig:problem_9.6_right}。
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/p9.6_1_0.pdf}
+    \caption{序列收敛点$x^*$随$r$的关系}
+    \label{fig:problem_9.6_full}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \subfloat[周期2]{
+        \label{fig:problem_9.6_right_1}
+        \includegraphics[width=0.48\textwidth]{figures/p9.6_1_2.pdf}
+    }
+    \subfloat[周期4]{
+        \label{fig:problem_9.6_right_2}
+        \includegraphics[width=0.48\textwidth]{figures/p9.6_1_3.pdf}
+    }
+    \caption{序列收敛点$x^*$随$r$的关系，左下角取为各分叉点。子图标题中的周期指图片中最左侧的那条分支的周期数}
+    \label{fig:problem_9.6_right}
+\end{figure}
+
+对各分叉点的$r$进行测量，结果如\autoref{tab:prob_9_r_and_F} 所示。
+相邻分叉点的间距$\Delta r$近似以比例4.6缩小。
+通过不断放大绘图，得到$r_\infty \approx 0.86557934$。
+
+\begin{table}
+    \centering
+    \caption{各分叉点处的$r$值}
+    \label{tab:prob_9_r_and_F}
+    \begin{tabular}{lll}
+    \toprule
+    \multicolumn{1}{c}{$r$} & \multicolumn{1}{c}{$\Delta r$} & \multicolumn{1}{c}{$F$} \\ \midrule
+    0.317 & 0.402 & 3.53 (舍去) \\
+    0.719 & 0.1138 & 4.431 \\
+    0.8328 & 0.02568 & 4.601 \\
+    0.85848 & 0.005582 & 4.691 \\
+    0.864062 & 0.001190 & 4.627 \\
+    0.865252 & 0.0002572 & 4.72 \\
+    0.8655092 & 0.0000545 &  \\
+    0.8655637 & \multicolumn{1}{r}{平均:}& 4.6 \\ \bottomrule
+    \end{tabular}
+\end{table}

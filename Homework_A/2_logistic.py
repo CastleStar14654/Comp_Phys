@@ -138,9 +138,9 @@ def main():
     # end:problem_6 #
 
     # problem_7
-    rs = [0, 1, 3, 3.449, 3.5439, 3.5643, 3.56874, 3.569684,
+    rs = [1, 3, 3.449, 3.5439, 3.5643, 3.56874, 3.569684,
           3.569888, 3.5699334, 3.56994271]
-    delta = [n - p for n, p in zip(rs[2:], rs[1:-1])]
+    delta = [n - p for n, p in zip(rs[1:], rs[:-1])]
     Fs = [p/n for n, p in zip(delta[1:], delta[:-1])]
     print(sum(Fs)/len(Fs))
     print(delta)
