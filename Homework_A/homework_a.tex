@@ -42,12 +42,12 @@
 \renewcommand{\chaptername}{第}
 \newcommand{\chapterendname}{章}
 
-\renewcommand\appendix{\par
-  \setcounter{chapter}{0}%
-  \setcounter{section}{0}%
-  \renewcommand\chaptertitlename{\appendixname}%
-  \renewcommand\thechapter{\Alph{chapter}}%
-  \renewcommand\chapterendname{}}
+% \renewcommand\appendix{\par
+%   \setcounter{chapter}{0}%
+%   \setcounter{section}{0}%
+%   \renewcommand\chaptertitlename{\appendixname}%
+%   \renewcommand\thechapter{\Alph{chapter}}%
+%   \renewcommand\chapterendname{}}
 
 \renewcommand{\equationautorefname}{式}
 \renewcommand{\figureautorefname}{图}
@@ -118,6 +118,7 @@
 \input{2_logistic.tex}
 
 \appendix
+\renewcommand\chapterendname{}
 
 \chapter{\texttt{Misc}数值库接口}
 \input{../misc/misc.tex}
