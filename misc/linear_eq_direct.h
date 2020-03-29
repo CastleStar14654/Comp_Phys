@@ -29,7 +29,7 @@ inline void _up_back_sub(const Base_Matrix<T, N, N> &in_mat,
     {
         if (in_mat(i, i) == 0)
         {
-            throw std::runtime_error(__FILE__ + ":" + __LINE__ + ": singular matrix");
+            throw std::runtime_error((__FILE__ ":") + std::to_string(__LINE__) + ": singular matrix");
         }
         up_bound = N - 1 > i + M ? i + M : N - 1;
         for (size_t j = i + 1; j <= up_bound; j++)
@@ -52,7 +52,7 @@ inline void _low_back_sub(const Base_Matrix<T, N, N> &in_mat,
     {
         if (in_mat(i, i) == 0)
         {
-            throw std::runtime_error(__FILE__ + ":" + __LINE__ + ": singular matrix");
+            throw std::runtime_error((__FILE__ ":") + std::to_string(__LINE__) + ": singular matrix");
         }
         low_bound = i > M ? i - M : 0;
         for (size_t j = low_bound; j < i; j++)
@@ -444,7 +444,7 @@ inline void cholesky(const Symm_Matrix<T, N> &in_mat,
     }
     if (count != N)
     {
-        throw std::runtime_error(__FILE__ + ":" + __LINE__ + ": non positive-semidefinite matrix");
+        throw std::runtime_error((__FILE__ ":") + std::to_string(__LINE__) + ": non positive-semidefinite matrix");
     }
 
     for (size_t i = 0; i < N; i++)
@@ -467,7 +467,7 @@ inline void cholesky(const Symm_Band_Matrix<T, N, M> &in_mat,
     }
     if (count != N)
     {
-        throw std::runtime_error(__FILE__ + ":" + __LINE__ + ": non positive-semidefinite matrix");
+        throw std::runtime_error((__FILE__ ":") + std::to_string(__LINE__) + ": non positive-semidefinite matrix");
     }
 
     for (size_t i = 0; i < N; i++)
@@ -553,7 +553,7 @@ inline void _l_u_decomposition(const Base_Matrix<T, N, N> &in_mat,
 
         if (out_u(i, i) == 0.)
         {
-            throw std::runtime_error(__FILE__ + ":" + __LINE__ + ": divided by zero");
+            throw std::runtime_error((__FILE__ ":") + std::to_string(__LINE__) + ": divided by zero");
         }
 
         // calc u
@@ -702,7 +702,7 @@ inline Matrix<T, N, N> inv(const Base_Matrix<T, N, N> &in_mat)
         t_ii = temp(i, i);
         if (t_ii == 0.)
         {
-            throw std::runtime_error(__FILE__ + ":" + __LINE__ + ": divided by zero");
+            throw std::runtime_error((__FILE__ ":") + std::to_string(__LINE__) + ": divided by zero");
         }
 
         // refresh two matrices
@@ -767,7 +767,7 @@ inline Up_Tri_Matrix<T, N> _inv(Up_Tri_Matrix<T, N> &in_mat)
         t_ii = in_mat(i, i);
         if (t_ii == 0.)
         {
-            throw std::runtime_error(__FILE__ + ":" + __LINE__ + ": divided by zero");
+            throw std::runtime_error((__FILE__ ":") + std::to_string(__LINE__) + ": divided by zero");
         }
 
         // refresh two matrices
@@ -818,7 +818,7 @@ inline Low_Tri_Matrix<T, N> inv(const Low_Tri_Matrix<T, N> &in_mat)
         t_ii = in_mat(i, i);
         if (t_ii == 0.)
         {
-            throw std::runtime_error(__FILE__ + ":" + __LINE__ + ": divided by zero");
+            throw std::runtime_error((__FILE__ ":") + std::to_string(__LINE__) + ": divided by zero");
         }
 
         // refresh two matrices

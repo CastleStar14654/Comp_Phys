@@ -257,7 +257,7 @@ public:
         {
             if (data_ln != mat.data_ln)
             {
-                throw std::runtime_error(__FILE__ + ":" + __LINE__ + ": different data_size");
+                throw std::runtime_error((__FILE__ ":") + std::to_string(__LINE__) + ": different data_size");
             }
             if (data_ln)
             {
@@ -272,7 +272,7 @@ public:
         {
             if (this->data_ln != mat.data_ln)
             {
-                throw std::runtime_error(__FILE__ + ":" + __LINE__ + ": different data_size");
+                throw std::runtime_error((__FILE__ ":") + std::to_string(__LINE__) + ": different data_size");
             }
             delete[] elem;
             elem = std::exchange(mat.elem, nullptr);

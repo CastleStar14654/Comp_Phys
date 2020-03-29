@@ -290,7 +290,7 @@ inline int suc_over_rel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, 
 {
     if (omega <= 0 || omega >= 2)
     {
-        throw std::runtime_error(__FILE__ + ":" + __LINE__ + ": invalid omega");
+        throw std::runtime_error((__FILE__ ":") + std::to_string(__LINE__) + ": invalid omega");
     }
 
     std::array<T, N> prev_x{std::move(out_x)};

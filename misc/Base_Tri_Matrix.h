@@ -70,7 +70,7 @@ public:
         {
             if (i->size() != count)
             {
-                throw std::invalid_argument(__FILE__ + ":" + __LINE__ + ": wrong column number");
+                throw std::invalid_argument((__FILE__ ":") + std::to_string(__LINE__) + ": wrong column number");
             }
             ++count;
         }
@@ -151,7 +151,7 @@ protected:
     {
         if (row < col)
         {
-            throw std::out_of_range(__FILE__ + ":" + __LINE__ + ": trying to access empty area.");
+            throw std::out_of_range((__FILE__ ":") + std::to_string(__LINE__) + ": trying to access empty area.");
         }
         else
         {
@@ -162,7 +162,7 @@ protected:
     {
         if (row < col)
         {
-            throw std::out_of_range(__FILE__ + ":" + __LINE__ + ": trying to access empty area.");
+            throw std::out_of_range((__FILE__ ":") + std::to_string(__LINE__) + ": trying to access empty area.");
         }
         else
         {

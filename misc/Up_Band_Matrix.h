@@ -63,7 +63,7 @@ public:
     {
         if (col < row)
         {
-            throw std::out_of_range(__FILE__ + ":" + __LINE__ + ": trying to access empty area.");
+            throw std::out_of_range((__FILE__ ":") + std::to_string(__LINE__) + ": trying to access empty area.");
         }
         else
         {

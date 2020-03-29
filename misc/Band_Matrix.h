@@ -46,14 +46,14 @@ public:
     {
         if (!(ini.size() % 2))
         {
-            throw std::invalid_argument(__FILE__ + ":" + __LINE__ + ": wrong band width");
+            throw std::invalid_argument((__FILE__ ":") + std::to_string(__LINE__) + ": wrong band width");
         }
         auto it = ini.begin();
         for (size_type count = N - M; count < N; count++)
         {
             if (it->size() != count)
             {
-                throw std::invalid_argument(__FILE__ + ":" + __LINE__ + ": wrong column number");
+                throw std::invalid_argument((__FILE__ ":") + std::to_string(__LINE__) + ": wrong column number");
             }
             ++it;
         }
@@ -61,7 +61,7 @@ public:
         {
             if (it->size() != count)
             {
-                throw std::invalid_argument(__FILE__ + ":" + __LINE__ + ": wrong column number");
+                throw std::invalid_argument((__FILE__ ":") + std::to_string(__LINE__) + ": wrong column number");
             }
             ++it;
         }
@@ -117,7 +117,7 @@ public:
         auto idx{index(row, col)};
         if (idx.first == -1)
         {
-            throw std::out_of_range(__FILE__ + ":" + __LINE__ + ": trying to access empty area.");
+            throw std::out_of_range((__FILE__ ":") + std::to_string(__LINE__) + ": trying to access empty area.");
         }
         else
         {
@@ -150,7 +150,7 @@ protected:
         {
             if (it->size() != count)
             {
-                throw std::invalid_argument(__FILE__ + ":" + __LINE__ + ": wrong column number");
+                throw std::invalid_argument((__FILE__ ":") + std::to_string(__LINE__) + ": wrong column number");
             }
             ++it;
         }
