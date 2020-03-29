@@ -1,5 +1,5 @@
-#ifndef MISC_MATRIX_CATALOGUE
-#define MISC_MATRIX_CATALOGUE
+#ifndef MISC_MATRIXLIB
+#define MISC_MATRIXLIB
 
 #include <complex>
 
@@ -118,4 +118,4 @@ std::array<T, R> operator*(const Sparse_Matrix<T, R, N> &a, const std::array<T, 
 
 } // namespace Misc
 
-#endif // MISC_MATRIX_CATALOGUE
+#endif // MISC_MATRIXLIB

@@ -17,10 +17,9 @@ template <typename T>
 class Polynomial : public std::vector<T>
 {
 public:
-    // using std::vector<T>::vector;
-    using std::vector<T>::size;
-    using typename std::vector<T>::value_type;
-    using std::vector<T>::operator[];
+    // using std::vector<T>::size;
+    // using typename std::vector<T>::value_type;
+    // using std::vector<T>::operator[];
 
     Polynomial(std::initializer_list<T> ini)
         : std::vector<T>(std::rbegin(ini), std::rend(ini))
@@ -48,7 +47,7 @@ public:
     Polynomial deriv() const
     {
         Polynomial res{};
-        for (size_t i = 1; i < size(); i++)
+        for (size_t i = 1; i < this->size(); i++)
         {
             res.push_back((*this)[i] * i);
         }
@@ -62,7 +61,7 @@ public:
         {
             coefficient *= i;
         }
-        for (size_t i = m; i < size(); i++)
+        for (size_t i = m; i < this->size(); i++)
         {
             coefficient *= i;
             res.push_back((*this)[i] * coefficient);
@@ -74,7 +73,7 @@ public:
     Polynomial integ() const
     {
         std::vector<T> res{0.};
-        for (size_t i = 0; i < size(); i++)
+        for (size_t i = 0; i < this->size(); i++)
         {
             res.push_back((*this)[i] / (i + 1));
         }
@@ -88,7 +87,7 @@ public:
         {
             coefficient *= i;
         }
-        for (size_t i = 0; i < size(); i++)
+        for (size_t i = 0; i < this->size(); i++)
         {
             coefficient *= i + m;
             res.push_back((*this)[i] / coefficient);
@@ -134,17 +133,22 @@ public:
         }
         else
         {
+            size_t res_size{remain.size() - other.size()};
             std::vector<T> res(this->size() - other.size() + 1);
-            T divider {other.back()};
+            T divider{other.back()};
             for (size_t i = 0; i < res.size(); i++)
             {
-                res[res.size()-i-1] = remain[remain.size()-i-1] / divider;
-                for (size_t j = 0; j < other.size(); j++)
+                static T alpha;
+                static size_t remain_start;
+                res[res.size() - i - 1] = remain[remain.size() - i - 1] / divider;
+                alpha = res[res.size() - i - 1];
+                remain_start = res_size - i;
+                for (size_t j = 0; j < other.size() - 1; j++)
                 {
-                    remain[remain.size()-other.size()-i+j] -= res[res.size()-i-1]*other[j];
+                    remain[remain_start + j] -= alpha * other[j];
                 }
             }
-            return std::make_pair(res, Polynomial(remain.begin(), remain.begin() + (other.size()-1)));
+            return std::make_pair(res, Polynomial(remain.begin(), remain.begin() + (other.size() - 1)));
         }
     }
 
@@ -172,6 +176,16 @@ inline Polynomial<T> operator+(const Polynomial<T> &a, const Polynomial<T> &b)
     res += b;
     return res;
 }
+template <typename T>
+inline Polynomial<T> operator+(const Polynomial<T> &a, const T &b)
+{
+    return a + Polynomial<T>{b};
+}
+template <typename T>
+inline Polynomial<T> operator+(const T &a, const Polynomial<T> &b)
+{
+    return Polynomial<T>{a} + b;
+}
 
 template <typename T>
 inline Polynomial<T> operator-(const Polynomial<T> &a, const Polynomial<T> &b)
@@ -179,6 +193,16 @@ inline Polynomial<T> operator-(const Polynomial<T> &a, const Polynomial<T> &b)
     Polynomial<T> res{a};
     res -= b;
     return res;
+}
+template <typename T>
+inline Polynomial<T> operator-(const Polynomial<T> &a, const T &b)
+{
+    return a - Polynomial<T>{b};
+}
+template <typename T>
+inline Polynomial<T> operator-(const T &a, const Polynomial<T> &b)
+{
+    return Polynomial<T>{a} - b;
 }
 
 template <typename T>
@@ -209,17 +233,47 @@ inline Polynomial<T> operator*(const Polynomial<T> &a, const Polynomial<T> &b)
         return Polynomial<T>{};
     }
 }
+template <typename T>
+inline Polynomial<T> operator*(const Polynomial<T> &a, const T &b)
+{
+    return a * Polynomial<T>{b};
+}
+template <typename T>
+inline Polynomial<T> operator*(const T &a, const Polynomial<T> &b)
+{
+    return Polynomial<T>{a} * b;
+}
 
 template <typename T>
 inline Polynomial<T> operator/(const Polynomial<T> &a, const Polynomial<T> &b)
 {
     return a.div(b).first;
 }
+template <typename T>
+inline Polynomial<T> operator/(const Polynomial<T> &a, const T &b)
+{
+    return a / Polynomial<T>{b};
+}
+template <typename T>
+inline Polynomial<T> operator/(const T &a, const Polynomial<T> &b)
+{
+    return Polynomial<T>{a} / b;
+}
 
 template <typename T>
 inline Polynomial<T> operator%(const Polynomial<T> &a, const Polynomial<T> &b)
 {
     return a.div(b).second;
+}
+template <typename T>
+inline Polynomial<T> operator%(const Polynomial<T> &a, const T &b)
+{
+    return a % Polynomial<T>{b};
+}
+template <typename T>
+inline Polynomial<T> operator%(const T &a, const Polynomial<T> &b)
+{
+    return Polynomial<T>{a} % b;
 }
 
 // ========================= IO ============================

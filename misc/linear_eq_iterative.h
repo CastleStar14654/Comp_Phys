@@ -12,7 +12,7 @@
 #include <iostream>
 #include <memory>
 
-#include "Matrix_Catalogue.h"
+#include "matrixlib.h"
 
 namespace Misc
 {
@@ -290,7 +290,7 @@ inline int suc_over_rel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, 
 {
     if (omega <= 0 || omega >= 2)
     {
-        throw std::runtime_error("suc_over_rel(): invalid omega");
+        throw std::runtime_error(__FILE__ + ":" + __LINE__ + ": invalid omega");
     }
 
     std::array<T, N> prev_x{std::move(out_x)};
@@ -537,8 +537,8 @@ inline int conj_grad(const Hermite_Matrix<std::complex<T>, N> &in_mat, const std
 
 template <typename T, size_t N, size_t M>
 inline int grad_des(const Symm_Band_Matrix<T, N, M> &in_mat, const std::array<T, N> &in_b,
-             std::array<T, N> &out_x,
-             bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-15)
+                    std::array<T, N> &out_x,
+                    bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-15)
 {
     return grad_des(Symm_Matrix<T, N>(in_mat), in_b, out_x,
                     true, max_times, rel_epsilon);
@@ -546,8 +546,8 @@ inline int grad_des(const Symm_Band_Matrix<T, N, M> &in_mat, const std::array<T,
 
 template <typename T, size_t N, size_t M>
 inline int conj_grad(const Symm_Band_Matrix<T, N, M> &in_mat, const std::array<T, N> &in_b,
-              std::array<T, N> &out_x,
-              bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-15)
+                     std::array<T, N> &out_x,
+                     bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-15)
 {
     return conj_grad(Symm_Matrix<T, N>(in_mat), in_b, out_x,
                      true, max_times, rel_epsilon);

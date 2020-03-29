@@ -15,7 +15,7 @@ namespace Misc
 {
 
 template <typename T, size_t R, size_t C>
-class Sparse_Matrix: public Base_Matrix<T, R, C>, public std::array<std::map<size_t, T>, R>
+class Sparse_Matrix : public Base_Matrix<T, R, C>, public std::array<std::map<size_t, T>, R>
 {
 public:
     using typename Base_Matrix<T, R, C>::size_type;
@@ -75,7 +75,7 @@ public:
         {
             return std::array<std::map<size_t, T>, R>::operator[](row).at(col);
         }
-        catch(const std::out_of_range& e)
+        catch (const std::out_of_range &e)
         {
             return Base_Matrix<T, R, C>::zero;
         }

@@ -53,7 +53,7 @@ public:
         auto idx{index(row, col)};
         if (idx.first == -1)
         {
-            throw std::out_of_range("Base_Half_Band_Matrix::operator(): trying to access empty area.");
+            throw std::out_of_range(__FILE__ + ":" + __LINE__ + ": trying to access empty area.");
         }
         else
         {

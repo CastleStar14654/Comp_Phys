@@ -69,12 +69,12 @@ public:
     {
         if (ini.size() != R)
         {
-            throw std::invalid_argument("Matrix::Matrix: wrong row number");
+            throw std::invalid_argument(__FILE__ + ":" + __LINE__ + ": wrong row number");
         }
         for (auto i = ini.begin(); i != ini.end(); i++)
             if (i->size() != C)
             {
-                throw std::invalid_argument("Matrix::Matrix: non-uniform column number");
+                throw std::invalid_argument(__FILE__ + ":" + __LINE__ + ": non-uniform column number");
             }
         elem = new T[R][C];
         auto it{ini.begin()};

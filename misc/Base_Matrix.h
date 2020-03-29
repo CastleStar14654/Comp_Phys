@@ -184,9 +184,10 @@ inline T operator*(const Row<T, R, N> &a, const Column<T, N, C> &b)
 // ================================================================================
 
 template <typename T, size_t R, size_t C>
-class Transpose: public Base_Matrix<T, R, C>
+class Transpose : public Base_Matrix<T, R, C>
 {
-    const Base_Matrix<T, C, R>& orig;
+    const Base_Matrix<T, C, R> &orig;
+
 public:
     using typename Base_Matrix<T, R, C>::size_type;
 
@@ -235,7 +236,7 @@ public:
                 }
     }
     Base_Matrix(const Base_Matrix &mat)
-        : data_ln{mat.data_ln}, elem{mat.elem?(new T[mat.data_ln][C]):nullptr}
+        : data_ln{mat.data_ln}, elem{mat.elem ? (new T[mat.data_ln][C]) : nullptr}
     {
         if (mat.elem)
         {
@@ -256,7 +257,7 @@ public:
         {
             if (data_ln != mat.data_ln)
             {
-                throw std::runtime_error("Base_Matrix assignment: different data_size");
+                throw std::runtime_error(__FILE__ + ":" + __LINE__ + ": different data_size");
             }
             if (data_ln)
             {
@@ -271,7 +272,7 @@ public:
         {
             if (this->data_ln != mat.data_ln)
             {
-                throw std::runtime_error("Base_Matrix assignment: different data_size");
+                throw std::runtime_error(__FILE__ + ":" + __LINE__ + ": different data_size");
             }
             delete[] elem;
             elem = std::exchange(mat.elem, nullptr);

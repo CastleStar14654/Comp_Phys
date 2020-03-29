@@ -41,7 +41,7 @@ public:
         {
             if (i->size() != count)
             {
-                throw std::invalid_argument("Matrix::Matrix: wrong column number");
+                throw std::invalid_argument(__FILE__ + ":" + __LINE__ + ": wrong column number");
             }
             ++count;
         }
@@ -89,7 +89,7 @@ public:
     {
         if (col < row)
         {
-            throw std::out_of_range("Up_Tri_Matrix::operator(): trying to access empty area.");
+            throw std::out_of_range(__FILE__ + ":" + __LINE__ + ": trying to access empty area.");
         }
         else
         {

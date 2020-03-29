@@ -62,7 +62,7 @@ public:
     {
         if (row < col)
         {
-            throw std::out_of_range("Hermite_Matrix::operator(): trying to access conjugate area.");
+            throw std::out_of_range(__FILE__ + ":" + __LINE__ + ": trying to access conjugate area.");
         }
         else
         {

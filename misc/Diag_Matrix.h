@@ -28,7 +28,7 @@ public:
     {
         if (e - b != N)
         {
-            throw std::runtime_error("Diag_Matrix construct: wrong iterators.");
+            throw std::runtime_error(__FILE__ + ":" + __LINE__ + ": wrong iterators.");
         }
         elem = new T[1][N];
         std::copy(b, e, elem[0]);
@@ -38,7 +38,7 @@ public:
     {
         if (ini.size() != N)
         {
-            throw std::runtime_error("Diag_Matrix construct: wrong iterators.");
+            throw std::runtime_error(__FILE__ + ":" + __LINE__ + ": wrong iterators.");
         }
         elem = new T[1][N];
         std::move(ini.begin(), ini.end(), elem[0]);
@@ -55,7 +55,7 @@ public:
         }
         else
         {
-            throw std::out_of_range("Diag_Matrix::operator(): trying to access 0.");
+            throw std::out_of_range(__FILE__ + ":" + __LINE__ + ": trying to access 0.");
         }
     }
     T &operator()(size_type n) { return elem[0][n]; }

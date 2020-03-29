@@ -42,7 +42,7 @@ public:
         }
      */
     Up_Band_Matrix(std::initializer_list<std::initializer_list<T>> ini)
-    : Base_Half_Band_Matrix<T, N, M>{ini}{}
+        : Base_Half_Band_Matrix<T, N, M>{ini} {}
 
     Up_Band_Matrix &operator=(const Up_Band_Matrix &mat) = default;
     Up_Band_Matrix &operator=(Up_Band_Matrix &&mat) = default;
@@ -63,7 +63,7 @@ public:
     {
         if (col < row)
         {
-            throw std::out_of_range("Up_Band_Matrix::operator(): trying to access empty area.");
+            throw std::out_of_range(__FILE__ + ":" + __LINE__ + ": trying to access empty area.");
         }
         else
         {

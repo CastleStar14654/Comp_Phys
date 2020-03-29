@@ -19,7 +19,7 @@ class Band_Matrix : public Base_Matrix<T, N, N>
 {
 public:
     using typename Base_Matrix<T, N, N>::size_type;
-    size_t half_band() const {return M;}
+    size_t half_band() const { return M; }
 
     explicit Band_Matrix(T deft = T{}) : Base_Matrix<T, N, N>{2 * M + 1, deft} {}
     Band_Matrix(const Band_Matrix &mat) = default;
@@ -46,14 +46,14 @@ public:
     {
         if (!(ini.size() % 2))
         {
-            throw std::invalid_argument("Band_Matrix::Band_Matrix: wrong band width");
+            throw std::invalid_argument(__FILE__ + ":" + __LINE__ + ": wrong band width");
         }
         auto it = ini.begin();
         for (size_type count = N - M; count < N; count++)
         {
             if (it->size() != count)
             {
-                throw std::invalid_argument("Band_Matrix::Band_Matrix: wrong column number");
+                throw std::invalid_argument(__FILE__ + ":" + __LINE__ + ": wrong column number");
             }
             ++it;
         }
@@ -61,7 +61,7 @@ public:
         {
             if (it->size() != count)
             {
-                throw std::invalid_argument("Band_Matrix::Band_Matrix: wrong column number");
+                throw std::invalid_argument(__FILE__ + ":" + __LINE__ + ": wrong column number");
             }
             ++it;
         }
@@ -117,7 +117,7 @@ public:
         auto idx{index(row, col)};
         if (idx.first == -1)
         {
-            throw std::out_of_range("Band_Matrix::operator(): trying to access empty area.");
+            throw std::out_of_range(__FILE__ + ":" + __LINE__ + ": trying to access empty area.");
         }
         else
         {
@@ -150,7 +150,7 @@ protected:
         {
             if (it->size() != count)
             {
-                throw std::invalid_argument("Half_Band_Matrix::Half_Band_Matrix: wrong column number");
+                throw std::invalid_argument(__FILE__ + ":" + __LINE__ + ": wrong column number");
             }
             ++it;
         }
