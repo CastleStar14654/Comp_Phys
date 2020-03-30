@@ -6,7 +6,7 @@
 #include <chrono>
 #include <map>
 
-#include "../misc/Matrix_Catalogue.h"
+#include "../misc/matrixlib.h"
 #include "../misc/linear_eq_direct.h"
 #include "../misc/linear_eq_iterative.h"
 
