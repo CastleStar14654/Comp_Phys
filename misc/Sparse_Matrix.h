@@ -67,7 +67,7 @@ public:
 
     T &operator()(size_type row, size_type col) override
     {
-        return std::array<std::map<size_t, T>, R>::operator[](row).at(col);
+        return std::array<std::map<size_t, T>, R>::operator[](row)[col];
     }
     const T &operator()(size_type row, size_type col) const override
     {
