@@ -21,17 +21,19 @@ public:
     // using typename std::vector<T>::value_type;
     // using std::vector<T>::operator[];
 
-    Polynomial(std::initializer_list<T> ini)
+    explicit Polynomial(std::initializer_list<T> ini)
         : std::vector<T>(std::rbegin(ini), std::rend(ini))
     {
         cut_zero();
     }
     template <typename... Ts>
-    Polynomial(Ts... args, ...)
+    explicit Polynomial(Ts... args, ...)
         : std::vector<T>(args...)
     {
         cut_zero();
     }
+    // Polynomial(const Polynomial &other) = default;
+    // Polynomial(Polynomial &&other) = default;
 
     T operator()(T x) const
     {

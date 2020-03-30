@@ -49,28 +49,94 @@ public:
             throw std::invalid_argument((__FILE__ ":") + std::to_string(__LINE__) + ": wrong band width");
         }
         auto it = ini.begin();
-        for (size_type count = N - M; count < N; count++)
-        {
+        for (size_type count = N - M; count < N; count++, ++it)
             if (it->size() != count)
             {
                 throw std::invalid_argument((__FILE__ ":") + std::to_string(__LINE__) + ": wrong column number");
             }
-            ++it;
-        }
-        for (size_type count = N; count >= N - M; count--)
-        {
+        for (size_type count = N; count >= N - M; count--, ++it)
             if (it->size() != count)
             {
                 throw std::invalid_argument((__FILE__ ":") + std::to_string(__LINE__) + ": wrong column number");
             }
-            ++it;
-        }
 
         elem = new T[data_ln][N]{};
         std::size_t count{0};
         for (auto it = ini.begin(); it != ini.end(); it++)
         {
             std::move(it->begin(), it->end(), elem[count]);
+            ++count;
+        }
+    }
+    template <typename C>
+    Band_Matrix(std::initializer_list<C> ini)
+        : Base_Matrix<T, N, N>{2 * M + 1, nullptr}
+    {
+        if (!(ini.size() % 2))
+        {
+            throw std::invalid_argument((__FILE__ ":") + std::to_string(__LINE__) + ": wrong band width");
+        }
+        auto it = ini.begin();
+        for (size_type count = N - M; count < N; count++, ++it)
+            if (it->size() != count)
+            {
+                throw std::invalid_argument((__FILE__ ":") + std::to_string(__LINE__) + ": wrong column number");
+            }
+        for (size_type count = N; count >= N - M; count--, ++it)
+            if (it->size() != count)
+            {
+                throw std::invalid_argument((__FILE__ ":") + std::to_string(__LINE__) + ": wrong column number");
+            }
+
+        elem = new T[data_ln][N]{};
+        std::size_t count{0};
+        for (auto it = ini.begin(); it != ini.end(); it++)
+        {
+            std::copy(it->begin(), it->end(), elem[count]);
+            ++count;
+        }
+    }
+    Band_Matrix(std::initializer_list<std::array<T, N>> ini)
+        : Base_Matrix<T, N, N>{2 * M + 1, nullptr}
+    {
+        if (!(ini.size() % 2))
+        {
+            throw std::invalid_argument((__FILE__ ":") + std::to_string(__LINE__) + ": wrong band width");
+        }
+
+        elem = new T[data_ln][N]{};
+        std::size_t count{0};
+        for (auto it = ini.begin(); it != ini.end(); it++)
+        {
+            std::copy(it->begin(), it->end(), elem[count]);
+            ++count;
+        }
+    }
+    template <typename C>
+    Band_Matrix(C ini)
+        : Base_Matrix<T, N, N>{2 * M + 1, nullptr}
+    {
+        if (!(ini.size() % 2))
+        {
+            throw std::invalid_argument((__FILE__ ":") + std::to_string(__LINE__) + ": wrong band width");
+        }
+        auto it = ini.begin();
+        for (size_type count = N - M; count < N; count++, ++it)
+            if (it->size() != count)
+            {
+                throw std::invalid_argument((__FILE__ ":") + std::to_string(__LINE__) + ": wrong column number");
+            }
+        for (size_type count = N; count >= N - M; count--, ++it)
+            if (it->size() != count)
+            {
+                throw std::invalid_argument((__FILE__ ":") + std::to_string(__LINE__) + ": wrong column number");
+            }
+
+        elem = new T[data_ln][N]{};
+        std::size_t count{0};
+        for (auto it = ini.begin(); it != ini.end(); it++)
+        {
+            std::copy(it->begin(), it->end(), elem[count]);
             ++count;
         }
     }
@@ -146,21 +212,17 @@ protected:
         : Base_Matrix<T, N, N>{M + 1, nullptr}
     {
         auto it = ini.begin();
-        for (size_type count = N; count >= N - M; count--)
-        {
+        for (size_type count = N; count >= N - M; count--, it++)
             if (it->size() != count)
             {
                 throw std::invalid_argument((__FILE__ ":") + std::to_string(__LINE__) + ": wrong column number");
             }
-            ++it;
-        }
 
         elem = new T[data_ln][N]{};
         std::size_t count{0};
-        for (auto it = ini.begin(); it != ini.end(); it++)
+        for (auto it = ini.begin(); it != ini.end(); it++, count++)
         {
             std::move(it->begin(), it->end(), elem[count]);
-            ++count;
         }
     }
 

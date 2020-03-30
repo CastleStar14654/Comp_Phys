@@ -31,7 +31,7 @@ class Neville_Interpolator
 
 public:
     template <typename It1, typename It2>
-    Neville_Interpolator(It1 bx, It1 ex, It2 by, It2 ey)
+    explicit Neville_Interpolator(It1 bx, It1 ex, It2 by, It2 ey)
         : polys{}, xs{}
     {
         for (; bx != ex && by != ey; bx++, by++)
@@ -40,11 +40,11 @@ public:
         }
     }
     template <typename C1, typename C2>
-    Neville_Interpolator(const C1 &xs, const C2 &ys)
+    explicit Neville_Interpolator(const C1 &xs, const C2 &ys)
         : Neville_Interpolator(xs.begin(), xs.end(), ys.begin(), ys.end())
     {
     }
-    Neville_Interpolator(std::initializer_list<T> xs, std::initializer_list<T> ys)
+    explicit Neville_Interpolator(std::initializer_list<T> xs, std::initializer_list<T> ys)
         : Neville_Interpolator(xs.begin(), xs.end(), ys.begin(), ys.end())
     {
     }
@@ -116,7 +116,7 @@ class Newton_Interpolator
 
 public:
     template <typename It1, typename It2>
-    Newton_Interpolator(It1 bx, It1 ex, It2 by, It2 ey)
+    explicit Newton_Interpolator(It1 bx, It1 ex, It2 by, It2 ey)
         : coefs{}, xs{}
     {
         for (; bx != ex && by != ey; bx++, by++)
@@ -125,11 +125,11 @@ public:
         }
     }
     template <typename C1, typename C2>
-    Newton_Interpolator(const C1 &xs, const C2 &ys)
+    explicit Newton_Interpolator(const C1 &xs, const C2 &ys)
         : Newton_Interpolator(xs.begin(), xs.end(), ys.begin(), ys.end())
     {
     }
-    Newton_Interpolator(std::initializer_list<T> xs, std::initializer_list<T> ys)
+    explicit Newton_Interpolator(std::initializer_list<T> xs, std::initializer_list<T> ys)
         : Newton_Interpolator(xs.begin(), xs.end(), ys.begin(), ys.end())
     {
     }
