@@ -18,7 +18,7 @@
 #include <stdexcept>
 #include <functional>
 
-#include "Polynomial.h"
+#include "../polynomial.h"
 
 namespace Misc
 {

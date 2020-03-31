@@ -17,8 +17,9 @@
 #include <functional>
 #include <utility>
 
-#include "Polynomial.h"
-#include "matrixlib.h"
+#include "../polynomial.h"
+#include "../matrixlib.h"
+#include "../linear_eq.h"
 
 namespace Misc
 {

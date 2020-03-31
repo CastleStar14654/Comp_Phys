@@ -3,24 +3,24 @@
 
 #include <complex>
 
-#include "Base_Matrix.h"
+#include "matrixlib/Base_Matrix.h"
 
-#include "Band_Matrix.h"
-#include "Base_Tri_Matrix.h"
-#include "Diag_Matrix.h"
-#include "Matrix.h"
+#include "matrixlib/Band_Matrix.h"
+#include "matrixlib/Base_Tri_Matrix.h"
+#include "matrixlib/Diag_Matrix.h"
+#include "matrixlib/Matrix.h"
 
-#include "Base_Half_Band_Matrix.h"
-#include "Hermite_Matrix.h"
-#include "Low_Tri_Matrix.h"
-#include "Symm_Matrix.h"
-#include "Up_Tri_Matrix.h"
+#include "matrixlib/Base_Half_Band_Matrix.h"
+#include "matrixlib/Hermite_Matrix.h"
+#include "matrixlib/Low_Tri_Matrix.h"
+#include "matrixlib/Symm_Matrix.h"
+#include "matrixlib/Up_Tri_Matrix.h"
 
-#include "Low_Band_Matrix.h"
-#include "Symm_Band_Matrix.h"
-#include "Up_Band_Matrix.h"
+#include "matrixlib/Low_Band_Matrix.h"
+#include "matrixlib/Symm_Band_Matrix.h"
+#include "matrixlib/Up_Band_Matrix.h"
 
-#include "Sparse_Matrix.h"
+#include "matrixlib/Sparse_Matrix.h"
 
 namespace Misc
 {

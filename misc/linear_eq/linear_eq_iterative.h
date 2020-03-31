@@ -12,7 +12,7 @@
 #include <iostream>
 #include <memory>
 
-#include "matrixlib.h"
+#include "../matrixlib.h"
 
 namespace Misc
 {

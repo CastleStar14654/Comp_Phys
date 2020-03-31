@@ -8,7 +8,7 @@
 #include <iterator>
 #include <initializer_list>
 
-#include "linear_eq_direct.h"
+#include "linear_eq.h"
 
 namespace Misc
 {

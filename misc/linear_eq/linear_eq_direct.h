@@ -9,7 +9,7 @@
 #include <iterator>
 #include <iostream>
 
-#include "matrixlib.h"
+#include "../matrixlib.h"
 
 namespace Misc
 {
