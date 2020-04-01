@@ -77,7 +77,7 @@ inline T norm_1(const std::array<std::complex<T>, N> &x1, const std::array<std::
 template <typename T, size_t N>
 inline int jacobi(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
                   std::array<T, N> &out_x,
-                  bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-15);
+                  bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-10);
 
 // Gauss-Seidel iterative method to solve eqs Ax = b
 // ---------- return ------------
@@ -94,7 +94,7 @@ inline int jacobi(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in
 template <typename T, size_t N>
 inline int gauss_seidel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
                         std::array<T, N> &out_x,
-                        bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-15);
+                        bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-10);
 
 // successive over relaxation iterative method to solve eqs Ax = b
 // ---------- return ------------
@@ -112,7 +112,7 @@ inline int gauss_seidel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, 
 template <typename T, size_t N>
 inline int suc_over_rel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
                         std::array<T, N> &out_x, T omega,
-                        bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-15);
+                        bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-10);
 
 // gradient descent iterative method to solve eqs Ax = b
 // ---------- return ------------
@@ -128,7 +128,7 @@ inline int suc_over_rel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, 
 template <typename T, size_t N>
 inline int grad_des(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in_b,
                     std::array<T, N> &out_x,
-                    bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-15);
+                    bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-10);
 
 /*beg:conj_grad_dec*/
 // conjugate gradient method method to solve eqs Ax = b
@@ -145,7 +145,7 @@ inline int grad_des(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in_
 template <typename T, size_t N>
 inline int conj_grad(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in_b,
                      std::array<T, N> &out_x,
-                     bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-15);
+                     bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-10);
 /*end:conj_grad_dec*/
 
 // ================== DEFINITIONS ==================
@@ -153,7 +153,7 @@ inline int conj_grad(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in
 template <typename T, size_t N>
 inline int jacobi(const Sparse_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
                   std::array<T, N> &out_x,
-                  bool sparse = true, size_t max_times = 1000, double rel_epsilon = 1e-15)
+                  bool sparse = true, size_t max_times = 1000, double rel_epsilon = 1e-10)
 {
     std::array<T, N> prev_x{std::move(out_x)};
     T delta_norm;
@@ -182,7 +182,7 @@ inline int jacobi(const Sparse_Matrix<T, N, N> &in_mat, const std::array<T, N> &
 
         if (prev_norm && new_norm / prev_norm > not_conv_cri)
         {
-            std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged";
+            std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged: new_norm / prev_norm=" << new_norm / prev_norm << std::endl;
             return 2;
         }
         else if (prev_norm && delta_norm / prev_norm < rel_epsilon)
@@ -192,7 +192,7 @@ inline int jacobi(const Sparse_Matrix<T, N, N> &in_mat, const std::array<T, N> &
         prev_x = std::move(out_x);
         prev_norm = new_norm;
     }
-    std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged";
+    std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged: delta_norm / prev_norm=" << delta_norm / prev_norm << std::endl;
     return 1;
 }
 
@@ -203,7 +203,7 @@ inline int jacobi(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in
 {
     if (sparse)
     {
-        return jacobi(Sparse_Matrix<T, N, N>{in_mat}, in_b, out_x, max_times, rel_epsilon);
+        return jacobi(Sparse_Matrix<T, N, N>{in_mat}, in_b, out_x, sparse, max_times, rel_epsilon);
     }
     else
     {
@@ -234,7 +234,7 @@ inline int jacobi(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in
 
             if (prev_norm && new_norm / prev_norm > not_conv_cri)
             {
-                std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged";
+                std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged: new_norm / prev_norm=" << new_norm / prev_norm << std::endl;
                 return 2;
             }
             else if (prev_norm && delta_norm / prev_norm < rel_epsilon)
@@ -244,7 +244,7 @@ inline int jacobi(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in
             prev_x = std::move(out_x);
             prev_norm = new_norm;
         }
-        std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged";
+        std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged: delta_norm / prev_norm=" << delta_norm / prev_norm << std::endl;
         return 1;
     }
 }
@@ -252,7 +252,7 @@ inline int jacobi(const Base_Matrix<T, N, N> &in_mat, const std::array<T, N> &in
 template <typename T, size_t N>
 inline int gauss_seidel(const Sparse_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
                         std::array<T, N> &out_x,
-                        bool sparse = true, size_t max_times = 1000, double rel_epsilon = 1e-15)
+                        bool sparse = true, size_t max_times = 1000, double rel_epsilon = 1e-10)
 {
     std::array<T, N> prev_x{std::move(out_x)};
     T delta_norm;
@@ -286,7 +286,7 @@ inline int gauss_seidel(const Sparse_Matrix<T, N, N> &in_mat, const std::array<T
 
         if (prev_norm && new_norm / prev_norm > not_conv_cri)
         {
-            std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged";
+            std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged: new_norm / prev_norm=" << new_norm / prev_norm << std::endl;
             return 2;
         }
         else if (prev_norm && delta_norm / prev_norm < rel_epsilon)
@@ -296,7 +296,7 @@ inline int gauss_seidel(const Sparse_Matrix<T, N, N> &in_mat, const std::array<T
         prev_x = std::move(out_x);
         prev_norm = new_norm;
     }
-    std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged";
+    std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged: delta_norm / prev_norm=" << delta_norm / prev_norm << std::endl;
     return 1;
 }
 
@@ -307,7 +307,7 @@ inline int gauss_seidel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, 
 {
     if (sparse)
     {
-        return gauss_seidel(Sparse_Matrix<T, N, N>{in_mat}, in_b, out_x, max_times, rel_epsilon);
+        return gauss_seidel(Sparse_Matrix<T, N, N>{in_mat}, in_b, out_x, sparse, max_times, rel_epsilon);
     }
     else
     {
@@ -338,7 +338,7 @@ inline int gauss_seidel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, 
 
             if (prev_norm && new_norm / prev_norm > not_conv_cri)
             {
-                std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged";
+                std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged: new_norm / prev_norm=" << new_norm / prev_norm << std::endl;
                 return 2;
             }
             else if (prev_norm && delta_norm / prev_norm < rel_epsilon)
@@ -348,7 +348,7 @@ inline int gauss_seidel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, 
             prev_x = std::move(out_x);
             prev_norm = new_norm;
         }
-        std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged";
+        std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged: delta_norm / prev_norm=" << delta_norm / prev_norm << std::endl;
         return 1;
     }
 }
@@ -356,7 +356,7 @@ inline int gauss_seidel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, 
 template <typename T, size_t N>
 inline int suc_over_rel(const Sparse_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
                         std::array<T, N> &out_x, T omega,
-                        bool sparse = true, size_t max_times = 1000, double rel_epsilon = 1e-15)
+                        bool sparse = true, size_t max_times = 1000, double rel_epsilon = 1e-10)
 {
     if (omega <= 0 || omega >= 2)
     {
@@ -395,7 +395,7 @@ inline int suc_over_rel(const Sparse_Matrix<T, N, N> &in_mat, const std::array<T
 
         if (prev_norm && new_norm / prev_norm > not_conv_cri)
         {
-            std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged";
+            std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged: new_norm / prev_norm=" << new_norm / prev_norm << std::endl;
             return 2;
         }
         else if (prev_norm && delta_norm / prev_norm < rel_epsilon)
@@ -405,7 +405,7 @@ inline int suc_over_rel(const Sparse_Matrix<T, N, N> &in_mat, const std::array<T
         prev_x = std::move(out_x);
         prev_norm = new_norm;
     }
-    std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged";
+    std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged: delta_norm / prev_norm=" << delta_norm / prev_norm << std::endl;
     return 1;
 }
 
@@ -420,7 +420,7 @@ inline int suc_over_rel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, 
     }
     if (sparse)
     {
-        return suc_over_rel(Sparse_Matrix<T, N, N>{in_mat}, in_b, out_x, omega, max_times, rel_epsilon);
+        return suc_over_rel(Sparse_Matrix<T, N, N>{in_mat}, in_b, out_x, omega, sparse, max_times, rel_epsilon);
     }
     else
     {
@@ -452,7 +452,7 @@ inline int suc_over_rel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, 
 
             if (prev_norm && new_norm / prev_norm > not_conv_cri)
             {
-                std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged";
+                std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged: new_norm / prev_norm=" << new_norm / prev_norm << std::endl;
                 return 2;
             }
             else if (prev_norm && delta_norm / prev_norm < rel_epsilon)
@@ -462,7 +462,7 @@ inline int suc_over_rel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, 
             prev_x = std::move(out_x);
             prev_norm = new_norm;
         }
-        std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged";
+        std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged: delta_norm / prev_norm=" << delta_norm / prev_norm << std::endl;
         return 1;
     }
 }
@@ -470,7 +470,7 @@ inline int suc_over_rel(const Base_Matrix<T, N, N> &in_mat, const std::array<T, 
 template <typename T, size_t N>
 inline int _grad_des_sparse(const Sparse_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
                             std::array<T, N> &out_x,
-                            bool, size_t max_times = 1000, double rel_epsilon = 1e-15)
+                            bool, size_t max_times = 1000, double rel_epsilon = 1e-10)
 {
     T alpha;
     // calculate residue
@@ -507,7 +507,7 @@ inline int _grad_des_sparse(const Sparse_Matrix<T, N, N> &in_mat, const std::arr
 
         Ar = in_mat * residue;
     }
-    std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged";
+    std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged: res_norm / res_b=" << res_norm / res_b << std::endl;
     return 1;
 }
 
@@ -518,7 +518,7 @@ inline int grad_des(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in_
 {
     if (sparse)
     {
-        return _grad_des_sparse(Sparse_Matrix<T, N, N>{in_mat}, in_b, out_x, max_times, rel_epsilon);
+        return _grad_des_sparse(Sparse_Matrix<T, N, N>{in_mat}, in_b, out_x, sparse, max_times, rel_epsilon);
     }
     else
     {
@@ -557,7 +557,7 @@ inline int grad_des(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in_
 
             Ar = in_mat * residue;
         }
-        std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged";
+        std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged: res_norm / res_b=" << res_norm / res_b << std::endl;
         return 1;
     }
 }
@@ -565,7 +565,7 @@ inline int grad_des(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in_
 template <typename T, size_t N>
 inline int _conj_grad_sparse(const Sparse_Matrix<T, N, N> &in_mat, const std::array<T, N> &in_b,
                              std::array<T, N> &out_x,
-                             bool, size_t max_times = 1000, double rel_epsilon = 1e-15)
+                             bool, size_t max_times = 1000, double rel_epsilon = 1e-10)
 {
     T alpha;
     // calculate residue
@@ -616,7 +616,7 @@ inline int _conj_grad_sparse(const Sparse_Matrix<T, N, N> &in_mat, const std::ar
 
         Ap = in_mat * search_p;
     }
-    std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged";
+    std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged: res_norm / res_b=" << res_norm / res_b << std::endl;
     return 1;
 }
 
@@ -628,7 +628,7 @@ inline int conj_grad(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in
 {
     if (sparse)
     {
-        return _grad_des_sparse(Sparse_Matrix<T, N, N>{in_mat}, in_b, out_x, max_times, rel_epsilon);
+        return _grad_des_sparse(Sparse_Matrix<T, N, N>{in_mat}, in_b, out_x, sparse, max_times, rel_epsilon);
     }
     else
     {
@@ -681,7 +681,7 @@ inline int conj_grad(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in
 
             Ap = in_mat * search_p;
         }
-        std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged";
+        std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged: res_norm / res_b=" << res_norm / res_b << std::endl;
         return 1;
     }
 }
@@ -690,7 +690,7 @@ inline int conj_grad(const Symm_Matrix<T, N> &in_mat, const std::array<T, N> &in
 template <typename T, size_t N>
 inline int conj_grad(const Hermite_Matrix<std::complex<T>, N> &in_mat, const std::array<std::complex<T>, N> &in_b,
                      std::array<std::complex<T>, N> &out_x,
-                     bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-15)
+                     bool sparse = false, size_t max_times = 1000, double rel_epsilon = 1e-10)
 {
     std::unique_ptr<Sparse_Matrix<std::complex<T>, N, N>> p_sparse_mat{};
     if (sparse)
@@ -747,13 +747,14 @@ inline int conj_grad(const Hermite_Matrix<std::complex<T>, N> &in_mat, const std
 
         Ap = sparse ? (*p_sparse_mat) * search_p : in_mat * search_p;
     }
+    std::cerr << __FILE__ << ':' << __LINE__ << ": iterative method not converged: res_norm / res_b=" << res_norm / res_b << std::endl;
     return 1;
 }
 
 template <typename T, size_t N, size_t M>
 inline int grad_des(const Symm_Band_Matrix<T, N, M> &in_mat, const std::array<T, N> &in_b,
                     std::array<T, N> &out_x,
-                    bool sparse = true, size_t max_times = 1000, double rel_epsilon = 1e-15)
+                    bool sparse = true, size_t max_times = 1000, double rel_epsilon = 1e-10)
 {
     return _grad_des_sparse(Sparse_Matrix<T, N, N>{in_mat}, in_b, out_x,
                             true, max_times, rel_epsilon);
@@ -762,7 +763,7 @@ inline int grad_des(const Symm_Band_Matrix<T, N, M> &in_mat, const std::array<T,
 template <typename T, size_t N, size_t M>
 inline int conj_grad(const Symm_Band_Matrix<T, N, M> &in_mat, const std::array<T, N> &in_b,
                      std::array<T, N> &out_x,
-                     bool sparse = true, size_t max_times = 1000, double rel_epsilon = 1e-15)
+                     bool sparse = true, size_t max_times = 1000, double rel_epsilon = 1e-10)
 {
     return _conj_grad_sparse(Sparse_Matrix<T, N, N>{in_mat}, in_b, out_x,
                              true, max_times, rel_epsilon);

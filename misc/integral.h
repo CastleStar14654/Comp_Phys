@@ -65,6 +65,7 @@ inline T integrate(std::function<T(T)> func, T a, T b, size_t max_times = 50,
     prev *= 2 * h / 45;
     // iteration for max_times
     T current{0.};
+    T delta;
     for (size_t i = 0; i < max_times; i++)
     {
         // double the grid
@@ -83,16 +84,17 @@ inline T integrate(std::function<T(T)> func, T a, T b, size_t max_times = 50,
         }
         current *= 2 * h / 45;
         // check the relative epsilon
-        T delta{(current - prev) / 63};
-        if (std::abs(delta) / std::abs(current) < rel_epsilon || std::abs(delta) < abs_epsilon)
+        delta = (current - prev) / 63;
+        if (std::abs(delta / current) < rel_epsilon || std::abs(delta) < abs_epsilon)
         {
-            return (current + delta ) * reverse;
+            return (current + delta) * reverse;
         }
         // cleaning
         prev = current;
         current = 0.;
     }
-    std::cerr << __FILE__ << ':' << __LINE__ << ": integral not converge";
+    std::cerr << __FILE__ << ':' << __LINE__ << ": integral not converge\n";
+    std::cerr << '\t' << "rel_eps=" << std::abs(delta / current) << " abs_eps=" << std::abs(delta) << std::endl;
     return NAN;
 }
 
