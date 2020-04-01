@@ -7,8 +7,7 @@
 #include <map>
 
 #include "../misc/matrixlib.h"
-#include "../misc/linear_eq_direct.h"
-#include "../misc/linear_eq_iterative.h"
+#include "../misc/linear_eq.h"
 
 using namespace Misc;
 using namespace std;

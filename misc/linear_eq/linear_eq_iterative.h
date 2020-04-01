@@ -3,7 +3,6 @@
 
 #include <stdexcept>
 #include <array>
-#include <map>
 #include <vector>
 #include <complex>
 #include <cmath>
