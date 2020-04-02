@@ -29,7 +29,7 @@ inline T monte_carlo_integrate(std::function<T(X...)> func,
 // generalized integration from 0 to b, with singularity at 0
 // never directly call this function
 template <typename T>
-inline T _general_integrate(std::function<T(T)> func, T b);
+inline T _improper_integrate(std::function<T(T)> func, T b);
 
 // use Rumberg method to calculate integral
 template <typename T>
@@ -123,61 +123,129 @@ inline T integrate(std::function<T(T)> func, T a, T b, It b_sing, It e_sing, siz
     T buffer{0.};
     if (first_sing == sings.end() || *first_sing > b)
     {
-        res = integrate(func, a, b);
+        res = integrate_DE(func, a, b, max_times, abs_epsilon, rel_epsilon);
     }
     else
     {
-        buffer = std::min(1e-4, .01 * (*first_sing - a));
-        res = *first_sing == a
-                  ? 0.
-                  : integrate(func, a, *first_sing - buffer) + _general_integrate(
-                                                                   std::function<T(T)>{
-                                                                       [&func, &first_sing](T x) {
-                                                                           return func(*first_sing - x);
-                                                                       }},
-                                                                   buffer);
+        res = integrate_DE(func, a, *first_sing, max_times, abs_epsilon, rel_epsilon);
     }
 
     for (auto it = first_sing; it != sings.end() && !std::isnan(res) && *it < b; it++)
     {
         if (std::next(it) == sings.end() || *std::next(it) > b)
         {
-            buffer = std::min(1e-4, .01 * (b - *it));
-            res += _general_integrate(
-                std::function<T(T)>{
-                    [&func, &it](T x) {
-                        return func(*it + x);
-                    }},
-                buffer);
-            res += integrate(func, *it + buffer, b, max_times, abs_epsilon, rel_epsilon);
+            res += integrate_DE(func, *it, b, max_times, abs_epsilon, rel_epsilon);
             break;
         }
         else
         {
-            buffer = std::min(1e-4, .01 * (*std::next(it) - *it));
-            res += _general_integrate(
-                std::function<T(T)>{
-                    [&func, &it](T x) {
-                        return func(*it + x);
-                    }},
-                buffer);
-            res += integrate(func, *it + buffer, *std::next(it) - buffer, max_times, abs_epsilon, rel_epsilon);
-            res += _general_integrate(
-                std::function<T(T)>{
-                    [&func, &it](T x) {
-                        return func(*std::next(it) - x);
-                    }},
-                buffer);
-            break;
+            res += integrate_DE(func, *it, *std::next(it), max_times, abs_epsilon, rel_epsilon);
         }
     }
     return res * reverse;
 }
 
+/* use double exponential method to calculate integral
+ * I = \int f(x(t)) dx/dt dt, where
+ *      x = (b+a)/2 + (b-a)/2 * tanh(sinh(t))
+ *      dx/dt = (b-a)/2 * sech^2(sinh(t))*cosh(t)
+ * using q = exp(-2*sinh(t)), then
+ *      x = b - (b-a)*q/(1+q) := b - rel_x
+ *      dx/dt = 2*(b-a) * q/(1+q)^2 * cosh(t) = 2*rel_x/(1+q) * cosh(t)
+ * integrate from t=-h to h
+ * also,
+ *      x(t) + x(-t) = a + b
+ *      dx/dt(at -t) = dx/dt(at t)
+ */
+template <typename T>
+inline T integrate_DE(std::function<T(T)> func, T a, T b, T h = T{}, size_t max_times = 50,
+                      double abs_epsilon = 1e-10, double rel_epsilon = 1e-10)
+{
+    // optimization when a==b
+    if (a == b)
+    {
+        return 0.;
+    }
+    // if infty boundary
+    if ((std::isinf(a) || std::isinf(b)) && h == T{})
+    {
+        h = 4.;
+    }
+    if (std::isinf(a) && std::isinf(b))
+    {
+        return integrate(
+            std::function<T(T)>{[&func](T t) {
+                return func(std::sinh(std::sinh(t))) * std::cosh(std::sinh(t)) * std::cosh(t);
+            }},
+            -h, h, max_times, abs_epsilon, rel_epsilon);
+    }
+    else if (std::isinf(a))
+    {
+        return integrate(
+            std::function<T(T)>{[&func, &b](T t) {
+                return func(b - std::exp(2 * std::sinh(t))) * 2 * std::exp(2 * std::sinh(t)) * std::cosh(t);
+            }},
+            -h, h, max_times, abs_epsilon, rel_epsilon);
+    }
+    else if (std::isinf(b))
+    {
+        return integrate(
+            std::function<T(T)>{[&func, &a](T t) {
+                return func(a + std::exp(2 * std::sinh(t))) * 2 * std::exp(2 * std::sinh(t)) * std::cosh(t);
+            }},
+            -h, h, max_times, abs_epsilon, rel_epsilon);
+    }
+
+    // find the minimum h which would not overflow
+    if (h == T{})
+    {
+        h = std::log(std::numeric_limits<T>::epsilon());
+        h -= std::log(std::abs(b - a));
+        h += std::log(std::max(std::abs(a), std::abs(b)));
+        h = std::asinh(-.5 * h);
+    }
+
+    // initiate the res
+    T t{h};
+    T q{std::exp(-2 * std::sinh(t))};
+    T rel_x{(b - a) * q / (1 + q)};
+    T prev{h * (func((a + b) / 2) * (b - a) / 2 + (func(b - rel_x) + func(a + rel_x)) * rel_x / (1 + q) * std::cosh(t))};
+
+    // iteration for max_times
+    T current{0.};
+    T delta;
+    T step{h};
+    for (size_t i = 0; i < max_times; i++)
+    {
+        t = step / 2.;
+        for (size_t i = 0; t < h; i++, t = step / 2. + i * step)
+        {
+            q = std::exp(-2 * std::sinh(t));
+            rel_x = (b - a) * q / (1 + q);
+            current += (func(b - rel_x) + func(a + rel_x)) * 2. * rel_x / (1 + q) * std::cosh(t);
+        }
+        current *= step;
+        current += prev;
+        current /= 2.;
+
+        delta = current - prev;
+        if (std::abs(delta / current) < rel_epsilon || std::abs(delta) < abs_epsilon)
+        {
+            return current;
+        }
+        prev = current;
+        current = 0.;
+        step /= 2.;
+    }
+    std::cerr << __FILE__ << ':' << __LINE__ << ": integral not converge\n";
+    std::cerr << '\t' << "rel_eps=" << std::abs(delta / current) << " abs_eps=" << std::abs(delta) << std::endl;
+    return NAN;
+}
+
 // generalized integration from 0 to b, with singularity at 0
 // never directly call this function
 template <typename T>
-inline T _general_integrate(std::function<T(T)> func, T b)
+inline T _improper_integrate(std::function<T(T)> func, T b)
 {
     // find the order of the singularity
     T p{b < 1e-4 ? std::log2(func(b / 2) / func(b)) : std::log2(func(5e-5) / func(1e-4))};
@@ -214,7 +282,7 @@ inline T _general_integrate(std::function<T(T)> func, T b)
     }
     if (std::isnan(res))
     {
-        std::cerr << __FILE__ << ':' << __LINE__ << ": get nan in _general_integrate, trying Monte-Carlo" << std::endl;
+        std::cerr << __FILE__ << ':' << __LINE__ << ": get nan in _improper_integrate, trying Monte-Carlo" << std::endl;
         return monte_carlo_integrate(func, 0., b);
     }
     return res;

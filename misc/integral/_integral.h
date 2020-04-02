@@ -30,7 +30,7 @@ inline T monte_carlo_integrate(std::function<T(X...)> func,
 // generalized integration from 0 to b, with singularity at 0
 // never directly call this function
 template <typename T>
-inline T _general_integrate(std::function<T(T)> func, T b);
+inline T _improper_integrate(std::function<T(T)> func, T b);
 
 // use Rumberg method to calculate integral
 template <typename T>
@@ -55,13 +55,13 @@ inline T integrate(std::function<T(T)> func, T a, T b, size_t max_times = 50,
         std::cerr << __FILE__ << ':' << __LINE__ << ": all boundary are inf; please use inf_integrate to "
                                                     "specify where to start general integration; using +-32."
                   << std::endl;
-        rem += _general_integrate(
+        rem += _improper_integrate(
             std::function<T(T)>{
                 [&func](T x) {
                     return func(-1. / x) / x / x;
                 }},
             1. / 32);
-        rem += _general_integrate(
+        rem += _improper_integrate(
             std::function<T(T)>{
                 [&func](T x) {
                     return func(1. / x) / x / x;
@@ -73,7 +73,7 @@ inline T integrate(std::function<T(T)> func, T a, T b, size_t max_times = 50,
     else if (std::isinf(a))
     {
         a = -std::max(10 * std::abs(b), 32.);
-        rem += _general_integrate(
+        rem += _improper_integrate(
             std::function<T(T)>{
                 [&func](T x) {
                     return func(-1. / x) / x / x;
@@ -83,7 +83,7 @@ inline T integrate(std::function<T(T)> func, T a, T b, size_t max_times = 50,
     else if (std::isinf(b))
     {
         b = std::max(10 * std::abs(a), 32.);
-        rem += _general_integrate(
+        rem += _improper_integrate(
             std::function<T(T)>{
                 [&func](T x) {
                     return func(1. / x) / x / x;
@@ -148,13 +148,13 @@ inline T inf_integrate(std::function<T(T)> func, T a, T b, size_t max_times = 50
                        double abs_epsilon = 1e-10, double rel_epsilon = 1e-10)
 {
     T res{0.};
-    res += _general_integrate(
+    res += _improper_integrate(
         std::function<T(T)>{
             [&func](T x) {
                 return func(-1. / x) / x / x;
             }},
         -1. / a);
-    res += _general_integrate(
+    res += _improper_integrate(
         std::function<T(T)>{
             [&func](T x) {
                 return func(1. / x) / x / x;
@@ -196,7 +196,7 @@ inline T integrate(std::function<T(T)> func, T a, T b, It b_sing, It e_sing, siz
         buffer = std::min(1e-4, .01 * (*first_sing - a));
         res = *first_sing == a
                   ? 0.
-                  : integrate(func, a, *first_sing - buffer) + _general_integrate(
+                  : integrate(func, a, *first_sing - buffer) + _improper_integrate(
                                                                    std::function<T(T)>{
                                                                        [&func, &first_sing](T x) {
                                                                            return func(*first_sing - x);
@@ -209,7 +209,7 @@ inline T integrate(std::function<T(T)> func, T a, T b, It b_sing, It e_sing, siz
         if (std::next(it) == sings.end() || *std::next(it) > b)
         {
             buffer = std::min(1e-4, .01 * (b - *it));
-            res += _general_integrate(
+            res += _improper_integrate(
                 std::function<T(T)>{
                     [&func, &it](T x) {
                         return func(*it + x);
@@ -221,14 +221,14 @@ inline T integrate(std::function<T(T)> func, T a, T b, It b_sing, It e_sing, siz
         else
         {
             buffer = std::min(1e-4, .01 * (*std::next(it) - *it));
-            res += _general_integrate(
+            res += _improper_integrate(
                 std::function<T(T)>{
                     [&func, &it](T x) {
                         return func(*it + x);
                     }},
                 buffer);
             res += integrate(func, *it + buffer, *std::next(it) - buffer, max_times, abs_epsilon, rel_epsilon);
-            res += _general_integrate(
+            res += _improper_integrate(
                 std::function<T(T)>{
                     [&func, &it](T x) {
                         return func(*std::next(it) - x);
@@ -243,7 +243,7 @@ inline T integrate(std::function<T(T)> func, T a, T b, It b_sing, It e_sing, siz
 // generalized integration from 0 to b, with singularity at 0
 // never directly call this function
 template <typename T>
-inline T _general_integrate(std::function<T(T)> func, T b)
+inline T _improper_integrate(std::function<T(T)> func, T b)
 {
     // find the order of the singularity
     T p{b < 1e-4 ? std::log2(func(b / 2) / func(b)) : std::log2(func(5e-5) / func(1e-4))};
@@ -280,7 +280,7 @@ inline T _general_integrate(std::function<T(T)> func, T b)
     }
     if (std::isnan(res))
     {
-        std::cerr << __FILE__ << ':' << __LINE__ << ": get nan in _general_integrate, trying Monte-Carlo" << std::endl;
+        std::cerr << __FILE__ << ':' << __LINE__ << ": get nan in _improper_integrate, trying Monte-Carlo" << std::endl;
         return monte_carlo_integrate(func, 0., b);
     }
     return res;
