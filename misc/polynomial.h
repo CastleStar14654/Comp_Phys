@@ -7,6 +7,8 @@
 #include <iostream>
 #include <iterator>
 #include <initializer_list>
+#include <complex>
+#include <cmath>
 
 #include "linear_eq.h"
 
@@ -44,6 +46,86 @@ public:
             res += *it;
         }
         return res;
+    }
+
+    std::complex<T> operator()(std::complex<T> x) const
+    {
+        std::complex<T> res{};
+        for (auto it = this->crbegin(); it != this->crend(); it++)
+        {
+            res *= x;
+            res += *it;
+        }
+        return res;
+    }
+
+    T rootfind(T x0, size_t max_times = 1000, T tol = std::numeric_limits<T>::epsilon()) const
+    {
+        T diff;
+
+        for (size_t i = 0; i < max_times; i++)
+        {
+            auto it{this->crbegin()};
+            T p0{*it++};
+            T q0{};
+            for (; it != this->crend(); it++)
+            {
+                q0 *= x0;
+                q0 += p0;
+                p0 *= x0;
+                p0 += *it;
+            }
+            if (p0)
+            {
+                diff = p0 / q0;
+                if (std::abs(diff) < tol * std::abs(x0))
+                {
+                    return x0 - diff;
+                }
+            }
+            else
+            {
+                return x0;
+            }
+            x0 -= diff;
+        }
+        std::cerr << __FILE__ << ':' << __LINE__ << ": polynomial rootfind not converged: diff, x0=" << diff << ", " << x0 << std::endl;
+        return std::numeric_limits<T>::quiet_NaN();
+    }
+
+    std::complex<T> rootfind(std::complex<T> x0, std::complex<T> x1, std::complex<T> x2, size_t max_times = 1000, T tol = std::numeric_limits<T>::epsilon()) const
+    {
+        std::complex<T> diff;
+        std::complex<T> f0{(*this)(x0)};
+        std::complex<T> f1{(*this)(x1)};
+
+        for (size_t i = 0; i < max_times; i++)
+        {
+            std::complex<T> f2{(*this)(x2)};
+            std::complex<T> h0{x0 - x2};
+            std::complex<T> h1{x1 - x2};
+
+            std::complex<T> delta0{(f0 - f2) / h0};
+            std::complex<T> delta1{(f1 - f2) / h1};
+            std::complex<T> a{(delta0 - delta1) / (h0 - h1)};
+            std::complex<T> b{delta0 - h0 * a};
+
+            std::complex<T> D{std::sqrt(b * b - 4. * f2 * a)};
+            std::complex<T> E{std::abs(b - D) < std::abs(b + D) ? b + D : b - D};
+
+            diff = -2. * f2 / E;
+            if (std::abs(diff) < tol*std::abs(x2))
+            {
+                return x2;
+            }
+            x0 = x1;
+            f0 = f1;
+            x1 = x2;
+            f1 = f2;
+            x2 += diff;
+        }
+        std::cerr << __FILE__ << ':' << __LINE__ << ": polynomial rootfind not converged: diff, x2=" << diff << ", " << x2 << std::endl;
+        return std::numeric_limits<T>::quiet_NaN();
     }
 
     Polynomial deriv() const
