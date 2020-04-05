@@ -192,7 +192,8 @@ inline T steffenson(std::function<T(T)> func, T x0, bool original = false, size_
     {
         T func_x{func(x0)};
         T func_func_x{func(x0 + func(x0))};
-        if (func_x){
+        if (func_x)
+        {
             diff = func_x * func_x / (func_x - func_func_x);
         }
         else
