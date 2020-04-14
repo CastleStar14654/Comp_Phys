@@ -29,7 +29,7 @@ public:
         cut_zero();
     }
     template <typename... Ts>
-    explicit Polynomial(Ts... args, ...)
+    explicit Polynomial(Ts... args)
         : std::vector<T>(args...)
     {
         cut_zero();

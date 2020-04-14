@@ -292,6 +292,17 @@ public:
     virtual T &operator()(size_type row, size_type col) = 0;
     virtual const T &operator()(size_type row, size_type col) const = 0;
 
+    T trace() const
+    {
+        static_assert(R == C);
+        T res{};
+        for (size_t i = 0; i < R; i++)
+        {
+            res += (*this)(i, i);
+        }
+        return res;
+    }
+
     p_ta data() { return elem; }
     const p_ta data() const { return elem; }
     constexpr size_type size() const { return R * C; }

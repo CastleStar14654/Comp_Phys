@@ -95,13 +95,14 @@ public:
     }
     const T &operator()(size_type row, size_type col) const override
     {
-        try
-        {
-            return std::array<std::map<size_t, T>, R>::operator[](row).at(col);
-        }
-        catch (const std::out_of_range &e)
+        auto it {std::array<std::map<size_t, T>, R>::operator[](row).find(col)};
+        if (it == std::array<std::map<size_t, T>, R>::operator[](row).cend())
         {
             return Base_Matrix<T, R, C>::zero;
+        }
+        else
+        {
+            return it->second;
         }
     }
 };
