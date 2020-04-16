@@ -299,7 +299,7 @@ template <typename T, size_t N>
 inline T det(const Symm_Matrix<T, N> &in_mat)
 {
     Low_Tri_Matrix<T, N> out_l{};
-    std::array<T, N> out_d{};
+    std::array<T, N> out_d;
     ldl_factor(in_mat, out_l, out_d);
     T res{1};
     for (size_t i = 0; i < N; i++)
@@ -313,7 +313,7 @@ template <typename T, size_t N, size_t M>
 inline T det(const Symm_Band_Matrix<T, N, M> &in_mat)
 {
     Low_Band_Matrix<T, N, M> out_l{};
-    std::array<T, N> out_d{};
+    std::array<T, N> out_d;
     ldl_factor(in_mat, out_l, out_d);
     T res{1};
     for (size_t i = 0; i < N; i++)
@@ -435,7 +435,7 @@ template <typename T, size_t N>
 inline void cholesky(const Symm_Matrix<T, N> &in_mat,
                      Low_Tri_Matrix<T, N> &out_l)
 {
-    std::array<T, N> out_d{};
+    std::array<T, N> out_d;
     ldl_factor(in_mat, out_l, out_d);
     size_t count;
     for (count = 0; count < N && out_d[count] >= 0; count++)
@@ -458,7 +458,7 @@ template <typename T, size_t N, size_t M>
 inline void cholesky(const Symm_Band_Matrix<T, N, M> &in_mat,
                      Low_Band_Matrix<T, N, M> &out_l)
 {
-    std::array<T, N> out_d{};
+    std::array<T, N> out_d;
     ldl_factor(in_mat, out_l, out_d);
     size_t count;
     for (count = 0; count < N && out_d[count] >= 0; count++)

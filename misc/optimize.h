@@ -10,6 +10,7 @@
 #include <utility>
 
 #include "matrixlib.h"
+#include "linear_eq.h"
 
 namespace Misc
 {
@@ -101,6 +102,7 @@ T minimize1d_kiefer(std::function<T(T)> func, T a, T b,
     T func1{func(x1)};
     T x2{a + phi * del};
     T func2{func(x2)};
+    T prev_func{func1};
     const T tol_x{std::sqrt(tol)};
     const T tol_y{tol};
 
@@ -110,6 +112,7 @@ T minimize1d_kiefer(std::function<T(T)> func, T a, T b,
         {
             a = x1;
             x1 = x2;
+            prev_func = func1;
             func1 = func2;
             del = b - a;
             x2 = a + phi * del;
@@ -119,12 +122,13 @@ T minimize1d_kiefer(std::function<T(T)> func, T a, T b,
         {
             b = x2;
             x2 = x1;
+            prev_func = func2;
             func2 = func1;
             del = b - a;
-            x1 = a + (1 - phi) * del;
+            x1 = a + (1. - phi) * del;
             func1 = func(x1);
         }
-        if (std::abs(func1 - func2) < tol_y * std::abs(func1) && std::abs(func(a + .5 * del) - func1) < tol_y * std::abs(func1))
+        if (std::abs(func1 - func2) < tol_y * std::abs(func1) && std::abs(prev_func - std::max(func1, func2)) < tol_y * std::abs(func1))
         {
             break;
         }
@@ -296,7 +300,7 @@ std::array<T, N> _nelder_mead_vec_add(const std::array<T, N> &ori,
 template <typename T, size_t N>
 std::array<T, N> grad(std::function<T(const std::array<T, N> &)> func,
                       std::array<T, N> x0,
-                      const T step = std::cbrt(6.*std::numeric_limits<T>::epsilon()));
+                      const T step = std::cbrt(6. * std::numeric_limits<T>::epsilon()));
 
 /* Multi-dimensional optimization
  * using Polak-Ribiere Algorithm
@@ -304,15 +308,18 @@ std::array<T, N> grad(std::function<T(const std::array<T, N> &)> func,
  */
 template <typename T, size_t N>
 std::array<T, N> conj_grad(std::function<T(const std::array<T, N> &)> func,
+                           std::function<std::array<T, N>(const std::array<T, N> &)> grad_f,
                            std::array<T, N> x0,
                            std::function<void(std::array<T, N> &)> modify,
                            const size_t max_times = 1000,
                            const T tol = std::numeric_limits<T>::epsilon())
 {
-    std::array<T, N> g{grad(func, x0)};
+    std::array<T, N> g{grad_f(x0)};
     T gg{g * g};
-    T alpha{.5};
-    constexpr T phi{(std::sqrt(5) + 1)/2};
+    constexpr T phi{(std::sqrt(5.) + 1.) / 2.}; // 1.618
+    T alpha{1. / std::sqrt(gg)};
+    T up_bound{alpha};
+    T criteria{tol * std::sqrt((x0 * x0) / gg)};
     std::array<T, N> d;
     for (size_t i = 0; i < N; i++)
     {
@@ -331,24 +338,30 @@ std::array<T, N> conj_grad(std::function<T(const std::array<T, N> &)> func,
                 }
                 return func(x);
             }};
-        alpha = minimize1d_kiefer(func_alpha, 0., phi * alpha);
+        up_bound = std::max(alpha, 4. * criteria);
+        do
+        {
+            up_bound *= phi;
+            alpha = minimize1d_kiefer(func_alpha, 0., up_bound);
+        } while (alpha >= up_bound / phi);
         // new x0
         for (size_t i = 0; i < N; i++)
         {
             x0[i] += alpha * d[i];
         }
+        // stop or not
         modify(x0);
+        criteria = tol * std::sqrt((x0 * x0) / (d * d));
+        if (alpha < criteria)
+        {
+            return x0;
+        }
         // new g & beta
-        std::array<T, N> new_g{grad(func, x0)};
+        std::array<T, N> new_g{grad_f(x0)};
         T new_gg{new_g * new_g};
         T beta{(new_gg - new_g * g) / gg};
         gg = new_gg;
         g = new_g;
-        // stop or not
-        if (std::sqrt(d*d)*alpha < tol * std::sqrt(x0*x0))
-        {
-            return x0;
-        }
         // new d
         for (size_t i = 0; i < N; i++)
         {
@@ -370,7 +383,37 @@ std::array<T, N> conj_grad(std::function<T(const std::array<T, N> &)> func,
 {
     std::function<void(std::array<T, N> &)> modify{
         [](std::array<T, N> &) {}};
-    return conj_grad(func, std::move(x0), modify, max_times, tol);
+    std::function<std::array<T, N>(const std::array<T, N> &)> grad_f{
+        [&func](const std::array<T, N> &x0) {
+            return grad(func, x0);
+        }};
+    return conj_grad(func, grad_f, std::move(x0), modify, max_times, tol);
+}
+
+template <typename T, size_t N>
+std::array<T, N> conj_grad(std::function<T(const std::array<T, N> &)> func,
+                           std::function<std::array<T, N>(const std::array<T, N> &)> grad_f,
+                           std::array<T, N> x0,
+                           const size_t max_times = 1000,
+                           const T tol = std::numeric_limits<T>::epsilon())
+{
+    std::function<void(std::array<T, N> &)> modify{
+        [](std::array<T, N> &) {}};
+    return conj_grad(func, grad_f, std::move(x0), modify, max_times, tol);
+}
+
+template <typename T, size_t N>
+std::array<T, N> conj_grad(std::function<T(const std::array<T, N> &)> func,
+                           std::array<T, N> x0,
+                           std::function<void(std::array<T, N> &)> modify,
+                           const size_t max_times = 1000,
+                           const T tol = std::numeric_limits<T>::epsilon())
+{
+    std::function<std::array<T, N>(const std::array<T, N> &)> grad_f{
+        [&func](const std::array<T, N> &x0) {
+            return grad(func, x0);
+        }};
+    return conj_grad(func, grad_f, std::move(x0), modify, max_times, tol);
 }
 
 template <typename T, size_t N>
@@ -382,7 +425,6 @@ std::array<T, N> grad(std::function<T(const std::array<T, N> &)> func,
 
     for (size_t i = 0; i < N; i++)
     {
-        T f_mid{func(x0)};
         x0[i] -= step;
         T f_left{func(x0)};
         x0[i] += 2. * step;

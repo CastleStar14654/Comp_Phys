@@ -26,7 +26,7 @@ namespace Misc
 {
 
 template <typename T, size_t N>
-T operator*(const std::array<T, N> &a, const std::array<T, N> &b)
+inline T operator*(const std::array<T, N> &a, const std::array<T, N> &b)
 {
     T res{};
     for (std::size_t i = 0; i < N; i++)
@@ -37,7 +37,7 @@ T operator*(const std::array<T, N> &a, const std::array<T, N> &b)
 }
 
 template <typename T, size_t N>
-std::complex<T> operator*(const std::array<std::complex<T>, N> &a, const std::array<std::complex<T>, N> &b)
+inline std::complex<T> operator*(const std::array<std::complex<T>, N> &a, const std::array<std::complex<T>, N> &b)
 {
     std::complex<T> res{};
     for (std::size_t i = 0; i < N; i++)
@@ -48,9 +48,10 @@ std::complex<T> operator*(const std::array<std::complex<T>, N> &a, const std::ar
 }
 
 template <typename T, size_t N, size_t C>
-std::array<T, C> operator*(const std::array<T, N> &a, const Base_Matrix<T, N, C> &b)
+inline std::array<T, C> operator*(const std::array<T, N> &a, const Base_Matrix<T, N, C> &b)
 {
-    std::array<T, C> res{};
+    std::array<T, C> res;
+    res.fill(T{});
     for (std::size_t j = 0; j < N; j++)
     {
         T temp {a[j]};
@@ -63,9 +64,10 @@ std::array<T, C> operator*(const std::array<T, N> &a, const Base_Matrix<T, N, C>
 }
 
 template <typename T, size_t N, size_t C>
-std::array<std::complex<T>, C> operator*(const std::array<std::complex<T>, N> &a, const Base_Matrix<std::complex<T>, N, C> &b)
+inline std::array<std::complex<T>, C> operator*(const std::array<std::complex<T>, N> &a, const Base_Matrix<std::complex<T>, N, C> &b)
 {
-    std::array<std::complex<T>, C> res{};
+    std::array<std::complex<T>, C> res;
+    res.fill(std::complex<T>{});
     for (std::size_t j = 0; j < N; j++)
     {
         std::complex<T> temp {std::conj(a[j])};
@@ -78,9 +80,10 @@ std::array<std::complex<T>, C> operator*(const std::array<std::complex<T>, N> &a
 }
 
 template <typename T, size_t R, size_t N>
-std::array<T, R> operator*(const Base_Matrix<T, R, N> &a, const std::array<T, N> &b)
+inline std::array<T, R> operator*(const Base_Matrix<T, R, N> &a, const std::array<T, N> &b)
 {
-    std::array<T, R> res{};
+    std::array<T, R> res;
+    res.fill(T{});
     for (std::size_t i = 0; i < R; i++)
         for (std::size_t j = 0; j < N; j++)
         {
@@ -90,9 +93,10 @@ std::array<T, R> operator*(const Base_Matrix<T, R, N> &a, const std::array<T, N>
 }
 
 template <typename T, size_t N, size_t C>
-std::array<T, C> operator*(const std::array<T, N> &a, const Sparse_Matrix<T, N, C> &b)
+inline std::array<T, C> operator*(const std::array<T, N> &a, const Sparse_Matrix<T, N, C> &b)
 {
-    std::array<T, C> res{};
+    std::array<T, C> res;
+    res.fill(T{});
     for (std::size_t j = 0; j < N; j++)
     {
         T temp {a[j]};
@@ -105,9 +109,10 @@ std::array<T, C> operator*(const std::array<T, N> &a, const Sparse_Matrix<T, N, 
 }
 
 template <typename T, size_t R, size_t N>
-std::array<T, R> operator*(const Sparse_Matrix<T, R, N> &a, const std::array<T, N> &b)
+inline std::array<T, R> operator*(const Sparse_Matrix<T, R, N> &a, const std::array<T, N> &b)
 {
-    std::array<T, R> res{};
+    std::array<T, R> res;
+    res.fill(T{});
     for (std::size_t i = 0; i < R; i++)
         for (const auto& p: a[i])
         {

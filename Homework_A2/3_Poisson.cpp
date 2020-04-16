@@ -88,7 +88,7 @@ array<double, (M - 1) * (N - 1)> sinxy(double xa, double xb, double ya, double y
 {
     static_assert(M >= 1 && N >= 1);
     constexpr size_t mat_size{(M - 1) * (N - 1)};
-    array<double, mat_size> res{};
+    array<double, mat_size> res;
     double hx{(xb - xa) / M};
     double hy{(yb - ya) / N};
 
@@ -107,7 +107,7 @@ array<double, (M - 1) * (N - 1)> sinxy(double xa, double xb, double ya, double y
 template <size_t M, size_t N>
 array<double, 4 * M * N> gauss_pts(const array<double, (M - 1) * (N - 1)> &grid_res)
 {
-    array<double, 4 * M * N> res{};
+    array<double, 4 * M * N> res;
     constexpr double _2_sqrt3{2. + sqrt(3.)};
     res.fill(0.);
     for (size_t i = 0; i < M - 1; i++)
@@ -211,7 +211,7 @@ void solve(bool output, string prefix)
         }
     }
     // 3.2 integration in each grid
-    array<double, partition * partition> integrals{};
+    array<double, partition * partition> integrals;
     for (size_t i = 0; i < partition * partition; i++)
     {
         integrals[i] = interp[4 * i] * interp[4 * i] + interp[4 * i + 1] * interp[4 * i + 1];
