@@ -319,7 +319,6 @@ std::array<T, N> conj_grad(std::function<T(const std::array<T, N> &)> func,
     constexpr T phi{(std::sqrt(5.) + 1.) / 2.}; // 1.618
     T alpha{1. / std::sqrt(gg)};
     T up_bound{alpha};
-    T criteria{tol * std::sqrt((x0 * x0) / gg)};
     std::array<T, N> d;
     for (size_t i = 0; i < N; i++)
     {
@@ -338,7 +337,7 @@ std::array<T, N> conj_grad(std::function<T(const std::array<T, N> &)> func,
                 }
                 return func(x);
             }};
-        up_bound = std::max(alpha, 4. * criteria);
+        up_bound = alpha;
         do
         {
             up_bound *= phi;
@@ -351,8 +350,8 @@ std::array<T, N> conj_grad(std::function<T(const std::array<T, N> &)> func,
         }
         // stop or not
         modify(x0);
-        criteria = tol * std::sqrt((x0 * x0) / (d * d));
-        if (alpha < criteria)
+
+        if (alpha < tol * std::sqrt((x0 * x0) / (d * d)))
         {
             return x0;
         }
