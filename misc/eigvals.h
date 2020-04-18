@@ -1,6 +1,10 @@
 #ifndef MISC_EIGVALS
 #define MISC_EIGVALS
 
+#include <array>
+#include <utility>
+#include <vector>
+
 #include "matrixlib.h"
 
 namespace Misc
@@ -9,7 +13,10 @@ namespace Misc
 // ======================= APIs =============================
 
 /* find the Hessenberg matrix of `in_mat`. `in_mat` == `q_mat` H `q_mat`^T, where `q_mat` is orthogonal
- *  parameters:
+ * RETURN:
+ *      H when `in_situ` is not passed, or else `in_mat` is modified;
+ *      `q_mat` is modified.
+ * PARAMETERS:
  *      in_mat: the matrix to be calculated. if `in_situ` is passed, then it will be modified
  *      q_mat:  optional; will be modified in situ
  *      in_situ:    its value is not used
@@ -26,20 +33,33 @@ inline void hessenberg(Matrix<T, N, N> &in_mat, Matrix<T, N, N> &q_mat, bool in_
 template <typename T, size_t N>
 inline void _hessenberg_impl(Matrix<T, N, N> &in_mat, Matrix<T, N, N> *p_q_mat = nullptr);
 
-/* QR factorization of a *Hessenberg matrix* H, using shifted implicit QR
+/* eigenvalues of a *Hessenberg matrix* H (`in_mat`), using shifted implicit QR
+ * H = Q R Q^T, R is a block diagonal matrix
  * intended to be inner implementation
- * ASSUMPTION: H = Q0^T A Q0, where Q0 is `q_mat` (default to be identity)
+ * ASSUMPTION: H = Q0^T A Q0, where Q0 is `*p_q_mat` (if `p_q_mat` != nullptr)
  * RETURN:
- *      R when `in_situ` is passed; `q_mat` is modified.
- *      H = Q R = Q0^T A Q0, so A = Q0 Q R Q0^T. `q_mat` would be Q0 Q
+ *      `in_mat` & `*p_q_mat` are modified.
+ *      H = Q R Q^T = Q0^T A Q0, so A = Q0 Q R Q^T Q0^T. `*p_q_mat` would be Q0 Q
  * parameters:
  *      in_mat: the matrix H to be calculated. if `in_situ` is passed, then it will be modified
- *      q_mat:  optional; will be modified in situ
- *      in_situ:    its value is not used
+ *      p_q_mat:pointer to q_mat, optional; will be modified in situ
+ *      tol:    relative tolerance
  */
 template <typename T, size_t N>
-inline void _qr_hessenberg(Matrix<T, N, N> &in_mat, Matrix<T, N, N> *p_q_mat = nullptr,
-                           const T tol = std::numeric_limits<T>::epsilon());
+inline void _eig_hessenberg(Matrix<T, N, N> &in_mat, Matrix<T, N, N> *p_q_mat = nullptr,
+                            const T tol = std::numeric_limits<T>::epsilon());
+
+/* eigenvalues of a matrix A (`in_mat`),
+ * modifying A into a Hessenberg Matrix and then using shifted implicit QR
+ * RETURN:
+ *      array of eigenvalues;
+ *      vector of index where eigenvalues are complex pairs (Re first and Im second)
+ *          for example, if 2 is in vector, then array[2] +- i array[3] are eigenvalues
+ * parameters:
+ *      in_mat: the matrix A to be calculated.
+ */
+template <typename T, size_t N>
+inline std::pair<std::array<T, N>, std::vector<size_t>> eig_vals(Matrix<T, N, N> in_mat);
 
 // ======================= implementations ========================
 
@@ -92,6 +112,10 @@ inline void _hessenberg_impl(Matrix<T, N, N> &in_mat, Matrix<T, N, N> *p_q_mat)
         sigma *= std::signbit(u[i + 1]) ? -1. : 1.;
         u[i + 1] += sigma;
         T beta{sigma * u[i + 1]}; // |u|^2 / 2
+        if (beta == 0.)
+        {
+            continue;
+        }
         // left multiply H
         in_mat(i + 1, i) = -sigma;
         for (size_t j = i + 2; j < N; j++)
@@ -144,7 +168,7 @@ inline void _hessenberg_impl(Matrix<T, N, N> &in_mat, Matrix<T, N, N> *p_q_mat)
 }
 
 template <typename T, size_t N>
-inline void _qr_hessenberg(Matrix<T, N, N> &in_mat, Matrix<T, N, N> *p_q_mat, const T tol)
+inline void _eig_hessenberg(Matrix<T, N, N> &in_mat, Matrix<T, N, N> *p_q_mat, const T tol)
 {
     std::array<T, 3> u;
     size_t mat_range{N - 1}; // the maximum index of current sub-matrix
@@ -198,7 +222,10 @@ inline void _qr_hessenberg(Matrix<T, N, N> &in_mat, Matrix<T, N, N> *p_q_mat, co
             sigma *= std::signbit(u[0]) ? -1. : 1.;
             u[0] += sigma;
             T beta{sigma * u[0]}; // |u|^2 / 2
-
+            if (beta == 0.)
+            {
+                continue;
+            }
             // left multiply H
             if (i != -1)
             {
@@ -268,6 +295,47 @@ inline void _qr_hessenberg(Matrix<T, N, N> &in_mat, Matrix<T, N, N> *p_q_mat, co
             mat_range -= 2;
         }
     }
+}
+
+template <typename T, size_t N>
+inline std::pair<std::array<T, N>, std::vector<size_t>> eig_vals(Matrix<T, N, N> in_mat)
+{
+    hessenberg(in_mat, true);
+    _eig_hessenberg(in_mat);
+    std::array<T, N> res_array;
+    std::vector<size_t> res_vector{};
+
+    for (size_t i = 0; i < N - 1; i++)
+    {
+        if (in_mat(i + 1, i) == 0.)
+        {
+            res_array[i] = in_mat(i, i);
+        }
+        else
+        {
+            T sigma2{in_mat(i, i) * in_mat(i + 1, i + 1) - in_mat(i, i + 1) * in_mat(i + 1, i)};
+            T re_2sigma{in_mat(i, i) + in_mat(i + 1, i + 1)};
+            T delta{re_2sigma * re_2sigma - 4. * sigma2};
+            if (delta < 0.)
+            {
+                res_vector.push_back(i);
+                res_array[i] = re_2sigma / 2.;
+                res_array[i + 1] = std::sqrt(-delta) / 2.;
+            }
+            else
+            {
+                delta = std::sqrt(delta);
+                res_array[i] = (re_2sigma - delta) / 2.;
+                res_array[i + 1] = (re_2sigma + delta) / 2.;
+            }
+            i++;
+        }
+    }
+    if (in_mat(N - 1, N - 2) == 0.)
+    {
+        res_array[N - 1] = in_mat(N - 1, N - 1);
+    }
+    return {res_array, res_vector};
 }
 
 } // namespace Misc
