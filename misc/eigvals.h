@@ -47,7 +47,7 @@ inline void _hessenberg_impl(Matrix<T, N, N> &in_mat, Matrix<T, N, N> *p_q_mat =
  */
 template <typename T, size_t N>
 inline void _eig_hessenberg(Matrix<T, N, N> &in_mat, Matrix<T, N, N> *p_q_mat = nullptr,
-                            const T tol = std::numeric_limits<T>::epsilon());
+                            const T tol = std::sqrt(std::numeric_limits<T>::epsilon()));
 
 /* eigenvalues of a matrix A (`in_mat`),
  * modifying A into a Hessenberg Matrix and then using shifted implicit QR
@@ -59,7 +59,8 @@ inline void _eig_hessenberg(Matrix<T, N, N> &in_mat, Matrix<T, N, N> *p_q_mat = 
  *      in_mat: the matrix A to be calculated.
  */
 template <typename T, size_t N>
-inline std::pair<std::array<T, N>, std::vector<size_t>> eig_vals(Matrix<T, N, N> in_mat);
+inline std::pair<std::array<T, N>, std::vector<size_t>> eig_vals(Matrix<T, N, N> in_mat,
+                                                                 const T tol = std::sqrt(std::numeric_limits<T>::epsilon()));
 
 // ======================= implementations ========================
 
@@ -283,7 +284,7 @@ inline void _eig_hessenberg(Matrix<T, N, N> &in_mat, Matrix<T, N, N> *p_q_mat, c
                 }
         }
         // check convergence
-        T criteria{tol * std::max(std::sqrt(std::abs(sigma2)), std::abs(re_2sigma))};
+        T criteria{tol * std::max({1., std::abs(in_mat(mat_range, mat_range)), std::abs(in_mat(mat_range - 1, mat_range - 1))})};
         if (std::abs(in_mat(mat_range, mat_range - 1)) < criteria)
         {
             in_mat(mat_range, mat_range - 1) = 0.;
@@ -298,10 +299,10 @@ inline void _eig_hessenberg(Matrix<T, N, N> &in_mat, Matrix<T, N, N> *p_q_mat, c
 }
 
 template <typename T, size_t N>
-inline std::pair<std::array<T, N>, std::vector<size_t>> eig_vals(Matrix<T, N, N> in_mat)
+inline std::pair<std::array<T, N>, std::vector<size_t>> eig_vals(Matrix<T, N, N> in_mat, const T tol)
 {
     hessenberg(in_mat, true);
-    _eig_hessenberg(in_mat);
+    _eig_hessenberg(in_mat, (Matrix<T, N, N> *)nullptr, tol);
     std::array<T, N> res_array;
     std::vector<size_t> res_vector{};
 

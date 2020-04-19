@@ -1,0 +1,189 @@
+本题要求使用二阶中心差分求解Poisson方程
+\begin{equation}
+    \begin{cases}
+        -u_{xx} - u_{yy} = 2\pi^2\sin(\pi x)\sin(\pi y),\quad 0<x, y<1;\\
+        \eval{u}_{\partial \Omega} = 0, \quad \Omega=(0, 1)\times(0, 1),
+    \end{cases}
+\end{equation}
+并给出$L_2$范数下的误差估计。
+两方向差分的剖分数均为$2^n$，分别在$n=4,5,6,7$时求解、比较误差。
+
+容易得到，该方程的解析解为
+\begin{equation}
+    u(x,y) = \sin(\pi x)\sin(\pi y).
+\end{equation}
+
+求解程序为\texttt{3\_Poisson.cpp}，主要的求解函数为\texttt{solve<N>()}，完成剖分数为$2^N$的全题求解，声明如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:solve_decl-end:solve_decl]{3_Poisson.cpp}
+}
+参数\texttt{output}为是否输出到文件；\texttt{prefix}为输出文件名的前缀（默认为保存到文件夹\texttt{3\_Poisson}）。
+
+函数\texttt{solve<N>()}在正式求解前先做一些初始操作，如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:solve_init-end:solve_init]{3_Poisson.cpp}
+}
+将剖分数的指数\texttt{N}加入到文件名\texttt{prefix}中；
+定义剖分数\texttt{partition}，微分算符矩阵边长\texttt{mat\_size}，横纵坐标取值范围\texttt{xa, xb, ya, yb}等数个字面量。
+
+\section{求解离散化的Poisson方程}
+基本思路为获得拉普拉斯算符$\laplacian$以及非齐次项的离散化形式，然后使用矩阵的迭代法求解矩阵方程。
+相关程序如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=end:solve_init-end:prob_1]{3_Poisson.cpp}
+}
+使用函数\texttt{laplacian<partition, partition>()}（见\autoref{ssec:laplacian}）获得以稀疏矩阵存储的$\laplacian$，存入\texttt{op}。
+使用函数\texttt{sinxy<partition, partition>()}（见\autoref{ssec:sinxy}）获得非齐次项$2\pi^2\sin(\pi x)\sin(\pi y)$，存入\texttt{b}。
+使用函数\texttt{suc\_over\_rel()}用超松弛法求解线性方程\begin{equation}
+    \text{\texttt{op} \texttt{solution}} = \text{\texttt{b}},
+\end{equation}
+松弛因子$\omega=1.95$。
+最后，将结果输出到文件\texttt{N\_1}（参见文件夹\texttt{3\_Poisson/}中的\texttt{4\_1, 5\_1, 6\_1, 7\_1}）。
+
+方程的离散化首先将二维网格上的点编号。
+$x$方向用$i$编号，剖分数为$M$；$y$方向用$j$编号，剖分数为$N$；两方向步长分别为$h_x, h_y$。
+那么方程离散为
+\begin{equation}
+    − \frac{u_{i−1,j} − 2u_{i,j} + u_{i+1,j}}{h_x^2}
+    − \frac{u_{i,j−1} − 2u_{i,j} + u_{i,j+1}}{h_y^2}
+    = f_{i,j} = f(x_i ,y_j).
+\end{equation}
+且$i, j$取到边界时函数值为0。
+将二维网格上的格点按照$y$方向优先遍历（\textsf{C}风格的行优先）压缩到一维，那么拉普拉斯算符的离散化形式为一个\textbf{块三对角矩阵}，每一块的大小为$(N-1)\times(N-1)$。
+非对角的块均为矩阵$-\frac{I_{(N-1)\times(N-1)}}{h_x^2}$，而对角的块为一个\textbf{三对角矩阵}$A$。
+$A$的非对角上的非零元素为$-\frac{1}{h_y^2}$，对角元为$\frac{2}{h_x^2}+\frac{2}{h_y^2}$。
+
+\subsection{获得拉普拉斯算符}\label{ssec:laplacian}
+函数\texttt{laplacian<M, N>()}完整定义如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:laplacian-end:laplacian]{3_Poisson.cpp}
+}
+由前面的讨论得到，我们需要构造的矩阵其实只有5条非零的带。
+故使用三个循环填充这些非零元素即可。
+函数返回一个底层是\texttt{std::array<std::map<size\_t, T>, N>}的稀疏矩阵。
+
+\subsection{获得非齐次项}\label{ssec:sinxy}
+返回压缩为一维的非齐次项的函数\texttt{sinxy<M, N>()}完整定义如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:sinxy-end:sinxy]{3_Poisson.cpp}
+}
+为十分简单的嵌套循环。
+外层为$x$方向，内层为$y$方向。
+
+\section{插值计算高斯点函数值}
+使用函数\texttt{gauss\_pts()}，将前面得到的函数离散解进行线性插值，计算$4MN$个高斯点上的函数值并保存到文件。
+相关程序如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=end:prob_1-end:prob_2]{3_Poisson.cpp}
+}
+
+对于标准单元$(-1, 1)$上的任意函数$f$，其积分$\int_{-1}^1 f\dd{x}$可用$f\qty(-\frac{1}{\sqrt{3}}) + f\qty(\frac{1}{\sqrt{3}})$近似，并具有3次代数精度。
+推广到二维，标准单元$(-1, 1)\times(-1, 1)$上的积分可用四个点$\qty(\pm\frac{1}{\sqrt{3}}, \pm\frac{1}{\sqrt{3}})$上的函数值之和近似。
+对于其他区间，需要进行相应的\textbf{放缩变换}。
+
+考虑标准单元上使用四个顶点$(\pm 1, \pm 1)$的线性插值。
+四个插值基函数分别为$\frac{(1\pm\xi)(1\pm\eta)}{4}$。
+对于每个顶点，恰有一个基函数在此处取值为1，而其他基函数取值均为0。
+
+由于高斯点的相对位置已知，我们很容易就可以得到，对于一个顶点$A$，其函数值对离它最近的高斯点的权重为$\frac{2+\sqrt{3}}{6}$，对两个离它等距的高斯点权重为$\frac{1}{6}$，对最远的为$\frac{1}{6\qty(2+\sqrt{3})}$。
+利用这个关系，我们可以这样实现\texttt{gauss\_pts()}：
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:gauss_pts-end:gauss_pts]{3_Poisson.cpp}
+}
+整体思路为：将高斯点也按照行优先的方式压缩为一维。
+然后，\textbf{对离散解}进行遍历，将\texttt{value\_idx}处的离散解按照权重添加到周围的16个高斯点的函数值上。
+遍历完成时，我们便得到所有高斯点上的函数值。
+
+\section{计算每个网格上的误差平方积分}
+所需计算的是每个网格$\Omega_{i, j}$上的积分
+\begin{equation}
+    \int_{\Omega_{i, j}}(\hat{u} − u)^2\dd{x}\dd{y},
+\end{equation}
+其中$\hat{u}$为插值得到的近似解。
+根据上面的讨论，我们只要计算各高斯点处的$(\hat{u} − u)^2$即可。
+而这又可以通过计算高斯点处的解析解$u=\sin(\pi x)\sin(\pi y)$然后和$\hat{u}$求差、平方得到。
+
+\subsection{计算各高斯点处的误差}
+前面已经得到各高斯点处的函数值的\texttt{std::array interp}。
+接下来将直接原处将其修改为各高斯点处的近似解与解析解之差。
+实现如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=end:prob_2-end:prob_3.1]{3_Poisson.cpp}
+}
+定义了量\texttt{left\_gauss}$=\frac{-\frac{1}{\sqrt{3}}-(-1)}{2}=\frac{1}{3+\sqrt{3}}$，为高斯点$-\frac{1}{\sqrt{3}}$到点$-1$的距离与点$1$到点$-1$的距离之比。
+可用其计算高斯点的绝对位置。
+
+简写$x,y$方向步长为\texttt{hx}, \texttt{hy}。
+外层循环为$x$方向遍历，先将\texttt{x}设为当前区间的左高斯点，然后进入内层$y$方向循环。
+将\texttt{y}分别设为左、右高斯点，计算解析解，然后从对应的\texttt{interp}中的项中减去。
+然后将\texttt{x}设为右高斯点，重复。
+通过这种方式，遍历了所右高斯点，并使\texttt{interp}储存高斯点上的函数偏差。
+
+其中，解析解函数\texttt{ana\_sol()}为
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:ana_sol-end:ana_sol]{3_Poisson.cpp}
+}
+
+\subsection{计算积分}
+各个网格上的积分值即为网格上各高斯点处的误差平方和再乘以面积$\frac{1}{4}h_xh_y$。
+编号为\texttt{k}的网格，其行号为\texttt{k / partition}，列号为\texttt{k \% partition}。
+其对应的四个高斯点的行号为\texttt{k / partition * 2}和\texttt{k / partition * 2 + 1}，列号为\texttt{k \% partition * 2 (+ 1)}。
+代码为
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=end:prob_3.1-end:prob_3]{3_Poisson.cpp}
+}
+将四个高斯点上的误差的平方赋给\texttt{integrals[k]}后再乘以网格面积。
+最后输出到文件。
+
+\section{计算方均根误差}
+最后，只需将\texttt{integrals}中的积分求和并开方即可得到方均根误差。
+计算与输出的代码如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=end:prob_3-end:prob_4]{3_Poisson.cpp}
+}
+最终结果见\autoref{tab:rms_error}。
+其他中间结果请参见\texttt{3\_Poisson/}文件夹中的文件。
+文件名的第一个数字为$n$，第二个数字为题号。
+
+\begin{table}
+\centering
+\caption{不同剖分数下离散求解Poisson方程然后线性插值的全域方均根误差}
+\label{tab:rms_error}
+\begin{tabular}{cl}
+\toprule
+$n$ & \multicolumn{1}{c}{方均根误差$E_{L_2}$} \\ \midrule
+4 & 0.001605577640345589 \\
+5 & 0.0004015450480851767 \\
+6 & 0.0001003956716993960 \\
+7 & 0.00002509950593925162 \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\section{讨论}
+从\autoref{tab:rms_error} 中可以发现，当剖分数翻倍（步长$h$缩小一半）时，方均根误差十分精确地变为$\frac{1}{4}$。
+下面对其原因做一个探讨。
+
+误差的来源可能有三个：
+\begin{inparaenum}
+    \item 离散求解的误差；
+    \item 插值到高斯点的误差；
+    \item 高斯积分的误差。
+\end{inparaenum}
+注意到，高斯积分有3次代数精度，故其误差$\propto h^4$，可以忽略。
+
+离散求解微分方程的误差主要来自于算符离散化。
+离散化使用了二阶中心差分，误差$\propto h^2$。
+线性插值的误差也为$\propto h^2$。
+因此，总的误差为$O(h^2)$。
+这与我们观察到的现象是符合的。

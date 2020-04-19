@@ -32,13 +32,17 @@ array<double, (M - 1) * (N - 1)> sinxy(double xa, double xb, double ya, double y
 //      grid_res: values at grid
 template <size_t M, size_t N>
 array<double, 4 * M * N> gauss_pts(const array<double, (M - 1) * (N - 1)> &grid_res);
+/*beg:ana_sol*/
 // analytical solution of this problem
 double ana_sol(double x, double y)
 {
     return sin(pi * x) * sin(pi * y);
 }
+/*end:ana_sol*/
+/*beg:solve_decl*/
 template <size_t N>
-void solve(bool output=true, string prefix="3_Poisson/");
+void solve(bool output = true, string prefix = "3_Poisson/");
+/*end:solve_decl*/
 
 int main()
 {
@@ -48,6 +52,7 @@ int main()
     solve<7>();
 }
 
+/*beg:laplacian*/
 template <size_t M, size_t N>
 Sparse_Matrix<double, (M - 1) * (N - 1), (M - 1) * (N - 1)> laplacian(double xrange, double yrange)
 {
@@ -82,7 +87,9 @@ Sparse_Matrix<double, (M - 1) * (N - 1), (M - 1) * (N - 1)> laplacian(double xra
 
     return res;
 }
+/*end:laplacian*/
 
+/*beg:sinxy*/
 template <size_t M, size_t N>
 array<double, (M - 1) * (N - 1)> sinxy(double xa, double xb, double ya, double yb)
 {
@@ -103,7 +110,9 @@ array<double, (M - 1) * (N - 1)> sinxy(double xa, double xb, double ya, double y
 
     return res;
 }
+/*end:sinxy*/
 
+/*beg:gauss_pts*/
 template <size_t M, size_t N>
 array<double, 4 * M * N> gauss_pts(const array<double, (M - 1) * (N - 1)> &grid_res)
 {
@@ -144,7 +153,9 @@ array<double, 4 * M * N> gauss_pts(const array<double, (M - 1) * (N - 1)> &grid_
     }
     return res;
 }
+/*end:gauss_pts*/
 
+/*beg:solve_init*/
 template <size_t N>
 void solve(bool output, string prefix)
 {
@@ -158,6 +169,7 @@ void solve(bool output, string prefix)
     constexpr double xb{1.};
     constexpr double ya{0.};
     constexpr double yb{1.};
+    /*end:solve_init*/
     // 1. solve the equation: op * solution = b
     auto op{laplacian<partition, partition>(xb - xa, yb - ya)};
     array<double, mat_size> b{sinxy<partition, partition>(xa, xb, ya, yb)};
@@ -166,22 +178,24 @@ void solve(bool output, string prefix)
     suc_over_rel(op, b, solution, 1.95);
     if (output)
     {
-        ofstream ofs {prefix + "1"};
+        ofstream ofs{prefix + "1"};
         for (auto &&i : solution)
         {
             ofs << setprecision(16) << i << '\n';
         }
     }
+    /*end:prob_1*/
     // 2. linear interpolation; get value at gauss points
     array<double, 4 * partition * partition> interp{gauss_pts<partition, partition>(solution)};
     if (output)
     {
-        ofstream ofs {prefix + "2"};
+        ofstream ofs{prefix + "2"};
         for (auto &&i : interp)
         {
             ofs << setprecision(16) << i << '\n';
         }
     }
+    /*end:prob_2*/
     // 3. Gauss integration of each grid
     // 3.1 difference between exact value at gauss points; modify `interp` in situ
     constexpr double left_gauss{1. / (3. + sqrt(3.))};
@@ -210,25 +224,29 @@ void solve(bool output, string prefix)
             idx++;
         }
     }
+    /*end:prob_3.1*/
     // 3.2 integration in each grid
     array<double, partition * partition> integrals;
-    for (size_t i = 0; i < partition * partition; i++)
+    for (size_t k = 0; k < partition * partition; k++)
     {
-        integrals[i] = interp[4 * i] * interp[4 * i] + interp[4 * i + 1] * interp[4 * i + 1];
-        integrals[i] += interp[4 * i + 2] * interp[4 * i + 2] + interp[4 * i + 3] * interp[4 * i + 3];
-        integrals[i] *= hx * hy / 4.;
+        size_t orig{k / partition * 4 * partition + k % partition * 2};
+        integrals[k] = interp[orig] * interp[orig] + interp[orig + 1] * interp[orig + 1];
+        orig += 2 * partition;
+        integrals[k] += interp[orig] * interp[orig] + interp[orig + 1] * interp[orig + 1];
+        integrals[k] *= hx * hy / 4.;
     }
     if (output)
     {
-        ofstream ofs {prefix + "3"};
+        ofstream ofs{prefix + "3"};
         for (auto &&i : integrals)
         {
             ofs << setprecision(16) << i << '\n';
         }
     }
+    /*end:prob_3*/
     // 4. Error
     double error{};
-    for (auto x: integrals)
+    for (auto x : integrals)
     {
         error += x;
     }
@@ -241,4 +259,5 @@ void solve(bool output, string prefix)
     }
     cerr << "partition number is 2^" << N << '\n';
     cerr << "rms error:\t" << setprecision(16) << error << endl;
+    /*end:prob_4*/
 }

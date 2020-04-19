@@ -302,6 +302,8 @@ std::array<T, N> grad(std::function<T(const std::array<T, N> &)> func,
                       std::array<T, N> x0,
                       const T step = std::cbrt(6. * std::numeric_limits<T>::epsilon()));
 
+/*beg:cg*/
+
 /* Multi-dimensional optimization
  * using Polak-Ribiere Algorithm
  * modify is used to modify x0's generated
@@ -373,6 +375,7 @@ std::array<T, N> conj_grad(std::function<T(const std::array<T, N> &)> func,
               << std::sqrt(gg) << ", " << func(x0) << std::endl;
     return x0;
 }
+/*end:cg*/
 
 template <typename T, size_t N>
 std::array<T, N> conj_grad(std::function<T(const std::array<T, N> &)> func,
