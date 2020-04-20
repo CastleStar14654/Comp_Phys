@@ -54,10 +54,10 @@ inline std::array<T, C> operator*(const std::array<T, N> &a, const Base_Matrix<T
     res.fill(T{});
     for (std::size_t j = 0; j < N; j++)
     {
-        T temp {a[j]};
+        T temp{a[j]};
         for (std::size_t i = 0; i < C; i++)
         {
-            res[i] += temp*b(j, i);
+            res[i] += temp * b(j, i);
         }
     }
     return res;
@@ -70,10 +70,10 @@ inline std::array<std::complex<T>, C> operator*(const std::array<std::complex<T>
     res.fill(std::complex<T>{});
     for (std::size_t j = 0; j < N; j++)
     {
-        std::complex<T> temp {std::conj(a[j])};
+        std::complex<T> temp{std::conj(a[j])};
         for (std::size_t i = 0; i < C; i++)
         {
-            res[i] += temp*b(j, i);
+            res[i] += temp * b(j, i);
         }
     }
     return res;
@@ -87,7 +87,7 @@ inline std::array<T, R> operator*(const Base_Matrix<T, R, N> &a, const std::arra
     for (std::size_t i = 0; i < R; i++)
         for (std::size_t j = 0; j < N; j++)
         {
-            res[i] += a(i, j)*b[j];
+            res[i] += a(i, j) * b[j];
         }
     return res;
 }
@@ -97,13 +97,9 @@ inline std::array<T, C> operator*(const std::array<T, N> &a, const Sparse_Matrix
 {
     std::array<T, C> res;
     res.fill(T{});
-    for (std::size_t j = 0; j < N; j++)
+    for (const auto &p : b)
     {
-        T temp {a[j]};
-        for (const auto& p: b[j])
-        {
-            res[p.first] += temp*p.second;
-        }
+        res[p.first.second] += a[p.first.first] * p.second;
     }
     return res;
 }
@@ -113,11 +109,10 @@ inline std::array<T, R> operator*(const Sparse_Matrix<T, R, N> &a, const std::ar
 {
     std::array<T, R> res;
     res.fill(T{});
-    for (std::size_t i = 0; i < R; i++)
-        for (const auto& p: a[i])
-        {
-            res[i] += p.second*b[p.first];
-        }
+    for (const auto &p : a)
+    {
+        res[p.first.first] += p.second * b[p.first.second];
+    }
     return res;
 }
 

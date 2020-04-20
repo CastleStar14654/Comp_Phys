@@ -164,17 +164,16 @@ inline int jacobi(const Sparse_Matrix<T, N, N> &in_mat, const std::array<T, N> &
     for (size_t count = 0; count < max_times; count++)
     {
         out_x = in_b;
+        for (auto &p : in_mat)
+        {
+            if (p.first.first != p.first.second)
+            {
+                out_x[p.first.first] -= p.second * prev_x[p.first.second];
+            }
+        }
         for (size_t i = 0; i < N; i++)
         {
-            T &obj{out_x[i]};
-            for (auto &p : in_mat[i])
-            {
-                if (p.first != i)
-                {
-                    obj -= p.second * prev_x[p.first];
-                }
-            }
-            obj /= in_mat(i, i);
+            out_x[i] /= in_mat(i, i);
         }
 
         delta_norm = norm_1(out_x, prev_x);
@@ -263,23 +262,24 @@ inline int gauss_seidel(const Sparse_Matrix<T, N, N> &in_mat, const std::array<T
     for (size_t count = 0; count < max_times; count++)
     {
         out_x = in_b;
-
-        for (size_t i = 0; i < N; i++)
+        size_t current_row{in_mat.begin()->first.first};
+        for (auto &p : in_mat)
         {
-            T &obj{out_x[i]};
-            for (auto &p : in_mat[i])
+            if (p.first.first != current_row)
             {
-                if (p.first < i)
-                {
-                    obj -= p.second * out_x[p.first];
-                }
-                else if (p.first > i)
-                {
-                    obj -= p.second * prev_x[p.first];
-                }
+                out_x[current_row] /= in_mat(current_row, current_row);
+                current_row = p.first.first;
             }
-            obj /= in_mat(i, i);
+            if (p.first.second < p.first.first)
+            {
+                out_x[p.first.first] -= p.second * out_x[p.first.second];
+            }
+            else if (p.first.second > p.first.first)
+            {
+                out_x[p.first.first] -= p.second * prev_x[p.first.second];
+            }
         }
+        out_x[current_row] /= in_mat(current_row, current_row);
 
         delta_norm = norm_1(out_x, prev_x);
         new_norm = norm_1(out_x);
@@ -372,23 +372,26 @@ inline int suc_over_rel(const Sparse_Matrix<T, N, N> &in_mat, const std::array<T
     for (size_t count = 0; count < max_times; count++)
     {
         out_x = in_b;
-        for (size_t i = 0; i < N; i++)
+        size_t current_row{in_mat.begin()->first.first};
+        for (auto &p : in_mat)
         {
-            T &obj{out_x[i]};
-            for (auto &p : in_mat[i])
+            if (p.first.first != current_row)
             {
-                if (p.first < i)
-                {
-                    obj -= p.second * out_x[p.first];
-                }
-                else if (p.first > i)
-                {
-                    obj -= p.second * prev_x[p.first];
-                }
+                out_x[current_row] *= omega / in_mat(current_row, current_row);
+                out_x[current_row] += (1 - omega) * prev_x[current_row];
+                current_row = p.first.first;
             }
-            obj *= omega / in_mat(i, i);
-            obj += (1 - omega) * prev_x[i];
+            if (p.first.second < p.first.first)
+            {
+                out_x[p.first.first] -= p.second * out_x[p.first.second];
+            }
+            else if (p.first.second > p.first.first)
+            {
+                out_x[p.first.first] -= p.second * prev_x[p.first.second];
+            }
         }
+        out_x[current_row] *= omega / in_mat(current_row, current_row);
+        out_x[current_row] += (1 - omega) * prev_x[current_row];
 
         delta_norm = norm_1(out_x, prev_x);
         new_norm = norm_1(out_x);

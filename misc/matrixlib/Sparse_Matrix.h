@@ -15,44 +15,44 @@ namespace Misc
 {
 
 template <typename T, size_t R, size_t C>
-class Sparse_Matrix : public Base_Matrix<T, R, C>, public std::array<std::map<size_t, T>, R>
+class Sparse_Matrix : public Base_Matrix<T, R, C>, public std::map<std::pair<size_t, size_t>, T>
 {
 public:
     using typename Base_Matrix<T, R, C>::size_type;
-    using std::array<std::map<size_t, T>, R>::operator[];
+    using Base_Matrix<T, R, C>::operator[];
 
     Sparse_Matrix()
-        : Base_Matrix<T, R, C>{0, nullptr}, std::array<std::map<size_t, T>, R>{} {}
+        : Base_Matrix<T, R, C>{0, nullptr}, std::map<std::pair<size_t, size_t>, T>{} {}
     Sparse_Matrix(const Base_Matrix<T, R, C> &mat)
-        : Base_Matrix<T, R, C>{0, nullptr}, std::array<std::map<size_t, T>, R>{}
+        : Base_Matrix<T, R, C>{0, nullptr}, std::map<std::pair<size_t, size_t>, T>{}
     {
         for (size_t i = 0; i < R; i++)
             for (size_t j = 0; j < C; j++)
                 if (mat(i, j) != Base_Matrix<T, R, C>::zero)
                 {
-                    std::array<std::map<size_t, T>, R>::operator[](i)[j] = mat(i, j);
+                    (*this)(i, j) = mat(i, j);
                 }
     }
     Sparse_Matrix(Base_Matrix<T, R, C> &&mat)
-        : Base_Matrix<T, R, C>{0, nullptr}, std::array<std::map<size_t, T>, R>{}
+        : Base_Matrix<T, R, C>{0, nullptr}, std::map<std::pair<size_t, size_t>, T>{}
     {
         for (size_t i = 0; i < R; i++)
             for (size_t j = 0; j < C; j++)
                 if (mat(i, j) != Base_Matrix<T, R, C>::zero)
                 {
-                    std::array<std::map<size_t, T>, R>::operator[](i)[j] = std::move(mat(i, j));
+                    (*this)(i, j) = std::move(mat(i, j));
                 }
     }
     template <size_t M>
     Sparse_Matrix(const Band_Matrix<T, R, M> &mat)
-        : Base_Matrix<T, R, C>{0, nullptr}, std::array<std::map<size_t, T>, R>{}
+        : Base_Matrix<T, R, C>{0, nullptr}, std::map<std::pair<size_t, size_t>, T>{}
     {
         static_assert(R == C);
         for (size_t i = 0; i < R; i++)
             for (size_t j = i > M ? i - M : 0; j < std::min(i + M + 1, R); j++)
                 if (mat(i, j) != Base_Matrix<T, R, C>::zero)
                 {
-                    std::array<std::map<size_t, T>, R>::operator[](i)[j] = mat(i, j);
+                    (*this)(i, j) = mat(i, j);
                 }
     }
     template <size_t M>
@@ -64,7 +64,7 @@ public:
             for (size_t j = i > M ? i - M : 0; j < std::min(i + M + 1, R); j++)
                 if (mat(i, j) != Base_Matrix<T, R, C>::zero)
                 {
-                    std::array<std::map<size_t, T>, R>::operator[](i)[j] = std::move(mat(i, j));
+                    (*this)(i, j) = std::move(mat(i, j));
                 }
     }
 
@@ -74,7 +74,7 @@ public:
             for (size_t j = 0; j < C; j++)
                 if (mat(i, j) != Base_Matrix<T, R, C>::zero)
                 {
-                    std::array<std::map<size_t, T>, R>::operator[](i)[j] = mat(i, j);
+                    (*this)(i, j) = mat(i, j);
                 }
         return *this;
     }
@@ -84,19 +84,19 @@ public:
             for (size_t j = 0; j < C; j++)
                 if (mat(i, j) != Base_Matrix<T, R, C>::zero)
                 {
-                    std::array<std::map<size_t, T>, R>::operator[](i)[j] = std::move(mat(i, j));
+                    (*this)(i, j) = std::move(mat(i, j));
                 }
         return *this;
     }
 
     T &operator()(size_type row, size_type col) override
     {
-        return std::array<std::map<size_t, T>, R>::operator[](row)[col];
+        return std::map<std::pair<size_t, size_t>, T>::operator[](std::make_pair(row, col));
     }
     const T &operator()(size_type row, size_type col) const override
     {
-        auto it {std::array<std::map<size_t, T>, R>::operator[](row).find(col)};
-        if (it == std::array<std::map<size_t, T>, R>::operator[](row).cend())
+        auto it {this->find(std::make_pair(row, col))};
+        if (it == this->cend())
         {
             return Base_Matrix<T, R, C>::zero;
         }

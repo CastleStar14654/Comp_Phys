@@ -67,22 +67,22 @@ Sparse_Matrix<double, (M - 1) * (N - 1), (M - 1) * (N - 1)> laplacian(double xra
     double value{2 * (delx2 + dely2)};
     for (size_t i = 0; i < mat_size; i++)
     {
-        res[i][i] = value;
+        res(i, i) = value;
     }
 
     value = -dely2;
     for (size_t i = 0; i < mat_size; i += N - 1)
         for (size_t j = i; j < i + N - 2; j++)
         {
-            res[j][j + 1] = value;
-            res[j + 1][j] = value;
+            res(j, j + 1) = value;
+            res(j + 1, j) = value;
         }
 
     value = -delx2;
     for (size_t i = 0; i < mat_size - (N - 1); i++)
     {
-        res[i][i + N - 1] = value;
-        res[i + N - 1][i] = value;
+        res(i, i + N - 1) = value;
+        res(i + N - 1, i) = value;
     }
 
     return res;
