@@ -11,6 +11,7 @@
 #include <initializer_list>
 #include <iostream>
 #include <iomanip>
+#include <array>
 
 // the namespace miscellany
 namespace Misc
@@ -64,6 +65,22 @@ public:
     }
     template <size_t _R>
     Row &operator=(Row<T, _R, C> &&other)
+    {
+        for (size_t i = 0; i < C; i++)
+        {
+            (*this)[i] = other[i];
+        }
+        return *this;
+    }
+    Row &operator=(const std::array<T, C> &other)
+    {
+        for (size_t i = 0; i < C; i++)
+        {
+            (*this)[i] = other[i];
+        }
+        return *this;
+    }
+    Row &operator=(std::array<T, C> &&other)
     {
         for (size_t i = 0; i < C; i++)
         {
@@ -139,6 +156,22 @@ public:
     }
     template <size_t _C>
     Column &operator=(Column<T, R, _C> &&other)
+    {
+        for (size_t i = 0; i < R; i++)
+        {
+            (*this)[i] = other[i];
+        }
+        return *this;
+    }
+    Column &operator=(const std::array<T, R> &other)
+    {
+        for (size_t i = 0; i < R; i++)
+        {
+            (*this)[i] = other[i];
+        }
+        return *this;
+    }
+    Column &operator=(std::array<T, R> &&other)
     {
         for (size_t i = 0; i < R; i++)
         {

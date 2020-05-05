@@ -104,11 +104,10 @@ public:
     void add_point(T x, T y, T dydx)
     {
         T del{x - xs.back()};
-        polys.push_back(Polynomial<T>{
-            2 * (ys.back() - y) + del * (dydxs.back() + dydx),
-            3 * (y - ys.back()) - del * (2 * dydxs.back() + dydx),
-            dydxs.back() * del,
-            ys.back()});
+        polys.emplace_back({2 * (ys.back() - y) + del * (dydxs.back() + dydx),
+                            3 * (y - ys.back()) - del * (2 * dydxs.back() + dydx),
+                            dydxs.back() * del,
+                            ys.back()});
         xs.push_back(x);
         ys.push_back(y);
         dydxs.push_back(dydx);

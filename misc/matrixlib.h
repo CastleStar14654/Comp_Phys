@@ -35,6 +35,26 @@ inline T operator*(const std::array<T, N> &a, const std::array<T, N> &b)
     }
     return res;
 }
+template <typename T, size_t N, size_t _C>
+inline T operator*(const std::array<T, N> &a, const Column<T, N, _C> &b)
+{
+    T res{};
+    for (std::size_t i = 0; i < N; i++)
+    {
+        res += a[i] * b[i];
+    }
+    return res;
+}
+template <typename T, size_t N, size_t _R>
+inline T operator*(const Row<T, N, _R> &a, const std::array<T, N> &b)
+{
+    T res{};
+    for (std::size_t i = 0; i < N; i++)
+    {
+        res += a[i] * b[i];
+    }
+    return res;
+}
 
 template <typename T, size_t N>
 inline std::complex<T> operator*(const std::array<std::complex<T>, N> &a, const std::array<std::complex<T>, N> &b)
@@ -89,30 +109,6 @@ inline std::array<T, R> operator*(const Base_Matrix<T, R, N> &a, const std::arra
         {
             res[i] += a(i, j) * b[j];
         }
-    return res;
-}
-
-template <typename T, size_t N, size_t C>
-inline std::array<T, C> operator*(const std::array<T, N> &a, const Sparse_Matrix<T, N, C> &b)
-{
-    std::array<T, C> res;
-    res.fill(T{});
-    for (const auto &p : b)
-    {
-        res[p.first.second] += a[p.first.first] * p.second;
-    }
-    return res;
-}
-
-template <typename T, size_t R, size_t N>
-inline std::array<T, R> operator*(const Sparse_Matrix<T, R, N> &a, const std::array<T, N> &b)
-{
-    std::array<T, R> res;
-    res.fill(T{});
-    for (const auto &p : a)
-    {
-        res[p.first.first] += p.second * b[p.first.second];
-    }
     return res;
 }
 

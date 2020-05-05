@@ -69,7 +69,7 @@ public:
         }
 
         xs.push_back(x);
-        polys.push_back(temp1);
+        polys.push_back(std::move(temp1));
     }
     // ============= valid boundary ==================
     T left() const

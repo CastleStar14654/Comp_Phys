@@ -25,7 +25,7 @@ Base_Matrix<T, R, C> 虚基类
 ||Up_Tri_Matrix<T, N> 上三角矩阵，长宽为N
 |Diag_Matrix<T, N> 对角矩阵，长宽为N
 |Matrix<T, R, C> 一般矩阵，R行C列
-|Sparse_Matrix<T, R, C> 稀疏矩阵；同时继承自std::array<std::map<size_t, T>, R>
+|Sparse_Matrix<T, R, C> 稀疏矩阵；同时继承自std::map<std::pair<size_t, size_t>, T>
 \end{verbatim}
 }
 

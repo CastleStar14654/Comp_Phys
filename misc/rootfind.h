@@ -42,10 +42,11 @@ inline T bisection(std::function<T(T)> func, T a, T b, T val = T{}, T tol = std:
     }
     T c;
     T func_c;
-    while (std::abs(b - a) / 2. > tol * std::abs(b) && func_a)
+    T del{(b - a) / 2.};
+    while (std::abs(del) > tol * std::abs(b) && func_a)
     {
         // std::cerr << "a b: " << a << ' ' << b << ' ' << std::setprecision(16) << (b - a) / 2 << std::endl;
-        c = a + (b - a) / 2.;
+        c = a + del;
         func_c = func(c);
         if (func_c == 0.)
         {
@@ -60,6 +61,7 @@ inline T bisection(std::function<T(T)> func, T a, T b, T val = T{}, T tol = std:
             a = c;
             func_a = func_c;
         }
+        del /= 2.;
     }
     if (!(std::abs(func_a) < 1e-10))
     {
@@ -92,8 +94,8 @@ inline T dekker_brent(std::function<T(T)> func, T a, T b, T val = 0., T tol = st
     }
     T c{b}; // previous solution
     T func_c{func_b};
-    T s; // next solution
-    T func_s;
+    T s{b}; // next solution
+    T func_s{func_b};
     T inc{a - b}; // s - b
     T temp_inc;   // temp inc of interplotation
 

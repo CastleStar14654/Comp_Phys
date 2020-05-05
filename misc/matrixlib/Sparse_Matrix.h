@@ -107,6 +107,54 @@ public:
     }
 };
 
+template <typename T, size_t N, size_t C>
+inline std::array<T, C> operator*(const std::array<T, N> &a, const Sparse_Matrix<T, N, C> &b)
+{
+    std::array<T, C> res;
+    res.fill(T{});
+    for (const auto &p : b)
+    {
+        res[p.first.second] += a[p.first.first] * p.second;
+    }
+    return res;
+}
+
+template <typename T, size_t R, size_t N>
+inline std::array<T, R> operator*(const Sparse_Matrix<T, R, N> &a, const std::array<T, N> &b)
+{
+    std::array<T, R> res;
+    res.fill(T{});
+    for (const auto &p : a)
+    {
+        res[p.first.first] += p.second * b[p.first.second];
+    }
+    return res;
+}
+
+template <typename T, size_t N, size_t C, size_t _R>
+inline std::array<T, C> operator*(const Row<T, _R, N> &a, const Sparse_Matrix<T, N, C> &b)
+{
+    std::array<T, C> res;
+    res.fill(T{});
+    for (const auto &p : b)
+    {
+        res[p.first.second] += a[p.first.first] * p.second;
+    }
+    return res;
+}
+
+template <typename T, size_t R, size_t N, size_t _C>
+inline std::array<T, R> operator*(const Sparse_Matrix<T, R, N> &a, const Column<T, N, _C> &b)
+{
+    std::array<T, R> res;
+    res.fill(T{});
+    for (const auto &p : a)
+    {
+        res[p.first.first] += p.second * b[p.first.second];
+    }
+    return res;
+}
+
 } // namespace Misc
 
 #endif // MISC_SPARSE_MATRIX
