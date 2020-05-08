@@ -1,0 +1,1128 @@
+\documentclass[a4paper,unicode]{report}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{textgreek}
+\usepackage{esint}
+\usepackage{subfig}
+\usepackage{rotating}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{paralist}
+\usepackage{titlesec}
+\usepackage{graphicx}
+\usepackage{physics}
+\usepackage{ucs}
+\usepackage{listings}
+\usepackage{multirow}
+\usepackage{tablefootnote}
+\usepackage{indentfirst}
+\usepackage{tikz}
+\usepackage{warpcol}
+\usepackage[pdftitle=计算物理第二次大作业第一部分,pdfauthor=***,bookmarksnumbered=true]{hyperref}
+\usepackage{natbib}
+\usepackage{xcolor}
+\usepackage{xeCJK}
+    \setCJKmainfont[BoldFont={Noto Serif CJK SC Bold},ItalicFont={FangSong}]{Noto Serif CJK SC}
+    \setCJKsansfont[BoldFont={Noto Sans CJK SC Bold},ItalicFont={KaiTi}]{Noto Sans CJK SC}
+    \setCJKmonofont[BoldFont={Noto Sans Mono CJK SC Bold}]{Noto Sans Mono CJK SC}
+
+\title{计算物理第二次大作业第一部分}
+\author{物理学院\quad ***\quad 1800011***}
+
+\DeclareUnicodeCharacter{"00B0}{\textdegree}
+\DeclareUnicodeCharacter{"00B5}{\textmu}
+
+\renewcommand{\today}{\number\year 年\number\month 月\number\day 日}
+\renewcommand{\refname}{参考文献}
+\renewcommand{\abstractname}{摘要}
+\renewcommand{\contentsname}{目录}
+\renewcommand{\figurename}{图}
+\renewcommand{\tablename}{表}
+\renewcommand{\appendixname}{附录}
+\renewcommand{\chaptername}{第}
+\newcommand{\chapterendname}{章}
+
+\renewcommand{\equationautorefname}{式}
+\renewcommand{\figureautorefname}{图}
+\newcommand{\subfigureautorefname}{子图}
+\renewcommand{\tableautorefname}{表}
+\renewcommand{\subsectionautorefname}{小节}
+\newcommand{\mythmautorefname}{定理}
+\renewcommand{\sectionautorefname}{\S}
+
+\newtheorem{mythm}{定理}
+
+\lstset{
+    basicstyle=\scriptsize\ttfamily\color{black}, % print whole listing small
+    keywordstyle=\color{teal}\bfseries,
+    identifierstyle=, % nothing happens
+    commentstyle=\color{gray}\ttfamily, % white comments
+    stringstyle=\color{violet}, % typewriter type for strings
+    showstringspaces=true,
+    numbers=left,
+    numberstyle=\tiny\color{brown},
+    stepnumber=2,
+    numbersep=5pt,
+    firstnumber=auto,
+    frame=lines,
+    language=[11]C++,
+    rangeprefix=/*,
+    rangesuffix=*/,
+    includerangemarker=false
+}
+
+% \pgfsetxvec{\pgfpoint{0.02cm}{0}}
+% \pgfsetyvec{\pgfpoint{0}{0.1em}}
+
+% \usetikzlibrary{datavisualization,plotmarks,datavisualization.formats.functions}
+% \usetikzlibrary{math,fpu,datavisualization}
+% \graphicspath{{figure/}}
+\linespread{1.3}
+
+\titleformat{\chapter}[display]{\huge\bfseries}{\chaptertitlename\ \thechapter\ \chapterendname}{20pt}{\Huge}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\begin{center}
+    \textbf{编译与运行环境说明}
+\end{center}
+
+本地操作系统版本为\textsf{Windows 10 x64 1909 (18363.815)}。
+
+第二次大作业第一题主要使用\textsf{C++}编写，编译器为Windows下的\texttt{g++ 9.3.0} (Rev2, Built by MSYS2 project)，标准为\textsf{C++17}。
+除标准库外未使用其他第三方库。
+最后上交的程序的编译命令为\begin{verbatim}
+    g++ -O2 -static -std=c++17 -o <可执行文件名> <源文件名>
+\end{verbatim}
+
+对于绘图部分，使用了必要的\textsf{Python}的第三方库\texttt{matplotlib}进行处理。
+
+% \setcounter{chapter}{2}
+\chapter{正交多项式}
+在区间$(a, b)$上可以定义实函数$f,g$的内积
+\begin{equation}
+    \braket{f}{g} = \int_a^b f(x)g(x)\rho(x)\dd{x},
+\end{equation}
+其中$\rho(x)$为权函数。
+可以定义区间$(a, b)$上在权函数$\rho(x)$下平方可积函数空间$\mathcal{L}^2(a, b)$上的正交归一多项式$\{Q_n(x)\}$，满足
+\begin{align}
+    \braket{Q_i}{Q_j} &{}= \delta_{ij}, \label{eq:ortho_normal}\\
+    \braket{Q_n}{x^m} &{}= 0,\quad\forall\ m<n. \label{eq:normal_to_power}
+\end{align}
+依题意，所有的正交多项式都以内积来确定归一化常数。
+
+获得正交多项式的方法可以是将线性无关的函数组$\{x^n\}$进行Gram--Schmidt正交化。
+取迭代起点为常函数$Q_0(x) = \frac{1}{\sqrt{\braket{1}}}$，则在已知$Q_{0},Q_1,\cdots,Q_n$后，$Q_{n+1}$可以这样获得：
+\begin{align}
+    \gamma_{i, n} &{}= \braket{Q_i}{xQ_n},\quad i=0,1,\cdots,n,\label{eq:def_gamma}\\
+    V_n(x) &{}= xQ_n(x) - \sum_{i=0}^n \gamma_{i,n} Q_i(x), \label{eq:V_from_Q}\\
+    \alpha_n &{}= \sqrt{\braket{V_n}},\label{eq:alpha}\\
+    Q_{n+1}(x) &{}= \frac{V_n(x)}{\alpha_n}.\label{eq:normal}
+\end{align}
+
+\section{多项式递归算法的合理性}
+\subsection{正交归一性}
+\paragraph{归一性}
+显然，根据定义，$Q_0(x)$归一。
+而其他$Q_i$由递推式导出，根据式 \eqref{eq:alpha} \eqref{eq:normal}，其归一性质是显然的。
+
+\paragraph{各正交函数间的正交性}
+即证式 \eqref{eq:ortho_normal}。
+
+使用数学归纳法。
+假设$\qty{Q_{0},Q_1,\cdots,Q_k}$已是正交归一的，下面证明$Q_{k+1}$与它们正交归一。
+在式 \eqref{eq:normal} 两侧作与$Q_i\ (i \le k)$的内积，则
+\begin{multline}
+    \braket{Q_i}{Q_{k+1}}
+    = \frac{1}{\alpha_k}\braket{Q_i}{V_k}
+    = \frac{1}{\alpha_k}\qty(\gamma_{i, k} - \sum_{j=0}^k \gamma_{j,k} \braket{Q_i}{Q_j}) \\
+    = \frac{1}{\alpha_k}\qty(\gamma_{i, k} - \sum_{j=0}^k \gamma_{j,k} \delta_{ij})
+    = \frac{1}{\alpha_k}\qty(\gamma_{i, k} - \gamma_{i,k}) = 0.
+\end{multline}
+因此，$\qty{Q_{0},Q_1,\cdots,Q_{k+1}}$也是正交归一的。
+
+而$\qty{Q_{0}}$显然由定义也是正交归一的。
+根据数学归纳法原理，$\qty{Q_n}$是一组正交归一函数，式 \eqref{eq:ortho_normal} 得证。
+
+\paragraph{\texorpdfstring{$Q_n$}{Q_n}与所有幂次小于\texorpdfstring{$n$}{n}的幂函数正交}
+即证式 \eqref{eq:normal_to_power}。
+
+先证明$Q_n$为$n$次多项式。
+由定义，$Q_0$为$0$次多项式。
+
+假设$\qty{Q_{0},Q_1,\cdots,Q_k}$分别是$0,1,\cdots,k$次多项式。
+根据式 \eqref{eq:V_from_Q}，$V_k$为$k+1$次多项式，从而根据式 \eqref{eq:normal}，$Q_{k+1}$为$k+1$次多项式。
+由数学归纳法，$Q_n$为$n$次多项式。
+
+因此，我们可以写出
+\begin{equation}
+    \mqty(
+        Q_0\\   Q_1\\   \vdots\\    Q_n
+    )
+    = \mqty(
+        a_{00}&&&\\
+        a_{10}& a_{11}&&\\
+        \vdots& \vdots& \ddots&\\
+        a_{n0}&  a_{n1}& \cdots& a_{nn}
+    ) \mqty(
+        1\\   x\\   \vdots\\    x^n
+    ),
+\end{equation}
+或反解为
+\begin{equation}
+    \mqty(
+        1\\   x\\   \vdots\\    x^n
+    )
+    = \mqty(
+        b_{00}&&&\\
+        b_{10}& b_{11}&&\\
+        \vdots& \vdots& \ddots&\\
+        b_{n0}&  b_{n1}& \cdots& b_{nn}
+    ) \mqty(
+        Q_0\\   Q_1\\   \vdots\\    Q_n
+    ).
+\end{equation}
+
+因此，
+\begin{equation}
+    x^m = \sum_{i=0}^m b_{mi} Q_i,
+\end{equation}
+根据式 \eqref{eq:ortho_normal}，$m < n$时，
+\begin{equation}
+    \braket{Q_n}{x^m} = \sum_{i=0}^m b_{mi} \braket{Q_n}{Q_i} = \sum_{i=0}^m b_{mi} \delta_{ni} = 0,
+\end{equation}
+式 \eqref{eq:normal_to_power} 得证。
+而$m\ge n$时，
+\begin{equation} \label{eq:inner_product_Q_power}
+    \braket{Q_n}{x^m} = \sum_{i=0}^m b_{mi} \braket{Q_n}{Q_i} = \sum_{i=0}^m b_{mi} \delta_{ni} = b_{mn},
+\end{equation}
+
+\subsection{系数\texorpdfstring{$\gamma_{i,n}$}{γ\_\{i,n\}}的简化}
+\label{ssec:gamma_i_n}
+对特定的$n$，使用数学归纳法证明
+\begin{equation} \label{eq:gamma_eq_0}
+    \gamma_{i, n} = 0,\quad i=0,1,\cdots,n-2.
+\end{equation}
+
+首先证明$i = 0$的情况。
+式 \eqref{eq:V_from_Q} 即
+\begin{equation}\label{eq:V_from_Q_b}
+    \alpha_n Q_{n+1}(x) = xQ_n(x) - \sum_{i=0}^n \gamma_{i,n} Q_i(x). \tag{\ref{eq:V_from_Q}b}
+\end{equation}
+将式 \eqref{eq:V_from_Q_b} $(n \ge 2)$ 两侧与$x^0$作内积，得到
+\begin{multline}
+    \alpha_n \braket{x^0}{Q_{n+1}(x)} = 0 \\
+    = \braket{x}{Q_n(x)} - \sum_{i=0}^n \gamma_{i,n} \braket{x^0}{Q_i(x)} = 0 - \gamma_{0,n} \braket{x^0}{Q_0(x)}.
+\end{multline}
+根据式 \eqref{eq:inner_product_Q_power}，$\braket{x^0}{Q_0(x)}$非零，故$\gamma_{0,n}=0$。
+式 \eqref{eq:V_from_Q} 变为
+\begin{equation}\label{eq:V_from_Q_c}
+    \alpha_n Q_{n+1}(x) = xQ_n(x) - \sum_{i=1}^n \gamma_{i,n} Q_i(x). \tag{\ref{eq:V_from_Q}c}
+\end{equation}
+
+再假设对于$i=0,1,\cdots,k; k<n-2 $，有$\gamma_{i, n} = 0$，那么式 \eqref{eq:V_from_Q} 变为
+\begin{equation}\label{eq:V_from_Q_d}
+    \alpha_n Q_{n+1}(x) = xQ_n(x) - \sum_{i=k+1}^n \gamma_{i,n} Q_i(x). \tag{\ref{eq:V_from_Q}d}
+\end{equation}
+将式 \eqref{eq:V_from_Q_d} 两侧与$x^{k+1}$作内积，得到
+\begin{multline}
+    \alpha_n \braket{x^{k+1}}{Q_{n+1}(x)} = 0 \\
+    = \braket{x^{k+2}}{Q_n(x)} - \sum_{i=k+1}^n \gamma_{i,n} \braket{x^{k+1}}{Q_i(x)} \\
+    = 0 - \gamma_{k+1,n} \braket{x^{k+1}}{Q_{k+1}(x)}.
+\end{multline}
+故$\gamma_{k+1,n}=0$。
+
+下面证明前述的递推关系在$k = n-2$时截止。
+将式 \eqref{eq:V_from_Q_d} 两侧与$x^{k+1} = x^{n-1}$作内积，得到
+\begin{multline}
+    \alpha_n \braket{x^{n-1}}{Q_{n+1}(x)} = 0 \\
+    = \braket{x^{n}}{Q_n(x)} - \sum_{i=n-1}^n \gamma_{i,n} \braket{x^{n-1}}{Q_i(x)} \\
+    = \braket{x^{n}}{Q_n(x)} - \gamma_{n-1,n} \braket{x^{n-1}}{Q_{n-1}(x)}.
+\end{multline}
+即有
+\begin{equation}
+    \gamma_{n-1,n} = \frac{\braket{x^{n}}{Q_n(x)}}{\braket{x^{n-1}}{Q_{n-1}(x)}} \neq 0.
+\end{equation}
+所以由数学归纳法，式 \eqref{eq:gamma_eq_0} 成立。
+
+\subsection{系数\texorpdfstring{$\alpha_{n-1}$}{α\_\{n-1\}}与\texorpdfstring{$\gamma_{n-1,n}$}{γ\_\{n-1,n\}}的关系}
+由\autoref{ssec:gamma_i_n} 的结论，
+\begin{equation} \label{eq:recurrence}
+    \alpha_n Q_{n+1}(x) = \qty(x - \gamma_{n,n}) Q_n(x) - \gamma_{n-1,n} Q_{n-1}(x).
+\end{equation}
+两边均与$Q_{n+1}$作内积，利用正交归一性，可得
+\begin{equation}
+    \alpha_n = \braket{Q_{n+1}}{xQ_n} = \braket{Q_n}{xQ_{n+1}}.
+\end{equation}
+
+与式 \eqref{eq:def_gamma} 对比，可以得到
+\begin{equation}
+    \alpha_n = \gamma_{n, n+1},\quad\text{即}\ \alpha_{n-1} = \gamma_{n-1, n}.
+\end{equation}
+
+\section{利用递推关系计算一些多项式}
+\subsection{求勒让德多项式与拉盖尔多项式的一些值}
+记$\beta_n = \gamma_{n, n}$，那么递推关系 \eqref{eq:recurrence} 可写成
+\begin{equation} \label{eq:beau_recurrence}
+    \alpha_n Q_{n+1}(x) = \qty(x - \beta_n) Q_n(x) - \alpha_{n-1} Q_{n-1}(x).
+\end{equation}
+下面利用这个关系求$n=2,\ 16,\ 128,\ 1024$阶的勒让德多项式$\mathrm{P}_n(x)$与拉盖尔多项式$\mathrm{L}_n(x)$在$x=0.5$处的函数值。
+
+\subsubsection{勒让德多项式}
+通常定义的勒让德函数满足
+\begin{gather}
+    (n+1)\mathrm{P}_{n+1}=(2n+1)x\mathrm{P}_{n}-n\mathrm{P}_{n-1},\\
+    \mathrm{P}_0 = 1,\quad \mathrm{P}_1 = x.
+\end{gather}
+归一化后的勒让德函数满足
+\begin{equation}
+    \hat{\mathrm{P}}_n = \sqrt{n + \frac{1}{2}} \mathrm{P}_n.
+\end{equation}
+那么，
+\begin{gather}
+    (n+1)\frac{\hat{\mathrm{P}}_{n+1}}{\sqrt{(n+1)+1/2}}=x(2n+1)\frac{\hat{\mathrm{P}}_{n}}{\sqrt{n+1/2}}-n\frac{\hat{\mathrm{P}}_{n-1}}{\sqrt{(n-1)+1/2}},\\
+    \frac{\hat{\mathrm{P}}_{0}}{\sqrt{0+1/2}} = 1,\quad \frac{\hat{\mathrm{P}}_{1}}{\sqrt{1+1/2}} = x.
+\end{gather}
+
+因此函数可实现为
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:Pn_dec-end:Pn_dec]{1_Orthogonal_Polynomials.cpp}
+    \lstinputlisting[linerange=beg:Pn-end:Pn]{1_Orthogonal_Polynomials.cpp}
+}
+
+为减少开方运算，函数中递推得到了$\frac{\hat{\mathrm{P}}_{n}}{\sqrt{n+1/2}}$，在最后乘上$\sqrt{n+1/2}$。
+另外，对于$n=0, 1$的特殊情况进行了简化处理。
+
+在函数\texttt{main()}中调用该函数计算要求的值，如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:prob2.1_P-end:prob2.1_P]{1_Orthogonal_Polynomials.cpp}
+}
+程序输出为
+\begin{verbatim}
+==========================
+PROBLEM 2.1
+--------------------------
+Legendre polynomial P_n(x) at x=0.5
+n=2,    P_n(x)=-0.1976423537605237
+n=16,   P_n(x)=-0.6087144378627884
+n=128,  P_n(x)=-0.2214407352688623
+n=1024, P_n(x)=-0.6063038194703785
+\end{verbatim}
+
+% \appendix
+% \renewcommand\chapterendname{}
+
+\subsubsection{拉盖尔多项式}
+通常定义的拉盖尔函数已是归一化的，满足
+\begin{gather}
+    (n+1)\mathrm{L}_{n+1}=(2n+1-x)\mathrm{L}_{n}-n\mathrm{L}_{n-1},\\
+    \mathrm{L}_0 = 1,\quad \mathrm{L}_1 = -x+1.
+\end{gather}
+
+因此函数可实现为
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:Ln_dec-end:Ln_dec]{1_Orthogonal_Polynomials.cpp}
+    \lstinputlisting[linerange=beg:Ln-end:Ln]{1_Orthogonal_Polynomials.cpp}
+}
+
+其中对于$n=0, 1$的特殊情况进行了简化处理。
+
+在函数\texttt{main()}中调用该函数计算要求的值，如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=end:prob2.1_P-end:prob2.1]{1_Orthogonal_Polynomials.cpp}
+}
+程序输出为
+\begin{verbatim}
+--------------------------
+Laguerre polynomial L_n(x) at x=0.5
+n=2,    L_n(x)=0.125
+n=16,   L_n(x)=0.09265564418598525
+n=128,  L_n(x)=-0.2278406908864269
+n=1024, L_n(x)=0.1340328657018783
+\end{verbatim}
+
+\subsection{求厄密多项式与切比雪夫多项式的一些零点}
+式 \eqref{eq:beau_recurrence} 可以写为矩阵形式，
+\begin{equation}\label{eq:mat_eig}
+    x \mqty(
+        Q_0\\   Q_1\\   Q_2\\   \vdots\\    Q_{n-1}
+    )
+    = \mqty(
+        \beta_0&    \alpha_0&&&\\
+        \alpha_0& \beta_1&  \alpha_1&&\\
+        &   \alpha_1&   \beta_2&    \ddots&\\
+        && \ddots&\ddots&\\
+        &&&&    \beta_{n-1}
+    ) \mqty(
+        Q_0\\   Q_1\\   Q_2\\   \vdots\\    Q_{n-1}
+    )
+    + \mqty(
+        0\\   0\\   0\\   \vdots\\    \alpha_{n-1}Q_n
+    ).
+\end{equation}
+
+可以发现，$Q_n$的$n$个零点恰为三对角系数矩阵的$n$个本征值。
+下面用QR算法和二分法求解实对称矩阵本征值问题。
+由于本题求解的已是海森堡矩阵，故略去了使用Householder变换进行海森堡化的部分。
+
+\subsubsection{QR算法}
+实对称矩阵的QR算法的底层实现是\texttt{misc/eigvals.h}中的\texttt{\_eig\_hessenberg\_symm\_qr\_()}函数，如下。
+其对从\texttt{start}到\texttt{end}间的子矩阵进行QR迭代对角化。
+其可以在非空的指针\texttt{p\_q\_mat}指向的矩阵右方作用本次得到的正交矩阵。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:symm_qr-end:symm_qr]{../misc/eigvals.h}
+}
+向量\texttt{zero\_break}在计算前扫描为0的非对角元，将矩阵彻底块对角化。
+\texttt{mat\_range}存储当前正在计算的子三对角矩阵的最右下角元素编号；\texttt{lower\_bound}存储当前正在计算的子三对角矩阵的最左上角元素编号，为不断从\texttt{zero\_break}末尾读取得到。
+
+在\texttt{mat\_range}未执行到\texttt{start}时，保持循环。
+在循环开头检查有没有完成对子三对角矩阵的对角化，如已完成，则更新\texttt{lower\_bound}。
+
+计算Wilkinson shift，即当前三对角矩阵最右下角的$2\times 2$矩阵的两个本征值中最接近最右下角元素的一个。
+
+随后做初始化。
+根据隐式QR定理，只要计算了正交矩阵$\vb{Q}$的第一列，其后的各列均被唯一确定了。
+因此，使用Givens变换确定$\vb{Q}$，使得最左上方的非对角元为0。
+但将对称的正交矩阵载作用后，除原有的三对角部分外，$(2,1)$处也出现了非零元素。
+将其存入\texttt{bulge}。
+
+接下来的主循环中，通过Givens变换，将\texttt{bulge}逐步向矩阵的右下赶，直到重新获得海森堡矩阵。
+这时，我们完成了一次QR迭代。
+
+当非对角元足够小（判据\texttt{criteria}）时，将其取为零，并缩减矩阵规模。
+
+\subsubsection{二分法}
+对于对称三对角矩阵$\vb{T}$，$\vb{T}-\lambda\vb{I}$的$i$阶顺序主子式组成的序列$\qty{p_i(\lambda)}$称为其\textbf{Sturm序列}。
+这一序列的变号数$s_n(\lambda)$恰为该矩阵在区间$(-\infty, \lambda)$内特征值的个数。
+利用这一性质，可以用二分法求解本征值，且可以任意指定要求的本征值是升序的第几个。
+
+实对称矩阵的二分法的底层实现是\texttt{misc/eigvals.h}中的\texttt{\_eig\_hessenberg\_symm\_bisection()}函数，如下。
+其返回所有本征值升序排列组成的数组。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:symm_bis-end:symm_bis]{../misc/eigvals.h}
+}
+
+首先定义了计算变号数的闭包表达式\texttt{sturm\_change\_of\_sign}。
+按原始定义，有递推公式
+\begin{gather}
+    p_0 = 1,\quad p_1 = a_1 - \lambda,\\
+    p_i = (a_i - \lambda)p_{i-1} - b_i^2p_{i-2},\quad i=2,\cdots,n.
+\end{gather}
+其中，$a_i$为$\vb{T}$从1开始编号的对角元，$b_i$为$\vb{T}$从2开始编号的次对角元。
+这一递推公式数值不稳定，改用$q_i = \frac{p_i}{p_{i-1}}$计算变号数。
+若$q_i=0$，则定义为此次未变号，且必有$q_{i+1} = -\infty$。
+程序中对此进行了判断。
+
+易得，矩阵本征值的绝对值的上界为矩阵的无穷范数。
+故计算了无穷范数作为二分法的左右边界。
+
+最后的循环中，依次根据变号数进行二分查找。
+每次均利用上次查找结果缩小搜索范围。
+将结果存入数组\texttt{res}。
+
+\subsubsection{厄密多项式零点}
+归一化的厄密多项式满足
+\begin{equation}
+    x\mathrm{H}_n(x) = \sqrt{\frac{n+1}{2}}\mathrm{H}_{n+1}(x) + \sqrt{\frac{n}{2}}\mathrm{H}_{n-1}(x).
+\end{equation}
+因此，
+\begin{equation}
+    \alpha_i = \sqrt{\frac{i+1}{2}},\quad \beta_i = 0.
+\end{equation}
+这一矩阵十分容易的可用如下函数生成：
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:hermite_dec-end:hermite_dec]{1_Orthogonal_Polynomials.cpp}
+    \lstinputlisting[linerange=beg:hermite-end:hermite]{1_Orthogonal_Polynomials.cpp}
+}
+在\texttt{main()}中用两种方法计算待求本征值，代码为
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=end:prob2.1-end:prob2.2_hermite]{1_Orthogonal_Polynomials.cpp}
+}
+输出为
+{
+\footnotesize
+\begin{verbatim}
+==========================
+PROBLEM 2.2
+--------------------------
+j'th zero of Hermite polynomial of degree 1024 H_n(x)
+j=      2                       16                      128                     1024
+QR      -44.35362564023855      -41.29744814312823      -28.75853394023516      44.7445685115969
+bisec   -44.3536256402386       -41.29744814312797      -28.75853394023522      44.7445685115968
+\end{verbatim}
+}
+与\textsf{Python}的第三方库\texttt{scipy.special}中的结果进行对比，二分法结果完全一致，QR算法在\texttt{double}的最后一位精度上有小差异。
+
+\subsubsection{切比雪夫多项式零点}
+归一化的切比雪夫多项式满足
+\begin{gather}
+    x\mathrm{T}_0 = \frac{\mathrm{T}_1}{\sqrt{2}},\quad x\mathrm{T}_1 = \frac{\mathrm{T}_0}{\sqrt{2}} + \frac{\mathrm{T}_2}{2},\\
+    x\mathrm{T}_n = \frac{\mathrm{T}_{n+1} + \mathrm{T}_{n-1}}{2}.
+\end{gather}
+因此，
+\begin{equation}
+    \alpha_0 = \frac{1}{\sqrt{2}},\quad\alpha_i = \frac{1}{2},\quad \beta_n = 0.
+\end{equation}
+这一矩阵十分容易的可用如下函数生成：
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:chebyshev_dec-end:chebyshev_dec]{1_Orthogonal_Polynomials.cpp}
+    \lstinputlisting[linerange=beg:chebyshev-end:chebyshev]{1_Orthogonal_Polynomials.cpp}
+}
+在\texttt{main()}中用两种方法计算待求本征值，代码为
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=end:prob2.2_hermite-end:prob2.2]{1_Orthogonal_Polynomials.cpp}
+}
+输出为
+{
+\footnotesize
+\begin{verbatim}
+--------------------------
+j'th zero of Chebyshev polynomial of degree 1024 T_n(x)
+j=      2                       16                      128                     1024
+QR      -0.9999894110819281     -0.9988695499142821     -0.9244654743252627     0.9999988234517019
+bisec   -0.9999894110819283     -0.9988695499142836     -0.9244654743252627     0.9999988234517018
+\end{verbatim}
+}
+已知$\mathrm{T}_n(x)$的第$k$个零点为$\cos(\frac{2(n-k)-1}{2n}\pi)$。
+对比可以发现，二分法结果在\texttt{double}精度内完全正确，QR法最后一位有小偏差。
+
+\subsubsection{算法精度与用时对比}
+\paragraph{精度}
+前面已经对比过了。
+二分法的精度由二分区间宽度决定，这里设为了机器精度$\sim 10^{-16}$。
+QR算法的精度则由将非对角元设为0的判据决定，这里设为了机器精度的根号$\sim 10^{-8}$。
+两者最后的结果都非常好，二分法在浮点数意义下精确，而QR算法的偏差也仅在最后一位有效位上。
+
+\paragraph{用时}
+方面，在\texttt{main()}函数中加入如下内容，如果命令行传入参数\texttt{t}则进行用时测试。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=end:prob2.2-end:timing]{1_Orthogonal_Polynomials.cpp}
+}
+对较快的QR算法进行50次重复，对二分法重复5次。
+最后输出单次运行耗时（单位\textmu{}s）。
+
+在编译命令为
+\begin{verbatim}
+g++ -std=c++17 -o <可执行文件名> <源文件名>
+\end{verbatim}
+同时计算机接通电源的情况下，计时输出为
+\begin{verbatim}
+--------------------------
+TIMING Chebyshev * 50 for QR and * 5 for bisection
+QR (mus per run)        113851.76
+bisec (mus per run)     1868566.8
+\end{verbatim}
+
+QR算法单次运行约0.11 s，二分法则为1.7 s，相差约16倍。
+
+编译进行优化后
+\begin{verbatim}
+g++ -O2 -std=c++17 -o <可执行文件名> <源文件名>
+\end{verbatim}
+计时输出为
+\begin{verbatim}
+--------------------------
+TIMING Chebyshev * 50 for QR and * 5 for bisection
+QR (mus per run)        19537.1
+bisec (mus per run)     349787.2
+\end{verbatim}
+QR算法单次运行约0.020 s，二分法则为0.35 s，相差约18倍。
+
+所以，在需要计算所有本征值时，虽然二分法精度更高，但QR算法快得多。
+然而，本题其实只需要求4个本征值。
+如果仅使用二分法计算4个本征值的话，那么其用时将会大概缩减为$\frac{1}{256}$。
+这样的话，其将比QR法快出几十倍。
+
+\subsection{插值多项式}
+\subsubsection{获得插值多项式}
+点系$\qty{x_i}$上的插值多项式$\qty{f_j(x)}$应满足
+\begin{equation}
+    f_j(x_i) = \delta_{ij}.
+\end{equation}
+下面我们尝试从前面得到的归一正交多项式$\qty{Q_i}$中构造插值多项式。
+
+由矩阵方程 \eqref{eq:mat_eig}，可以发现，$Q_n$的$n$个零点恰为矩阵的$n$个本征值。
+设$x_j$为第$j$个零点，那么，其本征矢为
+\begin{equation}
+    \mqty(
+        Q_0(x_j)&   Q_1(x_j)&   Q_2(x_j)&   \cdots&    Q_{n-1}(x_j)
+    )^T.
+\end{equation}
+
+对于实对称矩阵，其所有本征矢正交，因此
+\begin{multline}
+    \mqty(
+        Q_0(x_j)&   Q_1(x_j)&   \cdots&    Q_{n-1}(x_j)
+    )^T\mqty(
+        Q_0(x_i)&   Q_1(x_i)&   \cdots&    Q_{n-1}(x_i)
+    ) \\
+    = \sum_{k=0}^{n-1} Q_k(x_j)Q_k(x_i) = w_j\delta_{ji},
+\end{multline}
+若定义
+\begin{equation}
+    f_j(x) := \sum_{k=0}^{n-1} Q_k(x_j)Q_k(x),
+\end{equation}
+那么它满足
+\begin{equation} \label{eq:interpolation_poly}
+    f_j(x_i) = w_j\delta_{ji},
+\end{equation}
+是区间上的插值多项式。
+
+也可用另一种方式证明。
+记式 \eqref{eq:mat_eig} 为
+\begin{equation}\label{eq:mat_eig_simple}
+    x\vb{Q}(x) = \vb{T} \vb{Q}(x) + \alpha_{n-1}Q_n \vu{e}_{n-1},
+\end{equation}
+则
+\begin{gather}
+    x\vb{Q}(y)^T\vb{Q}(x) = \vb{Q}(y)^T\vb{T} \vb{Q}(x) + \alpha_{n-1}Q_n \vb{Q}(y)^T\vu{e}_{n-1},\\
+    y\vb{Q}(x)^T\vb{Q}(y) = \vb{Q}(x)^T\vb{T} \vb{Q}(y) + \alpha_{n-1}Q_n \vb{Q}(x)^T\vu{e}_{n-1},
+\end{gather}
+即（由于所有元素都是实的，而且矩阵对称）
+\begin{equation}
+    x\vb{Q}(y)^T\vb{Q}(x) - \alpha_{n-1}Q_n \vb{Q}(y)^T\vu{e}_{n-1} = y\vb{Q}(x)^T\vb{Q}(y) - \alpha_{n-1}Q_n \vb{Q}(x)^T\vu{e}_{n-1},
+\end{equation}
+或
+\begin{equation} \label{eq:simple_fj}
+    \sum_{k=0}^{n-1} Q_k(x)Q_k(y) = \alpha_{n-1} \frac{Q_{n-1}(y)Q_n(x) - Q_n(y)Q_{n-1}(x)}{x-y}.
+\end{equation}
+显然可以从上式直接得到 \eqref{eq:interpolation_poly}$i\neq j$的部分。
+取$y\to x$，可以得到
+\begin{equation}
+    \sum_{k=0}^{n-1} Q_k(x)Q_k(x) = \alpha_{n-1} \qty(Q_{n-1}(x)Q'_n(x) - Q_n(x)Q'_{n-1}(x)) \neq 0,
+\end{equation}
+即式 \eqref{eq:interpolation_poly} 中的系数
+\begin{gather}
+    \begin{aligned}
+        w_j &{}=\alpha_{n-1} \qty(Q_{n-1}(x_j)Q'_n(x_j) - Q_n(x_j)Q'_{n-1}(x_j)),\\
+        &{} = \alpha_{n-1} Q_{n-1}(x_j)Q'_n(x_j),
+    \end{aligned}\\
+    \begin{aligned}
+        f_j(x_i) &{}= \sum_{k=0}^{n-1} Q_k(x_j)Q_k(x_i) \\
+        &{}= \delta_{ji}\alpha_{n-1} Q_{n-1}(x_j)Q'_n(x_j).
+    \end{aligned}
+\end{gather}
+
+\subsubsection{高斯积分权值}
+带权的插值求积公式为
+\begin{equation}
+    \int_a^b\rho(x)f(x)\dd{x} \approx \sum_{k=0}^{n-1} A_kf(x_k),
+\end{equation}
+同时，我们也已经知道，$\qty{x_k}$为$Q_n(x)$的$n$个零点。
+那么为了求积分权重$A_j$，我们可以取$f(x) = f_j(x)$，即插值多项式，那么
+\begin{equation}
+    \int_a^b\rho(x)f_j(x)\dd{x} \approx \sum_{k=0}^{n-1} A_kf_j(x_k) = A_jf_j(x_j) = A_jw_j,
+\end{equation}
+展开$f_j(x)$，得到
+\begin{multline}
+    \sum_{k=0}^{n-1} Q_k(x_j) \int_a^b\rho(x)Q_k(x)\dd{x}
+    = \sum_{k=0}^{n-1} Q_k(x_j) \braket{Q_k}{1}\\
+    = Q_0(x_j) \braket{Q_0}{1}
+    = A_j \alpha_{n-1} \qty(Q_{n-1}(x_j)Q'_n(x_j) - Q_n(x_j)Q'_{n-1}(x_j)).
+\end{multline}
+
+而根据定义，
+\begin{equation}
+    Q_0 = \frac{1}{\sqrt{\braket{1}}},\quad Q_0 \braket{Q_0}{1} = 1,
+\end{equation}
+故系数
+\begin{multline}\label{eq:gauss_coef}
+    A_j = \frac{1}{w_j} = \frac{1}{\sum_{k=0}^{n-1} Q_k(x_j)Q_k(x_j)} \\
+    = \frac{1}{\alpha_{n-1} \qty(Q_{n-1}(x_j)Q'_n(x_j) - Q_n(x_j)Q'_{n-1}(x_j))}\\
+    = \frac{1}{\alpha_{n-1} Q_{n-1}(x_j)Q'_n(x_j)}.
+\end{multline}
+
+\subsubsection{厄密多项式}
+先定义一个通用的5点数值微分函数，选取步长为$2^{-25}$。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:deriv-end:deriv]{1_Orthogonal_Polynomials.cpp}
+}
+其他求导函数将直接调用它。
+然后定义厄密多项式函数
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:hermite_dec-end:hermite_dec]{1_Orthogonal_Polynomials.cpp}
+    \lstinputlisting[linerange=beg:hermite-end:hermite]{1_Orthogonal_Polynomials.cpp}
+}
+递归方式与前面类似，不再赘述。
+
+根据式 \eqref{eq:gauss_coef}，在\texttt{main()}中定义lambda函数\texttt{func\_hermite()}求权系数。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=end:timing-end:prob2.3_hermite]{1_Orthogonal_Polynomials.cpp}
+}
+然而由于厄密多项式在无穷远处的奇异性质，均发生了发散。
+输出为
+{
+\footnotesize
+\begin{verbatim}
+==========================
+PROBLEM 2.3
+--------------------------
+j'th Gaussian integration weight of Hermite polynomial of degree 1024 H_n(x)
+j=      2                       16                      128                     1024
+        nan     nan     0       nan
+\end{verbatim}
+}
+
+为避免其发散，尝试使用权函数$\rho(x)$。
+定义带权的厄密多项式$\sqrt{\rho(x)}\mathrm{H}_n(x) = \exp(-x^2/2)\mathrm{H}_n(x)$。
+注意到，在我们求值的地方（如$x=-44.353\,625\,640\,238\,6$），权函数其实发生了下溢。
+因此，我们将权函数在迭代过程中逐步乘上去：
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:hermite_weighted_dec-end:hermite_weighted_dec]{1_Orthogonal_Polynomials.cpp}
+    \lstinputlisting[linerange=beg:hermite_weighted-end:hermite_weighted]{1_Orthogonal_Polynomials.cpp}
+}
+同时，导数的定义也需要修改。
+\begin{equation}
+    e^{-\frac{x^2}{2}}\dv{\mathrm{H}_n}{x} = xe^{-\frac{x^2}{2}}\mathrm{H}_n + \dv{x} e^{-\frac{x^2}{2}}\mathrm{H}_n,
+\end{equation}
+可有
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:hermite_deri_weighted-end:hermite_deri_weighted]{1_Orthogonal_Polynomials.cpp}
+}
+
+\texttt{main()}函数部分如下，成功工作。
+\texttt{func\_hermite()}求权系数。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=end:prob2.3_hermite-end:prob2.3_hermite_weighted]{1_Orthogonal_Polynomials.cpp}
+}
+输出为
+{
+\footnotesize
+\begin{verbatim}
+--------------------------
+j'th Gaussian integration weight times rho(x) of Hermite polynomial of degree 1024 H_n(x)
+j=      2                       16                      128                     1024
+        0.3466901837717924      0.1694966208311146      0.08987182406046013     0.4539826520829535
+\end{verbatim}
+}
+注意到，\textbf{这些高斯积分系数$A_j$是已经被扩大了$\exp(x_j^2)$倍}，其本身是极小的，会导致双精度浮点数下溢。
+
+根据式 \eqref{eq:simple_fj}，
+\begin{equation}
+    f_j(x) = \alpha_{n-1} \frac{\mathrm{H}_{n-1}(x_j)\mathrm{H}_n(x)}{x - x_j},
+\end{equation}
+$x = x_j$为可去奇点，该处函数值为$w_j = 1/A_j$，即积分权值的倒数。
+我们需要绘制的函数
+\begin{equation}
+    \sqrt{\frac{\rho(x)}{\rho(x_j)}}f_j(x)
+    = \frac{\alpha_{n-1}}{\rho(x_j)} \frac{\sqrt{\rho(x_j)}\mathrm{H}_{n-1}(x_j)\sqrt{\rho(x)}\mathrm{H}_n(x)}{x - x_j},
+\end{equation}
+
+由于常数系数并不重要，而且这里的$\rho(x_j) = \exp(-x_j^2)$只会导致溢出，因此，仅绘制$\frac{\sqrt{\rho(x_j)}\mathrm{H}_{n-1}(x_j)\sqrt{\rho(x)}\mathrm{H}_n(x)}{x - x_j}$的图像。
+此函数仅在$x_j$附近有较大起伏，故仅绘制$x_j\pm 10.0$的图像。
+数据输出的代码如下（仅命令行传入参数\texttt{oh}时输出）
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=end:prob2.3_hermite_weighted-end:prob2.3_hermite_output]{1_Orthogonal_Polynomials.cpp}
+}
+使用\textsf{Python}绘图（见\texttt{1\_graph.py}），见\autoref{fig:hermite}。
+其展现出了$\delta$函数的性态。
+
+\begin{figure}
+    \centering
+    \subfloat[$j=2$]{
+        \label{fig:hermite_2}
+        \includegraphics[width=0.48\textwidth]{figures/hermite_weighted_2.pdf}
+    }
+    \subfloat[$j=16$]{
+        \label{fig:hermite_16}
+        \includegraphics[width=0.48\textwidth]{figures/hermite_weighted_16.pdf}
+    }\\
+    \subfloat[$j=128$]{
+        \label{fig:hermite_128}
+        \includegraphics[width=0.48\textwidth]{figures/hermite_weighted_128.pdf}
+    }
+    \subfloat[$j=1024$]{
+        \label{fig:hermite_1024}
+        \includegraphics[width=0.48\textwidth]{figures/hermite_weighted_1024.pdf}
+    }
+    \caption{厄密多项式$\mathrm{H}_{1024}(x)$第$j$个插值多项式在多项式第$j$个零点附近的图像（标度有放缩以避免溢出）}
+    \label{fig:hermite}
+\end{figure}
+
+\subsubsection{切比雪夫多项式}
+切比雪夫多项式的行为更为良态。
+我们可以直接计算出
+\begin{equation}
+    \sqrt{\frac{\rho(x)}{\rho(x_j)}}f_j(x)
+    = \frac{1}{2} \sqrt{\frac{1-x_j^2}{1-x^2}} \frac{\mathrm{T}_{n-1}(x_j)\mathrm{T}_n(x)}{x - x_j}.
+\end{equation}
+
+计算高斯积分系数以及绘图数据输出代码如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=end:prob2.3_hermite_output-end:prob2.3]{1_Orthogonal_Polynomials.cpp}
+}
+
+高斯积分系数输出为
+{
+\footnotesize
+\begin{verbatim}
+--------------------------
+j'th Gaussian integration weight of Chebyshev polynomial of degree 1024 T_n(x)
+j=      2                       16                      128                     1024
+        0.003067961587519458    0.003067961575658197    0.00306796157581011     0.00306796176444558
+\end{verbatim}
+}
+与解析解$\frac{\pi}{1024} \approx 0.003\,067\,961\,57$都特别接近，仅靠近区间边界的稍有偏离。
+
+插值多项式绘图见\autoref{fig:chebyshev}，其展现出了$\delta$函数性态。
+
+\begin{figure}
+    \centering
+    \subfloat[$j=2$]{
+        \label{fig:chebyshev_2}
+        \includegraphics[width=0.48\textwidth]{figures/chebyshev_weighted_2.pdf}
+    }
+    \subfloat[$j=16$]{
+        \label{fig:chebyshev_16}
+        \includegraphics[width=0.48\textwidth]{figures/chebyshev_weighted_16.pdf}
+    }\\
+    \subfloat[$j=128$]{
+        \label{fig:chebyshev_128}
+        \includegraphics[width=0.48\textwidth]{figures/chebyshev_weighted_128.pdf}
+    }
+    \subfloat[$j=1024$]{
+        \label{fig:chebyshev_1024}
+        \includegraphics[width=0.48\textwidth]{figures/chebyshev_weighted_1024.pdf}
+    }
+    \caption{切比雪夫多项式$\mathrm{T}_{1024}(x)$第$j$个插值多项式在多项式第$j$个零点附近的图像}
+    \label{fig:chebyshev}
+\end{figure}
+
+\section{希尔伯特空间}
+前面求式 \eqref{eq:mat_eig_simple} 中的矩阵$\vb{T}$的本征值其实就是将其对角化为$\vb{U}\vb{D}\vb{U}^\dagger$，其中$\vb{D}$对角，$\vb{U}$为酉矩阵。
+那么又根据$x_j$为$Q_n(x)$的第$j$个零点，我们可以将式 \eqref{eq:mat_eig_simple} 化为
+\begin{equation*}
+    x_j\vb{U}^\dagger\vb{Q}(x_j) = \vb{D} \vb{U}^\dagger \vb{Q}(x_j),
+\end{equation*}
+记$g_i(x) = \qty(\vb{U}^\dagger\vb{Q}(x))_i$，那么
+\begin{equation*}
+    x_jg_i(x_j) = \sum_i x_k\delta_{ki}g_i(x_j) = x_ig_i(x_j),
+\end{equation*}
+从而$g_i(x_j) = 0,\ i\neq j$，其为离散算符$x_i$的本征函数。
+另外，它也满足插值多项式的要求。
+因此，根据插值多项式的唯一性，我们可以得到：
+\begin{enumerate}
+    \item $g_i(x)$与前面定义的$f_i(x)$至多差一个常系数；
+    \item $f_i(x)$与$g_i(x)$一样，是离散算符$x_i$的本征函数。
+\end{enumerate}
+如果我们记$\ket{x_i} = f_i(x)$，那么
+\begin{multline}
+    \braket{x_i}{x_j} = \braket{\qty(\vb{U}^\dagger\vb{Q}(x))_i}{\qty(\vb{U}^\dagger\vb{Q}(x))_j} \\
+    = \sum_k u_{ki}\bra{Q_k} \sum_l u^*_{lj}\ket{Q_l} =  \sum_k u^*_{kj} u_{ki} = (\vb{U}^\dagger\vb{U})_{ji} = \delta_{ij}.
+\end{multline}
+
+下面考虑将$x_i$连续化。
+为此，我们先定义半连续的
+\begin{equation}
+    \ket{x}_D = \ket{x_i},\quad x_i\text{ 满足 }\frac{x_i+x_{i-1}}{2} \le x < \frac{x_i+x_{i+1}}{2}.
+\end{equation}
+那么，在$n\to\infty$，零点变得越发稠密时，
+\begin{multline}
+    \int_c^d {}_D\braket{x}{y}_D\dd{x} = \sum_{i = k}^{l}\int_\frac{x_i+x_{i-1}}{2}^\frac{x_i+x_{i+1}}{2} \braket{x_i}{x_j} \dd{x}\\
+    = \sum_{i = k}^{l} \braket{x_i}{x_j} \Delta x_i = \begin{cases}
+        \Delta x_j,&    y\text{ 在积分区间内},\\
+        0,&    y\text{ 不在积分区间内}.
+    \end{cases}
+\end{multline}
+其中$k$为最接近$c$的零点编号，$l$为最接近$d$的零点编号，$j$为最接近$y$的零点编号，$\Delta x_i = \frac{x_{i+1}-x_{i-1}}{2}$。
+
+我们再这样定义
+\begin{equation}
+    \ket{x} = \lim_{n\to\infty}\frac{\ket{x}_D}{\sqrt{\Delta x_i}},
+\end{equation}
+那么，我们就得到
+\begin{equation}
+    \int_c^d \braket{x}{y}\dd{x} = \begin{cases}
+        1,&    y\text{ 在积分区间内},\\
+        0,&    y\text{ 不在积分区间内}.
+    \end{cases}
+\end{equation}
+即$\braket{x}{y} = \delta(x-y)$。
+
+下面我们以勒让德多项式为例来验证一下连续极限。
+
+\subsection{勒让德多项式在\texorpdfstring{$n\to\infty$}{n→∞}的连续极限}
+我们期望，$\braket{x_i}{x}$在零点数$n\to\infty$时趋于$\delta(x - x_i)$，即
+\begin{equation}
+    \int_a^b \rho(\xi)f_i(\xi)f_x{\xi}\dd{x}\to \delta(x-x_i).
+\end{equation}
+我们可以通过验证
+\begin{enumerate}
+    \item $n\to\infty$时零点（也就是$\hat{x}$的本征谱）的稠密性，和
+    \item $\sqrt{\rho(x)}f_i(x)$在$n\to\infty$时仅在$x\approx x_i$时非零
+\end{enumerate}
+来验证这一渐进行为。
+
+\subsubsection{零点的稠密性}
+我们研究阶数为$16,\ 64,\ 256,\ 1024$的勒让德多项式。
+我们期待其零点在定义区间$[-1, 1]$上越发稠密。
+
+为计算它们的零点，我们需要获得三对角矩阵。
+归一化的勒让德有
+\begin{equation}
+    \alpha_n = \frac{n+1}{\sqrt{(2n+1)(2n+3)}},\quad \beta_n = 0.
+\end{equation}
+所以计算矩阵代码如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:legendre_mat_dec-end:legendre_mat_dec]{1_Orthogonal_Polynomials.cpp}
+    \lstinputlisting[linerange=beg:legendre_mat-end:legendre_mat]{1_Orthogonal_Polynomials.cpp}
+}
+
+在有命令行参数\texttt{olz}时计算它们的零点并输出的代码如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=end:prob2.3-end:prob3.1_zeroes]{1_Orthogonal_Polynomials.cpp}
+}
+
+将零点以编号$j$为横坐标，值为纵坐标绘图于\autoref{fig:legendre_zeroes}。
+说明，随着$n$的增加，算符$\hat{x}$的本征值趋于无穷，本征谱连续化。
+
+\begin{figure}
+    \centering
+    \subfloat[$n=16$]{
+        \label{fig:legendre_zeroes_16}
+        \includegraphics[width=0.48\textwidth]{figures/legendre_zeroes_16.pdf}
+    }
+    \subfloat[$n=64$]{
+        \label{fig:legendre_zeroes_64}
+        \includegraphics[width=0.48\textwidth]{figures/legendre_zeroes_64.pdf}
+    }\\
+    \subfloat[$n=256$]{
+        \label{fig:legendre_zeroes_256}
+        \includegraphics[width=0.48\textwidth]{figures/legendre_zeroes_256.pdf}
+    }
+    \subfloat[$n=1024$]{
+        \label{fig:legendre_zeroes_1024}
+        \includegraphics[width=0.48\textwidth]{figures/legendre_zeroes_1024.pdf}
+    }
+    \caption{$n$阶勒让德多项式$\mathrm{P}_{n}(x)$的零点值$x_j$与编号$j$的关系。说明随着$n$的增加，算符$\hat{x}$的本征值连续化}
+    \label{fig:legendre_zeroes}
+\end{figure}
+
+\subsubsection{本征函数趋于\texorpdfstring{$\delta$}{δ}函数}
+勒让德多项式的$\rho(x) = 1$，故我们直接绘制
+\begin{equation}
+    f_j(x) = \alpha_{n-1} \frac{\mathrm{P}_{n-1}(x_j)\mathrm{P}_n(x)}{x - x_j},
+\end{equation}
+即可。
+对于$n=16,\ 64,\ 256,\ 1024$，分别绘制$f_{6}, f_{28}, f_{110}, f_{400}$的图像。
+
+生成绘图数据的代码见下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=end:prob3.1_zeroes-end:prob3.1]{1_Orthogonal_Polynomials.cpp}
+}
+绘得的图片见\autoref{fig:legendre_poly}。
+可以发现，$n=1024$时，$f_{400}(x)$已十分接近一个$\delta$函数。
+
+\begin{figure}
+    \centering
+    \subfloat[$n=16, j=6$]{
+        \label{fig:legendre_poly_16}
+        \includegraphics[width=0.48\textwidth]{figures/legendre_poly_16_6.pdf}
+    }
+    \subfloat[$n=64, j=28$]{
+        \label{fig:legendre_poly_64}
+        \includegraphics[width=0.48\textwidth]{figures/legendre_poly_64_28.pdf}
+    }\\
+    \subfloat[$n=256, j=110$]{
+        \label{fig:legendre_poly_256}
+        \includegraphics[width=0.48\textwidth]{figures/legendre_poly_256_110.pdf}
+    }
+    \subfloat[$n=1024, j=400$]{
+        \label{fig:legendre_poly_1024}
+        \includegraphics[width=0.48\textwidth]{figures/legendre_poly_1024_400.pdf}
+    }
+    \caption{$n$阶勒让德多项式的第$j$个插值多项式。其表现为$\delta$函数$\delta(x-x_j)$}
+    \label{fig:legendre_poly}
+\end{figure}
+
+\subsection{勒让德多项式的对易子}
+由于一般的正交多项式的算符$-\dv{x}$需要知道微分方程，所以其对易子矩阵$[x, -\dv{x}]$并不是很好求。
+我们仅考虑归一化的勒让德多项式。
+
+其有微分递推关系
+\begin{equation}
+    \sqrt{2n-1}\mathrm{P}_{n-1} = \frac{\mathrm{P}'_n}{\sqrt{2n+1}} - \frac{\mathrm{P}'_{n-1}}{\sqrt{2n-3}}.
+\end{equation}
+很容易就可以得到，
+\begin{equation}
+    \frac{\mathrm{P}'_n}{\sqrt{2n+1}} = \sqrt{2n-1}\mathrm{P}_{n-1} + \sqrt{2n-5}\mathrm{P}_{n-3} + \cdots.
+\end{equation}
+从而我们可以写出
+\begin{equation}
+    \dv{x} \mqty(
+        \mathrm{P}_0\\   \mathrm{P}_1\\  \mathrm{P}_2\\    \mathrm{P}_3\\  \vdots
+    )
+    = \mqty(
+        \sqrt{1}\times&\mqty{0&0&0&0&\cdots}\\
+        \sqrt{3}\times&\mqty{\sqrt{1}&0&0&0&\cdots}\\
+        \sqrt{5}\times&\mqty{0&\sqrt{3}&0&0&\cdots}\\
+        \sqrt{7}\times&\mqty{\sqrt{1}&0&\sqrt{5}&0&\cdots}\\
+        \vdots&\vdots\\
+    ) \mqty(
+        \mathrm{P}_0\\   \mathrm{P}_1\\  \mathrm{P}_2\\    \mathrm{P}_3\\  \vdots
+    ).
+\end{equation}
+
+对任一函数$f(x)$，我们总可以将其展开到仅取到$\mathrm{P}_{n-1}$为止的$n$个正交多项式张成的函数空间，
+\begin{equation}
+    f(x) = \sum_{k=0}^{n-1} c_k \mathrm{P}_k(x) = \vb{c}^T\vb{P}.
+\end{equation}
+
+那么，$x$或$\dv{x}$作用在$f$上时有
+\begin{gather}
+    xf(x) = \vb{c}^T (x\vb{P}) = \vb{c}^T \vb{T} \vb{P},\\
+    \dv{x}f(x) = \vb{c}^T (\dv{x}\vb{P}).
+\end{gather}
+$\vb{T}$为之前的三对角递推矩阵。
+我们可以将$x$或$\dv{x}$理解为作用在系数矢量$\vb{c}$上，则
+\begin{gather}
+    x\vb{c} = \vb{T}^T\vb{c} = \mqty(
+        0&    \frac{1}{\sqrt{3}}&&&&\\
+        \frac{1}{\sqrt{3}}& 0&  \frac{2}{\sqrt{15}}&&&\\
+        &   \frac{2}{\sqrt{15}}&   0&\frac{3}{\sqrt{35}}&&\\
+        &   &   \frac{3}{\sqrt{35}}&    0&\ddots&\\
+        &&& \ddots&\ddots&
+    )^T\vb{c},\\
+    \dv{x}\vb{c} = \mqty(
+        0&    &&&&\\
+        \sqrt{3}& 0&&&&\\
+        0&   \sqrt{15}&   0&&&\\
+        \sqrt{7}& 0 &   \sqrt{35}&    0&&\\
+        \vdots&\vdots&\vdots& \vdots&\ddots&
+    )^T \vb{c}.
+\end{gather}
+
+在仅取到$\mathrm{P}_{n-1}$为止的$n$个正交多项式张成的函数空间、仅取相应$\mathrm{P}_{n}$的$n$个零点作为离散的坐标点时，我们可以将作用在系数矢量上的算符$\hat{x}$与$-\dv{\hat{x}}$写成矩阵：
+\begin{equation}
+    \mqty(
+        0&    \frac{1}{\sqrt{3}}&&&&\\
+        \frac{1}{\sqrt{3}}& 0&  \frac{2}{\sqrt{15}}&&&\\
+        &   \frac{2}{\sqrt{15}}&   0&\frac{3}{\sqrt{35}}&&\\
+        &   &   \frac{3}{\sqrt{35}}&    0&\ddots&\\
+        &&& \ddots&\ddots&
+    )^T,\quad \mqty(
+        0&    &&&&\\
+        -\sqrt{3}& 0&&&&\\
+        0&   -\sqrt{15}&   0&&&\\
+        -\sqrt{7}& 0 &   -\sqrt{35}&    0&&\\
+        \vdots&\vdots&\vdots& \vdots&\ddots&
+        )^T.
+\end{equation}
+
+因此，我们要计算
+\begin{equation}
+    \hat{x}\times -\dv{\hat{x}} =
+    -\qty(\mqty(
+        0&    &&&&\\
+        \sqrt{3}& 0&&&&\\
+        0&   \sqrt{5}&   0&&&\\
+        \sqrt{7}& 0 &   \sqrt{7}&    0&&\\
+        \vdots&\vdots&\vdots& \vdots&\ddots&
+    )\mqty(
+        0&    \frac{1}{\sqrt{3}}&&&&\\
+        \frac{1}{\sqrt{1}}& 0&  \frac{2}{\sqrt{5}}&&&\\
+        &   \frac{2}{\sqrt{3}}&   0&\frac{3}{\sqrt{7}}&&\\
+        &   &   \frac{3}{\sqrt{5}}&    0&\ddots&\\
+        &&& \ddots&\ddots&
+    ))^T
+\end{equation}
+与
+\begin{equation}
+    -\dv{\hat{x}}\times \hat{x} =
+    -\qty(\mqty(
+        0&    \frac{1}{\sqrt{1}}&&&&\\
+        \frac{1}{\sqrt{3}}& 0&  \frac{2}{\sqrt{3}}&&&\\
+        &   \frac{2}{\sqrt{5}}&   0&\frac{3}{\sqrt{5}}&&\\
+        &   &   \frac{3}{\sqrt{7}}&    0&\ddots&\\
+        &&& \ddots&\ddots&
+    )\mqty(
+        0&    &&&&\\
+        \sqrt{1}& 0&&&&\\
+        0&   \sqrt{3}&   0&&&\\
+        \sqrt{1}& 0 &   \sqrt{5}&    0&&\\
+        \vdots&\vdots&\vdots& \vdots&\ddots&
+    ))^T
+\end{equation}
+之差。
+
+经过矩阵运算可以得到，
+\begin{gather}
+    \hat{x}\times -\dv{\hat{x}} =
+    -\spmqty{
+        0 &  &  &  &  &  &  &  \\
+        0 & 1 &  &  &  &  &  &  \\
+        \sqrt{5\times 1} & 0 & 2 &  &  &  &  &   \\
+        0 & \sqrt{7\times 3} & 0 & 3 &  &  &  &   \\
+        \sqrt{5\times 1} & 0 & \sqrt{5\times 1} & 0 & 4 &  &  &  \\
+        \vdots & \vdots & \vdots & \vdots & \vdots & \ddots & & \\
+        &  & & \ddots & {\scriptscriptstyle\sqrt{(2n-3)(2n-7)}} & 0 &  n-2 &  \\
+        &  & & \cdots & 0 & {\scriptscriptstyle\sqrt{(2n-1)(2n-5)}} & 0 &  n-1
+    }^T,\\
+    -\dv{\hat{x}}\times \hat{x} =
+    - \spmqty{
+        1 &  &  &  &  &  &  &  \\
+        0 & 2 &  &  &  &  &  &  \\
+        \sqrt{5\times 1} & 0 & 3 &  &  &  &  &  \\
+        0 & \sqrt{7\times 3} & 0 & 4 &  &  &  &  \\
+        \sqrt{9\times 1} & 0 & \sqrt{9\times 5} & 0 & 5 &  &  &  \\
+        \vdots & \vdots & \vdots & \vdots & \ddots & \ddots &  &  \\
+        &  &  & \ddots & {\scriptscriptstyle\sqrt{(2n-3)(2n-7)}} & 0 &  n-1 &  \\
+        &  &  & \cdots & 0 & {\scriptscriptstyle(n-1)\sqrt{\frac{2n-5}{2n-1}}} & 0 & 0
+    }^T.
+\end{gather}
+
+两者相减，我们可以得到一个几乎与单位矩阵$\vb{I}$相同的矩阵——除了其中一列。
+我们有
+\begin{equation}
+    \qty[\hat{x}, -\dv{\hat{x}}]
+    = \hat{x}\times -\dv{\hat{x}} - \qty(-\dv{\hat{x}}\times \hat{x})
+    = \vb{I} - n \mqty(
+        \cdots &
+        \mqty{
+            \vdots\\
+            0\\
+            \sqrt{\frac{2n-9}{2n-1}}\\
+            0\\
+            \sqrt{\frac{2n-5}{2n-1}}\\
+            0\\
+            1
+        }
+    ).
+\end{equation}
+
+对任一Krylov子空间维度，对易子与单位算符的差别仅在于一列上。
+在维数趋于无穷时，两者趋于相等。
+
+
+% \appendix
+% \renewcommand\chapterendname{}
+
+% \chapter{\texttt{Misc}数值库接口}
+% \input{../misc/misc.tex}
+
+\end{document}

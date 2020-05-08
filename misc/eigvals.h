@@ -7,6 +7,7 @@
 #include <random>
 #include <thread>
 #include <functional>
+#include <stdexcept>
 
 #include "matrixlib.h"
 #include "rootfind.h"
@@ -64,7 +65,7 @@ inline Matrix<T, N, N> _hessenberg_impl(const Sparse_Matrix<T, N, N> &in_mat, Ma
  *      q_mat:  optional; will be modified in situ
  *      in_situ:    its value is not used
  * for Sparse_Matrix, Lanczos algorithm is used;
- * for Matrix or Base_Matrix, Householder transformation instead.
+ * for Symm_Matrix or Symm_Band_Matrix, Householder transformation instead.
  */
 template <typename T, size_t N>
 inline Symm_Band_Matrix<T, N, 1> hessenberg(Symm_Matrix<T, N> in_mat);
@@ -124,18 +125,7 @@ inline void _eig_hessenberg_symm_qr(Symm_Band_Matrix<T, N, 1> &in_mat, Matrix<T,
  */
 template <typename T, size_t N>
 inline std::array<T, N> _eig_hessenberg_symm_bisection(const Symm_Band_Matrix<T, N, 1> &in_mat,
-                                                       const T tol = std::sqrt(std::numeric_limits<T>::epsilon()));
-/* eigenvalues of a *tridiagonal Hessenberg matrix* H (`in_mat`),
- * using Divide and Conquer method.
- * H = Q R Q^T, R is a diagonal matrix
- * intended to be inner implementation
- * ASSUMPTION: H = Q0^T A Q0, where Q0 is `*p_q_mat` (if `p_q_mat` != nullptr)
- * RETURN:
- *      array of eigenvalues
- * parameters:
- *      in_mat: the matrix H to be calculated.
- *      tol:    relative tolerance
- */
+                                                       const T tol = std::numeric_limits<T>::epsilon());
 /* eigenvalues of a *tridiagonal Hessenberg matrix* H (`in_mat`),
  * using QR with implicit Wilkinson shift.
  * H = Q R Q^T, R is a diagonal matrix
@@ -176,6 +166,38 @@ template <typename T, size_t N>
 inline std::pair<std::array<T, N>, std::vector<size_t>> _eig_vals_impl(Matrix<T, N, N> &hessenberg_mat,
                                                                        const T tol);
 
+enum class Eig_Symm_Method
+{
+    QR,
+    bisection,
+    divide_conquer
+};
+
+/* eigenvalues of a symmetrical matrix A (`in_mat`),
+ * modifying A into a Hessenberg Matrix and then using shifted implicit QR
+ * RETURN:
+ *      array of eigenvalues;
+ *      vector of index where eigenvalues are complex pairs (Re first and Im second)
+ *          for example, if 2 is in vector, then array[2] +- i array[3] are eigenvalues
+ * parameters:
+ *      in_mat: the matrix A to be calculated.
+ */
+template <typename T, size_t N>
+inline std::array<T, N> eig_vals_symm(const Sparse_Matrix<T, N, N> &in_mat,
+                                      const Eig_Symm_Method method = Eig_Symm_Method::QR,
+                                      const T tol = std::numeric_limits<T>::epsilon());
+template <typename T, size_t N>
+inline std::array<T, N> eig_vals_symm(const Symm_Matrix<T, N> &in_mat,
+                                      const Eig_Symm_Method method = Eig_Symm_Method::QR,
+                                      const T tol = std::numeric_limits<T>::epsilon());
+template <typename T, size_t N, size_t M>
+inline std::array<T, N> eig_vals_symm(const Symm_Band_Matrix<T, N, M> &in_mat,
+                                      const Eig_Symm_Method method = Eig_Symm_Method::QR,
+                                      const T tol = std::numeric_limits<T>::epsilon());
+
+template <typename T, size_t N>
+inline std::array<T, N> _eig_vals_symm_impl(Symm_Band_Matrix<T, N, 1> &hessenberg_mat,
+                                            const Eig_Symm_Method method, const T tol);
 // ======================= implementations ========================
 
 template <typename T, size_t N>
@@ -405,14 +427,33 @@ inline Symm_Band_Matrix<T, N, 1> hessenberg(Symm_Matrix<T, N> in_mat, Matrix<T, 
 template <typename T, size_t N, size_t M>
 inline Symm_Band_Matrix<T, N, 1> hessenberg(const Symm_Band_Matrix<T, N, M> &in_mat)
 {
-    Symm_Matrix<T, N> temp{in_mat};
-    return _hessenberg_impl(temp);
+    if (M == 1)
+    {
+        return Symm_Band_Matrix<T, N, 1>{in_mat};
+    }
+    else
+    {
+        Symm_Matrix<T, N> temp{in_mat};
+        return _hessenberg_impl(temp);
+    }
 }
 template <typename T, size_t N, size_t M>
 inline Symm_Band_Matrix<T, N, 1> hessenberg(const Symm_Band_Matrix<T, N, M> &in_mat, Matrix<T, N, N> &q_mat)
 {
-    Symm_Matrix<T, N> temp{in_mat};
-    return _hessenberg_impl(temp, &q_mat);
+    if (M == 1)
+    {
+        q_mat = Matrix<T, N, N>{};
+        for (size_t i = 0; i < N; i++)
+        {
+            q_mat(i, i) = 1.;
+        }
+        return Symm_Band_Matrix<T, N, 1>{in_mat};
+    }
+    else
+    {
+        Symm_Matrix<T, N> temp{in_mat};
+        return _hessenberg_impl(temp, &q_mat);
+    }
 }
 
 template <typename T, size_t N>
@@ -696,13 +737,16 @@ inline void _eig_hessenberg(Matrix<T, N, N> &in_mat, Matrix<T, N, N> *p_q_mat, c
         }
     }
 }
+/*beg:symm_qr*/
 template <typename T, size_t N>
 inline void _eig_hessenberg_symm_qr_(Symm_Band_Matrix<T, N, 1> &in_mat, Matrix<T, N, N> *p_q_mat,
                                      const T tol, const size_t start = 0, const size_t end = N)
 {
     std::vector<size_t> zero_break{start};
     for (size_t i = start + 1; i < end; i++)
-        if (std::abs(in_mat(i, i - 1)) < tol * std::max({1., std::abs(in_mat(i, i)), std::abs(in_mat(i - 1, i - 1))}))
+        if (std::abs(in_mat(i, i - 1)) < tol * std::max({1.,
+                                                         std::abs(in_mat(i, i)),
+                                                         std::abs(in_mat(i - 1, i - 1))}))
         {
             in_mat(i, i - 1) = 0.;
             zero_break.push_back(i);
@@ -713,17 +757,22 @@ inline void _eig_hessenberg_symm_qr_(Symm_Band_Matrix<T, N, 1> &in_mat, Matrix<T
 
     while (mat_range >= start + 1)
     {
-        if (mat_range == lower_bound)
+        if (mat_range <= lower_bound)
         {
+            mat_range = lower_bound;
             lower_bound = zero_break.back();
             zero_break.pop_back();
-            mat_range--;
         }
         // d = (a_{n-1, n-1} - a_{n, n}) / 2.
         T d{(in_mat(mat_range - 1, mat_range - 1) - in_mat(mat_range, mat_range)) / 2.};
-        T shift{d ? in_mat(mat_range, mat_range - 1) / d : in_mat(mat_range, mat_range) - std::abs(in_mat(mat_range, mat_range - 1))};
-        shift *= shift;
-        shift = in_mat(mat_range, mat_range) - d * shift / (1. + std::sqrt(1. + shift));
+        T shift{d
+                    ? in_mat(mat_range, mat_range - 1) / d
+                    : in_mat(mat_range, mat_range) - std::abs(in_mat(mat_range, mat_range - 1))};
+        if (d)
+        {
+            shift *= shift;
+            shift = in_mat(mat_range, mat_range) - d * shift / (1. + std::sqrt(1. + shift));
+        }
         // initialize
         T bulge{in_mat(lower_bound + 1, lower_bound)};
         T offset;
@@ -774,7 +823,9 @@ inline void _eig_hessenberg_symm_qr_(Symm_Band_Matrix<T, N, 1> &in_mat, Matrix<T
                 }
         }
         // check convergence
-        T criteria{tol * std::max({1., std::abs(in_mat(mat_range, mat_range)), std::abs(in_mat(mat_range - 1, mat_range - 1))})};
+        T criteria{tol * std::max({1.,
+                                   std::abs(in_mat(mat_range, mat_range)),
+                                   std::abs(in_mat(mat_range - 1, mat_range - 1))})};
         if (std::abs(in_mat(mat_range, mat_range - 1)) < criteria)
         {
             in_mat(mat_range, mat_range - 1) = 0.;
@@ -782,11 +833,13 @@ inline void _eig_hessenberg_symm_qr_(Symm_Band_Matrix<T, N, 1> &in_mat, Matrix<T
         }
     }
 }
+/*end:symm_qr*/
 template <typename T, size_t N>
 inline void _eig_hessenberg_symm_qr(Symm_Band_Matrix<T, N, 1> &in_mat, Matrix<T, N, N> *p_q_mat, const T tol)
 {
     _eig_hessenberg_symm_qr_(in_mat, p_q_mat, tol);
 }
+/*beg:symm_bis*/
 template <typename T, size_t N>
 inline std::array<T, N> _eig_hessenberg_symm_bisection(const Symm_Band_Matrix<T, N, 1> &in_mat, const T tol)
 {
@@ -802,7 +855,9 @@ inline std::array<T, N> _eig_hessenberg_symm_bisection(const Symm_Band_Matrix<T,
                 }
                 else
                 {
-                    q = std::isinf(q) ? in_mat(i, i) - x : in_mat(i, i) - x - in_mat(i, i - 1) * in_mat(i, i - 1) / q;
+                    q = std::isinf(q)
+                            ? in_mat(i, i) - x
+                            : in_mat(i, i) - x - in_mat(i, i - 1) * in_mat(i, i - 1) / q;
                 }
                 if (std::signbit(q))
                 // q < +0.0
@@ -849,6 +904,7 @@ inline std::array<T, N> _eig_hessenberg_symm_bisection(const Symm_Band_Matrix<T,
     }
     return res;
 }
+/*end:symm_bis*/
 template <typename T, size_t N>
 inline std::array<T, N> _eig_hessenberg_symm_div_conq(Symm_Band_Matrix<T, N, 1> &in_mat, Matrix<T, N, N> *p_q_mat, const T tol)
 {
@@ -861,7 +917,7 @@ inline std::array<T, N> _eig_hessenberg_symm_div_conq(Symm_Band_Matrix<T, N, 1> 
     }
     std::array<T, N> res;
     constexpr std::array<size_t, 4> mats_end{(N / 2) / 2, N / 2, N / 2 + (N - N / 2) / 2, N};
-    constexpr T theta{.5};
+    constexpr T theta{1.};
     std::array<T, 3> rhos{
         in_mat(mats_end[0], mats_end[0] - 1) / theta,
         in_mat(mats_end[1], mats_end[1] - 1) / theta,
@@ -900,6 +956,13 @@ inline std::array<T, N> _eig_hessenberg_symm_div_conq(Symm_Band_Matrix<T, N, 1> 
     }
     std::sort(res.begin(), &res[mats_end[1]]);
     std::sort(&res[mats_end[1]], res.end());
+    for (auto x : res)
+    {
+        std::cerr << x << ',';
+    }
+    std::cerr << '\n';
+
+    std::cerr << alter_q_mat << std::endl;
 
     struct Glue
     {
@@ -941,18 +1004,28 @@ inline std::array<T, N> _eig_hessenberg_symm_div_conq(Symm_Band_Matrix<T, N, 1> 
                 if (rho < 0.)
                 {
                     T del = diag[start + 1] - diag[start];
-                    T f_right{f(diag[start] - 3.0517578125e-05 * del)};
-                    T left_bound{diag[start] - del};
-                    while (std::signbit(f(left_bound)) == std::signbit(f_right))
-                    {
-                        left_bound -= del;
-                    }
-                    res[start] = dekker_brent(f_lmd, left_bound, diag[start] - 3.0517578125e-05 * del);
+                    T f_right{f(diag[start] - 3.0517578125e-05 * std::max(del, .5))};
+                    // T left_bound{diag[start] - del};
+                    // while (std::signbit(f(left_bound)) == std::signbit(f_right))
+                    // {
+                    //     left_bound -= del;
+                    // }
+                    res[start] = dekker_brent(f_lmd, diag[start] - z * z, diag[start] - 3.0517578125e-05 * del);
                 }
                 for (size_t i = rho < 0. ? start + 1 : start, j = start; i < mid; i++, j++)
                 {
                     T del{diag[j + 1] - diag[j]};
-                    res[i] = dekker_brent(f_lmd, diag[j] + 3.0517578125e-05 * del, diag[j + 1] - 3.0517578125e-05 * del);
+                    if (del > 2. * std::numeric_limits<T>::epsilon() * std::max(std::abs(diag[j + 1]), std::abs(diag[j])))
+                    {
+                        del *= 3.0517578125e-05;
+                        T del_left{std::max(del, std::numeric_limits<T>::epsilon() * std::abs(diag[j]))};
+                        T del_right{std::max(del, std::numeric_limits<T>::epsilon() * std::abs(diag[j + 1]))};
+                        res[i] = dekker_brent(f_lmd, diag[j] + del, diag[j + 1] - del);
+                    }
+                    else
+                    {
+                        res[i] = diag[j];
+                    }
                 }
             }
         }
@@ -967,18 +1040,28 @@ inline std::array<T, N> _eig_hessenberg_symm_div_conq(Symm_Band_Matrix<T, N, 1> 
                 if (rho > 0.)
                 {
                     T del = diag[end - 1] - diag[end - 2];
-                    T f_left{f(diag[end - 1] + 3.0517578125e-05 * del)};
-                    T right_bound{diag[end - 1] + del};
-                    while (std::signbit(f(right_bound)) == std::signbit(f_left))
-                    {
-                        right_bound += del;
-                    }
-                    res[end - 1] = dekker_brent(f_lmd, diag[end - 1] + 3.0517578125e-05 * del, right_bound);
+                    T f_left{f(diag[end - 1] + 3.0517578125e-05 * std::max(del, .5))};
+                    // T right_bound{diag[end - 1] + del};
+                    // while (std::signbit(f(right_bound)) == std::signbit(f_left))
+                    // {
+                    //     right_bound += del;
+                    // }
+                    res[end - 1] = dekker_brent(f_lmd, diag[end - 1] + 3.0517578125e-05 * del, diag[end - 1] + z * z);
                 }
                 for (size_t i = mid, j = rho > 0. ? mid : mid - 1; j < end - 1; i++, j++)
                 {
                     T del{diag[j + 1] - diag[j]};
-                    res[i] = dekker_brent(f_lmd, diag[j] + 3.0517578125e-05 * del, diag[j + 1] - 3.0517578125e-05 * del);
+                    if (del > 2. * std::numeric_limits<T>::epsilon() * std::max(std::abs(diag[j + 1]), std::abs(diag[j])))
+                    {
+                        del *= 3.0517578125e-05;
+                        T del_left{std::max(del, std::numeric_limits<T>::epsilon() * std::abs(diag[j]))};
+                        T del_right{std::max(del, std::numeric_limits<T>::epsilon() * std::abs(diag[j + 1]))};
+                        res[i] = dekker_brent(f_lmd, diag[j] + del, diag[j + 1] - del);
+                    }
+                    else
+                    {
+                        res[i] = diag[j];
+                    }
                 }
             }
         }
@@ -987,12 +1070,33 @@ inline std::array<T, N> _eig_hessenberg_symm_div_conq(Symm_Band_Matrix<T, N, 1> 
         {
             size_t ref_start{less ? start : mid};
             size_t ref_end{less ? mid : end};
-            for (size_t i = start; i < end; i++)
+            for (size_t j = ref_start; j < ref_end; j++)
             {
-                T d{in_mat(i, i)};
-                for (size_t j = ref_start; j < ref_end; j++)
+                T lambda{res[j]};
+                T criteria{std::numeric_limits<T>::epsilon() * std::abs(lambda)};
+                std::vector<size_t> i_s_equal{};
+                for (size_t i = start; i < end; i++)
                 {
-                    new_q_mat(i, j) = z[i] / (d - res[j]);
+                    if (std::abs(in_mat(i, i) - res[j]) > criteria || std::find(i_s_equal.begin(), i_s_equal.end(), i) != i_s_equal.end())
+                    {
+                        new_q_mat(i, j) = z[i] / (in_mat(i, i) - res[j]);
+                    }
+                    else
+                    {
+                        for (size_t i_ = start; i_ < end; i_++)
+                        {
+                            new_q_mat(i_, j) = 0.;
+                        }
+                        new_q_mat(i, j) = 1.;
+                    }
+                    // if (z[i])
+                    // {
+                    //     new_q_mat(i, j) = z[i] / (d - res[j]);
+                    // }
+                    // else
+                    // {
+                    //     new_q_mat(i, j) = i == j ? 1. : 0.;
+                    // }
                 }
             }
             for (size_t j = ref_start; j < ref_end; j++)
@@ -1057,6 +1161,13 @@ inline std::array<T, N> _eig_hessenberg_symm_div_conq(Symm_Band_Matrix<T, N, 1> 
     z.fill(0.);
     z[mats_end[1] - 1] = 1.;
     z[mats_end[1]] = theta;
+    for (auto x : res)
+    {
+        std::cerr << x << ',';
+    }
+    std::cerr << '\n';
+
+    std::cerr << alter_q_mat << std::endl;
     z = z * alter_q_mat;
 
     Glue whole{in_mat, res, z, alter_q_mat, q_mat, q_temp_array, rhos[1], 0, N};
@@ -1138,6 +1249,66 @@ inline std::pair<std::array<T, N>, std::vector<size_t>> _eig_vals_impl(Matrix<T,
         res_array[N - 1] = hessenberg_mat(N - 1, N - 1);
     }
     return {res_array, res_vector};
+}
+
+// ------------------------------------------
+
+template <typename T, size_t N>
+inline std::array<T, N> eig_vals_symm(const Sparse_Matrix<T, N, N> &in_mat,
+                                      const Eig_Symm_Method method, const T tol)
+{
+    auto temp{hessenberg(in_mat, true)};
+    return _eig_vals_symm_impl(temp, method, tol);
+}
+template <typename T, size_t N>
+inline std::array<T, N> eig_vals_symm(const Symm_Matrix<T, N> &in_mat,
+                                      const Eig_Symm_Method method, const T tol)
+{
+    auto temp{hessenberg(in_mat)};
+    return _eig_vals_symm_impl(temp, method, tol);
+}
+template <typename T, size_t N, size_t M>
+inline std::array<T, N> eig_vals_symm(const Symm_Band_Matrix<T, N, M> &in_mat,
+                                      const Eig_Symm_Method method, const T tol)
+{
+    auto temp{hessenberg(in_mat)};
+    return _eig_vals_symm_impl(temp, method, tol);
+}
+template <typename T, size_t N>
+inline std::array<T, N> eig_vals_symm(const Symm_Band_Matrix<T, N, 1> &in_mat,
+                                      const Eig_Symm_Method method, const T tol)
+{
+    return _eig_vals_symm_impl(in_mat, method, tol);
+}
+
+template <typename T, size_t N>
+inline std::array<T, N> _eig_vals_symm_impl(Symm_Band_Matrix<T, N, 1> &hessenberg_mat,
+                                            const Eig_Symm_Method method, const T tol)
+{
+    switch (method)
+    {
+    case Eig_Symm_Method::QR:
+    {
+        _eig_hessenberg_symm_qr(hessenberg_mat, static_cast<Matrix<T, N, N> *>(nullptr), std::max(tol, std::cbrt(std::numeric_limits<T>::epsilon() * std::numeric_limits<T>::epsilon())));
+        std::array<T, N> res;
+        for (size_t i = 0; i < N; i++)
+        {
+            res[i] = hessenberg_mat(i, i);
+        }
+        std::sort(res.begin(), res.end());
+        return res;
+        break;
+    }
+    case Eig_Symm_Method::bisection:
+        return _eig_hessenberg_symm_bisection(hessenberg_mat, tol);
+        break;
+    case Eig_Symm_Method::divide_conquer:
+        return _eig_hessenberg_symm_div_conq(hessenberg_mat, static_cast<Matrix<T, N, N> *>(nullptr), std::max(tol, std::sqrt(std::numeric_limits<T>::epsilon())));
+    default:
+    {
+        throw std::runtime_error((__FILE__ ":") + std::to_string(__LINE__) + ": wrong method");
+    }
+    }
 }
 
 } // namespace Misc
