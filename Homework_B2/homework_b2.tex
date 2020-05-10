@@ -1,0 +1,631 @@
+\documentclass[a4paper,unicode]{report}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{textgreek}
+\usepackage{esint}
+\usepackage{subfig}
+\usepackage{rotating}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{paralist}
+\usepackage{titlesec}
+\usepackage{graphicx}
+\usepackage{physics}
+\usepackage{ucs}
+\usepackage{listings}
+\usepackage{multirow}
+\usepackage{tablefootnote}
+\usepackage{indentfirst}
+\usepackage{tikz}
+\usepackage{warpcol}
+\usepackage[pdftitle=计算物理第二次大作业第二部分,pdfauthor=***,bookmarksnumbered=true]{hyperref}
+\usepackage{natbib}
+\usepackage{xcolor}
+\usepackage{xeCJK}
+    \setCJKmainfont[BoldFont={Noto Serif CJK SC Bold},ItalicFont={FangSong}]{Noto Serif CJK SC}
+    \setCJKsansfont[BoldFont={Noto Sans CJK SC Bold},ItalicFont={KaiTi}]{Noto Sans CJK SC}
+    \setCJKmonofont[BoldFont={Noto Sans Mono CJK SC Bold}]{Noto Sans Mono CJK SC}
+
+\title{计算物理第二次大作业第二部分}
+\author{物理学院\quad ***\quad 1800011***}
+
+\DeclareUnicodeCharacter{"00B0}{\textdegree}
+\DeclareUnicodeCharacter{"00B5}{\textmu}
+
+\renewcommand{\today}{\number\year 年\number\month 月\number\day 日}
+\renewcommand{\refname}{参考文献}
+\renewcommand{\abstractname}{摘要}
+\renewcommand{\contentsname}{目录}
+\renewcommand{\figurename}{图}
+\renewcommand{\tablename}{表}
+\renewcommand{\appendixname}{附录}
+\renewcommand{\chaptername}{第}
+\newcommand{\chapterendname}{章}
+
+\renewcommand{\equationautorefname}{式}
+\renewcommand{\figureautorefname}{图}
+\newcommand{\subfigureautorefname}{子图}
+\renewcommand{\tableautorefname}{表}
+\renewcommand{\subsectionautorefname}{小节}
+\newcommand{\mythmautorefname}{定理}
+\renewcommand{\sectionautorefname}{\S}
+
+\newtheorem{mythm}{定理}
+
+\lstset{
+    basicstyle=\scriptsize\ttfamily\color{black}, % print whole listing small
+    keywordstyle=\color{teal}\bfseries,
+    identifierstyle=, % nothing happens
+    commentstyle=\color{gray}\ttfamily, % white comments
+    stringstyle=\color{violet}, % typewriter type for strings
+    showstringspaces=true,
+    numbers=left,
+    numberstyle=\tiny\color{brown},
+    stepnumber=2,
+    numbersep=5pt,
+    firstnumber=auto,
+    frame=lines,
+    language=[11]C++,
+    rangeprefix=/*,
+    rangesuffix=*/,
+    includerangemarker=false
+}
+
+% \pgfsetxvec{\pgfpoint{0.02cm}{0}}
+% \pgfsetyvec{\pgfpoint{0}{0.1em}}
+
+% \usetikzlibrary{datavisualization,plotmarks,datavisualization.formats.functions}
+% \usetikzlibrary{math,fpu,datavisualization}
+% \graphicspath{{figure/}}
+\linespread{1.3}
+
+\titleformat{\chapter}[display]{\huge\bfseries}{\chaptertitlename\ \thechapter\ \chapterendname}{20pt}{\Huge}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\begin{center}
+    \textbf{编译与运行环境说明}
+\end{center}
+
+本地操作系统版本为\textsf{Windows 10 x64 1909 (18363.815)}。
+
+第二次大作业第一题主要使用\textsf{C++}编写，编译器为Windows下的\texttt{g++ 9.3.0} (Rev2, Built by MSYS2 project)，标准为\textsf{C++17}。
+除标准库外未使用其他第三方库。
+最后上交的程序的编译命令为\begin{verbatim}
+    g++ -O3 -static -std=c++17 -o <可执行文件名> <源文件名>
+\end{verbatim}
+
+对于绘图部分，使用了必要的\textsf{Python}的第三方库\texttt{matplotlib}进行处理。
+
+\setcounter{chapter}{1}
+\chapter{伊辛模型}
+本题使用蒙特卡洛方法模拟二维伊辛模型。
+
+设二维网格维度为$L\times L$，有周期性边界条件，每个格点的自旋$s_{i, j}$仅可取$\pm 1$。
+对构型$\qty{S}$，系统哈密顿量有
+\begin{equation}
+    \mathcal{H}\qty[\qty{S}] = \sum_{i=0}^{L-1} \sum_{j=0}^{L-1} \qty[-Js_{i,j}(s_{i+1,j}+s_{i,j+1}) - Hs_{i,j}],
+\end{equation}
+我们可以做无量纲化。
+以下皆取$J=1$。
+
+正则系综的配分函数为
+\begin{eqnarray}
+    Z = \sum_\qty{S}\exp(-\beta \mathcal{H}),
+\end{eqnarray}
+系统的宏观物理量$U$，$\mathcal{M}$等可以通过求系综平均给出。
+然而，系统实际可能构型随粒子数指数增长，同时，系综的加权系数$\exp(-\beta \mathcal{H})$也因对各种构型有数量级上的差别而使运算更为困难。
+
+然而，若可以权系数为概率分布进行随机抽样，然后对抽样得到的体系的物理量直接做平均，那么，在系统达到精细平衡、抽样数足够多时，我们求得的平均值将趋于系综平均。
+
+下面按照题给的$1/(1+\exp(-\beta\Delta))$作为迭代接受概率进行抽样，进行蒙特卡洛模拟。
+
+\section*{类模板\texttt{Ising\_2D}}
+定义二维伊辛网格\verb|Ising_2D|如下。
+\verb|L|为网格大小，\verb|HIS_SIZE|为记忆迭代历史的数组大小。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:Ising_dec-end:Ising_dec]{2_Ising_model.cpp}
+}
+底层实现为\texttt{array<bitset<L>,L> data}，使用\verb|true|表示向上，\verb|false|表示向下。
+其使用随机数发生器类型为专为蒙卡模拟设计\footnote{刘川. 计算物理. 页107, 未出版手稿}的\texttt{ranlux48}。
+内部存储温度参量\verb|_beta|和磁场\verb|_H|（交换积分$J=1$）。
+保存迭代历史中的平均自旋\verb|spin_his|和哈密顿量\verb|hamiltonian_his|。
+此外还有一些用于迭代的参量。
+
+定义了一个方便求系综平均的函数\verb|ave()|；一个迭代时使用的、求翻转某个粒子的哈密顿量变化的函数\verb|delta_hamiltonian()|。
+
+定义了进行迭代的接口\verb|iterate()|。
+定义了求系统当前构型下的哈密顿量和平均自旋的函数\verb|hamiltonian()|和\verb|spin()|。
+
+还定义了一些根据之前的迭代历史求物理量的函数。
+
+此外还定义了网格的输出运算符。
+
+\section{\texorpdfstring{$L=32$}{L=32}的迭代}
+
+成员函数\verb|iterate()|会将实例的温度参量和磁场设定为给定值\verb|beta|和\verb|H|，然后迭代\verb|times|次。
+
+\verb|start_skip|将指示舍弃前多少次迭代的数据。
+\verb|random_start|指示是否将网格随机重置；若为\verb|false|，将相当于从上次的位置开始继续之前的迭代。
+
+\verb|output_skip|指示输出到流\verb|*p_os|。
+若\verb|output_skip == 0|，则不输出；否则，每隔\verb|output_skip|次迭代将当前构型的平均自旋以\textbf{内存二进制表示}写入到流\verb|*p_os|。
+
+下面看定义，
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:iterate-end:iterate]{2_Ising_model.cpp}
+}
+
+若\verb|random_start|为真，则遍历网格，随机等概率置其为真或假。
+
+然后，将指示历史记录已处理多少条记录的计数器\verb|history_data_count|置为0，将记录是否已经完成跳过前\verb|start_skip|迭代的计数器\verb|start_skip_count|置为0，将\verb|start_skip|存为成员变量\verb|skip_at_start|。
+
+正式迭代部分为一个\texttt{for}循环。
+首先为记录迭代历史的部分，策略为
+\begin{enumerate}
+    \item 若未完成跳过开头部分的任务，则继续跳过；
+    \item 若已跳过开头，则以一定概率（为$\frac{1}{\text{\texttt{ave\_history\_skip}}} = \frac{1}{47}$）的概率进入历史记录提交
+    \begin{enumerate}
+        \item 若历史记录未填满，则直接填入当前构型进入历史记录；
+        \item 否则，以概率\verb|HIS_SIZE / history_data_count|替换掉现有历史记录中的一条随机记录。
+    \end{enumerate}
+\end{enumerate}
+
+然后为输出二进制文件部分。
+
+最后为迭代部分。
+随机选取一个位置对$(i, j)$，然后计算若翻转该例子的能量改变$\Delta$。
+以概率$1/(1+\exp(\beta\Delta))$进行该翻转。
+
+\subsection{哈密顿量改变\texorpdfstring{$\Delta$}{Δ}的计算}
+一个粒子翻转对哈密顿量的改变仅有其与外磁场的作用以及其与周边四个粒子的作用。
+函数如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:delta_h-end:delta_h]{2_Ising_model.cpp}
+}
+
+假设粒子原始为向下。
+则其向上翻转会导致系统与磁场的哈密顿量改变$-2H$。
+同时，设其四周正、负粒子数分别为$n_+, n_-$，则相应导致的哈密顿量改变为$-2J(n_+ - n_-) = -2J(2n_+ - 4)$。
+
+程序先利用正粒子为\verb|true|这一点求出周围的正粒子个数\verb|pos_count|，然后求出哈密顿量改变。
+如果粒子其实为正，则再乘上负号。
+
+\subsection{平均自旋计算}
+平均自旋数可用总正粒子个数$n_+$表示为
+\begin{equation}
+    \bar{s} = \frac{n_+ - (L\times L - n_+)}{L\times L} = \frac{2n_+}{L\times L} - 1.
+\end{equation}
+
+程序如下，不做更多解释。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:spin-end:spin]{2_Ising_model.cpp}
+}
+
+\subsection{计算结果}
+取$L = 32,\beta = 0.5, J=1, H = 0$，进行迭代。
+程序代码如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=p2.1-p2.2]{2_Ising_model.cpp}
+}
+
+为避免随机种子影响，使用了多个不同的随机数种子（包括默认随机数种子19780503）进行尝试。
+进行迭代$32\times 32\times 2048\times 2 = 4,194,304$次，然后绘图于\autoref{fig:ising_2.1}。
+图中自旋的标度一致，横坐标已换算为迭代次数。
+
+\begin{figure}
+    \centering
+    \subfloat[种子14654]{
+        \label{fig:ising_2.1_14654}
+        \includegraphics[width=0.48\textwidth]{figures/ising_2.1_14654.pdf}
+    }
+    \subfloat[种子35641]{
+        \label{fig:ising_2.1_35641}
+        \includegraphics[width=0.48\textwidth]{figures/ising_2.1_35641.pdf}
+    }\\
+    \subfloat[种子6244212]{
+        \label{fig:ising_2.1_6244212}
+        \includegraphics[width=0.48\textwidth]{figures/ising_2.1_6244212.pdf}
+    }
+    \subfloat[种子19780503]{
+        \label{fig:ising_2.1_19780503}
+        \includegraphics[width=0.48\textwidth]{figures/ising_2.1_19780503.pdf}
+    }
+    \caption{给定不同初始种子，$L=32$时系统平均自旋随迭代次数的关系}
+    \label{fig:ising_2.1}
+\end{figure}
+
+可以发现，在迭代次数$n\gtrsim 0.5\times 10^6$时，平均自旋已趋于稳定。
+显然，稳定时$\bar{s}\neq 0$，且可能为正或负，出现了分裂。
+
+\section{计算物理量}
+下面将利用前面的收敛迭代结果作为抽样样本进行物理量的求取。
+首先介绍如何计算物理量；然后展示进行计算的函数调用方式；最后展示结果。
+
+\subsection{物理量的计算}
+整体思想是在系统稳定、历史记录中存在足够多数据后进行平均值求取。
+
+\subsubsection{微观物理量}
+可以由单个构型得到的微观物理量是平均自旋$\bar{s} = \frac{\sum s_{i,j}}{L^2}$和哈密顿量。
+前面已经解释了如何获得自旋。
+哈密顿量求取函数如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:hamiltonian-end:hamiltonian]{2_Ising_model.cpp}
+}
+主要想法是将哈密顿量拆分成粒子与磁场的作用以及粒子与周围粒子的耦合。
+前者即$-H\bar{s}L^2$，后者可以通过求 \begin{inparaenum}
+    \item 一行与相邻行之间的位异或\verb|^|，以及
+    \item 一行与自己左移一位后的结果的位异或\verb|^|
+\end{inparaenum}
+获得\textbf{相反自旋的耦合数}$n_-$。
+注意，后者由于\verb|bitset|的移位会补0，所以要对边缘进行特殊判断。
+
+最终哈密顿量为（$J=1$）
+\begin{eqnarray}
+    \mathcal{H} = -H\bar{s}L^2 - ((2L^2-n_-) - n_-).
+\end{eqnarray}
+
+\subsubsection{平均值求取}
+函数\verb|Ising_2D<L, HIS_SIZE>::ave()|接受一个函数作为参数，然后计算该函数的系综平均。
+定义如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:average-end:average]{2_Ising_model.cpp}
+}
+
+接收的函数应该为\verb|double(double, double)|，第一个参数为系统在某构型的平均自旋，第二个参数为该构型下的哈密顿量。
+
+在历史记录中的数据\verb|history_data_count|足够多时，进行求和。
+将历史记录中的数据逐对地传给函数\verb|func_spin_hamiltonian|，求和。
+为了减少求和中的浮点误差，使用了补偿求和。
+最后输出平均值。
+
+如果数据不够多，则返回非数\verb|nan|。
+
+那么只要定义合适的\verb|func_spin_hamiltonian|便可求取宏观物理量。
+
+\subsubsection{宏观物理量}
+
+\paragraph{粒子平均内能}
+定义为总内能除以粒子数，
+\begin{equation}
+    U = \frac{1}{L^2Z} \sum_\qty{S} \mathcal{H} \exp(-\beta \mathcal{H}),
+\end{equation}
+蒙卡抽样下，为
+\begin{equation}
+    U = \frac{1}{L^2}\expval{\mathcal{H}}.
+\end{equation}
+
+故内能函数定义为
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:energy-end:energy]{2_Ising_model.cpp}
+}
+
+\paragraph{粒子平均热容}
+定义为
+\begin{equation}
+    C_H = \qty(\pdv{U}{T})_H = k_\text{B}\beta^2 L^2\qty{ \frac{1}{Z} \sum_\qty{S} \qty(\frac{\mathcal{H}}{L^2})^2 \exp(-\beta \mathcal{H}) - U^2},
+\end{equation}
+可化为
+\begin{equation}
+    C_H = k_\text{B}\beta^2\qty(\frac{\expval{\mathcal{H}^2}}{L^2} - L^2U^2).
+\end{equation}
+
+取$k_\text{B}=1$，则
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:c_h-end:c_h]{2_Ising_model.cpp}
+}
+
+\paragraph{磁化强度和磁化率}
+分别定义为
+\begin{gather}
+    \mathcal{M} = \frac{1}{Z} \sum_\qty{S} \bar{s} \exp(-\beta \mathcal{H}),\\
+    \chi = \qty(\pdv{\mathcal{M}}{H})_T = \beta L^2\qty{ \frac{1}{Z} \sum_\qty{S} \bar{s}^2 \exp(-\beta \mathcal{H}) - \mathcal{M}^2},
+\end{gather}
+可化为
+\begin{gather}
+    \mathcal{M} = \expval{\bar{s}},\\
+    \chi = \beta L^2\qty(\expval{s^2} - \mathcal{M}^2).
+\end{gather}
+
+函数定义如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:mag_sus-end:mag_sus]{2_Ising_model.cpp}
+    \lstinputlisting[linerange=beg:chi-end:chi]{2_Ising_model.cpp}
+}
+
+\paragraph{计算与结果}
+
+使用四个线程，建立四个独立的、种子不同的网格进行迭代。
+将他们的温度参量逐步地从$0.00$过渡到$1.00$，步长$0.01$。
+每次更换温度都会更改随机数种子，但\textbf{不会重置网络}，以利用之前的结果，减少消耗在非平衡状态的时间。
+
+每个温度，单个网格会迭代$2,097,152$次，略去前$1,048,576$个数据，在之后的数据中随机抽样。
+将每1024帧的平均自旋二进制输出到文件保存（见\texttt{output/ising\_2.2\_*.out}，\texttt{*}为网格编号）。
+将每个温度下各个网格系统的统计物理量输出到标准输出（见\texttt{2\_Ising\_model\_2.2.txt}）。
+代码如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=p2.2-p2.3]{2_Ising_model.cpp}
+}
+
+其中，考虑到接近临界温度时，可能出现系统在正负两个平衡态之间跳动的情况。
+为监测这种情况，另外定义了绝对值的平均磁化强度和磁化率$\chi'$，也一并输出。
+
+结果绘图于\autoref{fig:ising_2.2}。
+可以发现，$C_H,\chi$在$\beta=0.42$附近出现一个尖峰，而$\mathcal{M}$在$\beta>0.42$时出现分叉现象，体现低温时的有序性。
+
+\begin{figure}
+    \centering
+    \subfloat[$U$]{
+        \label{fig:ising_2.2_U}
+        \includegraphics[width=0.48\textwidth]{figures/ising_2.2_energy.pdf}
+    }
+    \subfloat[$C_H$]{
+        \label{fig:ising_2.2_C_H}
+        \includegraphics[width=0.48\textwidth]{figures/ising_2.2_C_H.pdf}
+    }\\
+    \subfloat[$\mathcal{M}$]{
+        \label{fig:ising_2.2_M}
+        \includegraphics[width=0.48\textwidth]{figures/ising_2.2_M.pdf}
+    }
+    \subfloat[$\chi$]{
+        \label{fig:ising_2.2_chi}
+        \includegraphics[width=0.48\textwidth]{figures/ising_2.2_chi.pdf}
+    }
+    \caption{$L=32$时宏观物理量随$\beta J$的变化}
+    \label{fig:ising_2.2}
+\end{figure}
+
+\section{宏观物理量随尺度\texorpdfstring{$L$}{L}的变化行为}
+
+改变网格大小为$16,24,32,40,48,56,64$，并适当改变迭代次数。
+作四线程运算，各线程交替地从高温迭代到低温，跨过尖峰点（$0.4$附近）。等效步长最大为0.02。
+详细代码见源程序。
+
+获得的$\chi$的图像见\autoref{fig:ising_2.3}。
+注意其标度不同。
+
+\begin{figure}
+    \centering
+    \subfloat[$L=16$]{
+        \label{fig:ising_2.3_16_chi}
+        \includegraphics[width=0.24\textwidth,height=0.2\textheight]{figures/ising_2.3_16_chi.pdf}
+    }
+\subfloat[$L=24$]{
+        \label{fig:ising_2.3_24_chi}
+        \includegraphics[width=0.24\textwidth,height=0.2\textheight]{figures/ising_2.3_24_chi.pdf}
+    }
+\subfloat[$L=32$]{
+        \label{fig:ising_2.3_32_chi}
+        \includegraphics[width=0.24\textwidth,height=0.2\textheight]{figures/ising_2.3_32_chi.pdf}
+    }
+\subfloat[$L=40$]{
+        \label{fig:ising_2.3_40_chi}
+        \includegraphics[width=0.24\textwidth,height=0.2\textheight]{figures/ising_2.3_40_chi.pdf}
+    }\\
+\subfloat[$L=48$]{
+        \label{fig:ising_2.3_48_chi}
+        \includegraphics[width=0.24\textwidth,height=0.2\textheight]{figures/ising_2.3_48_chi.pdf}
+    }
+\subfloat[$L=56$]{
+        \label{fig:ising_2.3_56_chi}
+        \includegraphics[width=0.24\textwidth,height=0.2\textheight]{figures/ising_2.3_56_chi.pdf}
+    }
+\subfloat[$L=64$]{
+        \label{fig:ising_2.3_64_chi}
+        \includegraphics[width=0.24\textwidth,height=0.2\textheight]{figures/ising_2.3_64_chi.pdf}
+    }
+    \caption{$L$变化时时宏观物理量$\chi$在奇点附近随$\beta J$的变化}
+    \label{fig:ising_2.3}
+\end{figure}
+
+可以看到，$N=16$时，峰位大致在$0.40$左右。
+随着$L$增大，峰位向更大的位置移动，$L=32$时，在$0.42$附近。
+到$L=64$时，峰位在$0.43$附近。
+但由于波动涨落较大，无法更精确获得峰位。
+二维模型解析解为$\alpha_C\approx 0.441$\footnote{刘川. 平衡态统计物理. 页115, 未出版}。
+考虑到题给幂律假设，发现$L$翻倍时，估算的峰位与精确解差距大致减半，故估计
+\begin{equation}
+    \alpha_c (L) − \alpha_ c (\infty) \propto L^{-1}.
+\end{equation}
+
+对于峰高峰宽等，由于涨落波动过大，不做估计。
+
+
+\section{自旋经典图样}
+前面得到对于$L=32$，$\alpha_C \approx 0.44$。
+下面展示对于$\alpha = 0.2, 0.42, 0.6$的全域自旋图样。
+
+定义的\verb|Ising_2D|的输出运算符会将向上的粒子输出为\verb*|# |，向下的输出为\verb|  |。
+对不同$\beta$进行$32\times 32\times 2048$次迭代，然后输出构型。
+
+对于$\beta=0.2$，输出如下，呈现较为散乱随机的分布。
+{
+\linespread{0.7}
+\scriptsize
+\begin{verbatim}
+  # # # # # #                         # #   # # #   #   # # #
+# # #   #       #         # #       # # #       # # #     #   #
+# #           # # #         # # #     # # # # #   # # #       #
+  # #       # #     # #     # # # # #           # # #   # # # #
+# # #   #   # # # # # # #   # # #           # # #   #   # # # #
+  #     #       # #   # # # # #       #   # #   # # # #   #
+      # #   # # # #     # # # #   # # # # # # # # # # #   #   #
+    # # #   # # #         # # # # # # #   # # # #             #
+# #           # #               # # # #   # # # #           #
+# # #         #   #   # # # #     # # # # # # # #     # # # #
+# # # #   #       # # #         #     # # # # # #   # # # # # #
+# # #     # # #         #       # #   # # # #   # # # # # # #
+#   # #   # # #                 # #         #   # # #     #   #
+          # # #         #       # # # # #         #   #   # # #
+#   # #     # #       # #   #   # #   #   #   # # #       #
+# # # #     # # #     #       # # #       # # # #   # # #
+  # # #     # # # #   #   # # # # #       # # #     #   #
+      #     #   # #     #   #     #     # # # #   # # # # # # #
+# # # # # # # # # #     #         #     # # #     # #     # # #
+  #     # # # #     #       # #   # # # # #       #         #
+#   #     # # # # # #   #           # #     #     #
+# # # #   # # #   # # # #   # #           # # #     #   #     #
+#     #   # # #     # #     #         #     # # # #         # #
+#   # #   #         # # # # # #       # # # #   # # # #     # #
+#     #   # # # #   # # #     # # #   # #       #             #
+#   #   # # # # # # # # # # # #   #           #       #   #   #
+    # # #     # # # # # # # # #     # # #                     #
+  # #           # # # #   # # # #       #   #         #
+#     #   #   # # # #   #   # #         # #     #     # #   # #
+#         #       # #       # #         #             #     # #
+# # # #   #       # # #   # #           # # # # #     #   # # #
+                # # # # # # #         # #   # #       # #   # #
+\end{verbatim}
+}
+
+对于$\beta=0.44$，输出如下。
+正负粒子仍几乎等量，但同向粒子倾向于聚集，形成磁畴。
+{
+\linespread{0.7}
+\scriptsize
+\begin{verbatim}
+# # # # # # # #   #     # #                 # # #       # # # #
+# # # # # # # # # #     # # # #                 #       # # # #
+  # # # #   # # # # # # # # # #               # # #   # # # # #
+  # # # #     # # # # # # # #                       # # # # #
+  #   #           # # # # # # # # #
+                  #           # # #     # #               #
+          #                   # # # #           #           #
+#                               #             # # # #
+#                       #     # #             # # # #
+#                               # # # #         # # #       # #
+#           #       #           # # # #   #     #           # #
+  #                 # #       # # # #                   # # #
+                              # #                       # # #
+            #                   #               #
+            #
+  # #       #
+            # # #                 #
+          # # # #
+          # # # #                         # #
+          # # # #           #                                 #
+            # #   #       # #   # #
+          # # #           # # # #
+      # # # # #           # # # #
+        #   # #   #     # # #
+#       # # # # #       # # # # #   #
+#       #     # #       # # # # # # # #               # # #
+#         # # #         # # # # # # # #               #   #   #
+#         # # #       # # # #   # # # #             # # # # # #
+# #     # # # #   # # # # # # #   # # # #       # # # # # # # #
+#             # # # # # # # # # # # # # # #   # # # # # #   #
+# # # # # #   # # # # # # # # # #     # #   # # # # # # # # # #
+# # # # # # # # # # # # #                   # #       # # # # #
+\end{verbatim}
+}
+
+对于$\beta=0.6$，输出如下。
+粒子几乎完全朝向同一个方向。
+{
+\linespread{0.7}
+\scriptsize
+\begin{verbatim}
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # #   # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # #   # # # # # # #
+# # # # # # # # # # # # #   # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # #   # # #   # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # #   # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # #   # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # #   # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+\end{verbatim}
+}
+
+\section{磁滞回现象}
+使用如下方案模拟磁滞回现象。
+给定一个大于临界温度参量$\alpha_C$的温度参量$\beta J$和一个非零的初始磁场$H_0$。
+在系统稳定后，使$H$以$N$为周期在$\pm H_0$间以三角函数变化：
+\begin{equation}
+    H = H_0 \cos(\frac{2\pi k}{N}),\quad k = 0, 1, 2, \cdots
+\end{equation}
+$H$每变化一次后都重新迭代$M$次，记录此时的$\mathcal{M}$。
+
+取$H_0=1$，$\beta=0.5$。
+令$M, N$均可取$512, 1024, 2048$这三个值，共有9种组合。
+迭代代码如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=p2.5-pend]{2_Ising_model.cpp}
+}
+磁场循环三个周期。
+
+画出一些磁滞回线如\autoref{fig:ising_2.5} 所示。
+可以发现，滞回线的宽度与$M,N$均为反相关关系，而高度几乎不变。
+还可以验证，$MN$乘积相同时，磁滞回线可很好地重合（见子图d e f）。
+
+\begin{figure}
+    \centering
+    \subfloat[$N=512$]{
+        \label{fig:ising_2.5_512}
+        \includegraphics[width=0.48\textwidth]{figures/ising_2.5_N_512.pdf}
+    }
+    \subfloat[$N=1024$]{
+        \label{fig:ising_2.5_1024}
+        \includegraphics[width=0.48\textwidth]{figures/ising_2.5_N_1024.pdf}
+    }\\
+    \subfloat[$N=2048$]{
+        \label{fig:ising_2.5_2048}
+        \includegraphics[width=0.48\textwidth]{figures/ising_2.5_N_2048.pdf}
+    }
+    \subfloat[$MN=1024^2$]{
+        \label{fig:ising_2.5_MN}
+        \includegraphics[width=0.48\textwidth]{figures/ising_2.5_MN.pdf}
+    }\\
+    \subfloat[$MN=1024\times 512$]{
+        \label{fig:ising_2.5_MN2_small}
+        \includegraphics[width=0.48\textwidth]{figures/ising_2.5_MN_2small.pdf}
+    }
+    \subfloat[$MN=1024\times 2048$]{
+        \label{fig:ising_2.5_MN2_big}
+        \includegraphics[width=0.48\textwidth]{figures/ising_2.5_MN_2big.pdf}
+    }
+    \caption{不同$M,N$的磁滞回线。子图d e f表明磁滞回线形状与$MN$乘积有关}
+    \label{fig:ising_2.5}
+\end{figure}
+
+$M,N$越大，滞回线越窄表明磁场变化越缓慢，磁滞回现象越不明显。
+
+\end{document}
