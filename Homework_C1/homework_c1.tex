@@ -1,0 +1,668 @@
+\documentclass[a4paper,unicode]{report}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{textgreek}
+\usepackage{esint}
+\usepackage{subfig}
+\usepackage{rotating}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{paralist}
+\usepackage{titlesec}
+\usepackage{graphicx}
+\usepackage{physics}
+\usepackage{ucs}
+\usepackage{listings}
+\usepackage{multirow}
+\usepackage{tablefootnote}
+\usepackage{indentfirst}
+\usepackage{tikz}
+\usepackage{warpcol}
+\usepackage[pdftitle=计算物理第三次大作业第一部分,pdfauthor=***,bookmarksnumbered=true]{hyperref}
+\usepackage{natbib}
+\usepackage{xcolor}
+\usepackage{xeCJK}
+    \setCJKmainfont[BoldFont={Noto Serif CJK SC Bold},ItalicFont={FangSong}]{Noto Serif CJK SC}
+    \setCJKsansfont[BoldFont={Noto Sans CJK SC Bold},ItalicFont={KaiTi}]{Noto Sans CJK SC}
+    \setCJKmonofont[BoldFont={Noto Sans Mono CJK SC Bold}]{Noto Sans Mono CJK SC}
+
+\title{计算物理第二次大作业第二部分}
+\author{物理学院\quad ***\quad 1800011***}
+
+\DeclareUnicodeCharacter{"00B0}{\textdegree}
+\DeclareUnicodeCharacter{"00B5}{\textmu}
+
+\renewcommand{\today}{\number\year 年\number\month 月\number\day 日}
+\renewcommand{\refname}{参考文献}
+\renewcommand{\abstractname}{摘要}
+\renewcommand{\contentsname}{目录}
+\renewcommand{\figurename}{图}
+\renewcommand{\tablename}{表}
+\renewcommand{\appendixname}{附录}
+\renewcommand{\chaptername}{第}
+\newcommand{\chapterendname}{章}
+
+\renewcommand{\equationautorefname}{式}
+\renewcommand{\figureautorefname}{图}
+\newcommand{\subfigureautorefname}{子图}
+\renewcommand{\tableautorefname}{表}
+\renewcommand{\subsectionautorefname}{小节}
+\newcommand{\mythmautorefname}{定理}
+\renewcommand{\sectionautorefname}{\S}
+
+\newtheorem{mythm}{定理}
+
+\lstset{
+    basicstyle=\scriptsize\ttfamily\color{black}, % print whole listing small
+    keywordstyle=\color{teal}\bfseries,
+    identifierstyle=, % nothing happens
+    commentstyle=\color{gray}\ttfamily, % white comments
+    stringstyle=\color{violet}, % typewriter type for strings
+    showstringspaces=true,
+    numbers=left,
+    numberstyle=\tiny\color{brown},
+    stepnumber=2,
+    numbersep=5pt,
+    firstnumber=auto,
+    frame=lines,
+    language=[11]C++,
+    rangeprefix=/*,
+    rangesuffix=*/,
+    includerangemarker=false
+}
+
+% \pgfsetxvec{\pgfpoint{0.02cm}{0}}
+% \pgfsetyvec{\pgfpoint{0}{0.1em}}
+
+% \usetikzlibrary{datavisualization,plotmarks,datavisualization.formats.functions}
+% \usetikzlibrary{math,fpu,datavisualization}
+% \graphicspath{{figure/}}
+\linespread{1.3}
+
+\titleformat{\chapter}[display]{\huge\bfseries}{\chaptertitlename\ \thechapter\ \chapterendname}{20pt}{\Huge}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\begin{center}
+    \textbf{编译与运行环境说明}
+\end{center}
+
+本地操作系统版本为\textsf{Windows 10 x64 1909 (18363.836)}。
+
+第二次大作业第一题主要使用\textsf{C++}编写，编译器为Windows下的\texttt{g++ 10.1.0} (Rev2, Built by MSYS2 project)，标准为\textsf{C++17}。
+除标准库外未使用其他第三方库。
+最后上交的程序的编译命令为\begin{verbatim}
+    g++ -O3 -static -std=c++17 -o <可执行文件名> <源文件名>
+\end{verbatim}
+
+对于绘图部分，使用了必要的\textsf{Python}的第三方库\textsf{NumPy}和\texttt{matplotlib}进行处理。
+
+\chapter{绝热不变量}
+
+对于哈密顿系统$H(q,p)$，若其在相空间中的等能相曲线闭合，可定义绝热不变量
+\begin{equation}
+    J\equiv \frac{1}{2\pi}\oint p\dd q.
+\end{equation}
+
+若哈密顿量对时间的依赖是通过$H$对缓变参量$\lambda(t)$的依赖实现的，即$H(q,p;\lambda(t))$，则此时绝热不变量近似与$\lambda$无关，
+\begin{equation}
+    \lim_{\dv{t}\lambda\to 0}\dv{J}{\lambda} = 0.
+\end{equation}
+
+本题考查\autoref{fig:schematic} 所示的力学系统的绝热不变量。
+其哈密顿量（不含时）可写为
+\begin{equation}
+    H(y, p_y) = \frac{p_y^2}{2m} + \frac{1}{2}k\qty(\sqrt{x^2+y^2} - l)^2 + mgy,
+\end{equation}
+正则运动方程为
+\begin{subequations}\label{eq:canonical_eq}
+\begin{align}
+    \dot{y} &{}= \frac{p_y}{m},\\
+    \dot{p_y} &{}= -mg-ky\qty(1-\frac{l^2}{\sqrt{x^2+y^2}}).
+\end{align}
+\end{subequations}
+
+本题的程序为\verb|1_adiabatic_invariant.exe|。
+调用时，需要用\verb|-<小题号>|的格式传入需要求解的小题。
+启动文件夹内可能需要存在\verb|output/|文件夹。
+\verb|1_graph.py|可根据结果得到图像。
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\textwidth]{figures/schematic.pdf}
+    \caption{力学模型示意图}
+    \label{fig:schematic}
+\end{figure}
+
+\section{系统平衡位置}\label{sec:equiburium}
+
+系统平衡位置满足
+\begin{equation}\label{eq:equiburium_criteria}
+    \dot{p_y} = 0 = -mg-ky\qty(1-\frac{l^2}{\sqrt{x^2+y^2}}).
+\end{equation}
+做如下无量纲化操作
+\begin{equation}
+    \xi := \frac{x}{l},\quad
+    \eta := \frac{y}{l},\quad
+    \bar{\eta} := \frac{\eta}{\qty|\xi|},\quad
+    A := \frac{mg}{kl}.
+\end{equation}
+则式 \eqref{eq:equiburium_criteria} 可写为
+\begin{equation}
+    \qty|\xi| + \frac{A}{\bar{\eta}} = \frac{1}{\sqrt{\bar{\eta}^2 + 1}}.
+\end{equation}
+平衡位置$\bar{\eta}$为上式的解，参量为$A$与$|\xi|$。
+
+注意到，对于$A<0$的情形，我们只需将$\bar{\eta}$也反号，那么就又和$A>0$一样了。
+故一下以$A\ge 0$讨论。
+
+考虑平衡位置的个数。显然，在$\bar{\eta}<0$处一定有一个平衡位置。
+而在$\bar{\eta} > 0$则可能出现0至2个平衡位置。
+详见\autoref{fig:equiburium}。
+
+\begin{figure}
+    \centering
+    \subfloat[$\xi=0.5,A=0.4$]{
+        \includegraphics[width=0.48\textwidth]{figures/0.5_0.4.pdf}
+    }
+    \subfloat[$\xi=0.8,A=0.2$]{
+        \includegraphics[width=0.48\textwidth]{figures/0.8_0.2.pdf}
+    }\\
+    \subfloat[$\xi=0.5,A=0.2$]{
+        \includegraphics[width=0.7\textwidth]{figures/0.5_0.2.pdf}
+    }
+    \caption{平衡位置个数示意。蓝色线为$\qty|\xi| + \frac{A}{\bar{\eta}}$，橙色线为$\frac{1}{\sqrt{\bar{\eta}^2 + 1}}$。}
+    \label{fig:equiburium}
+\end{figure}
+
+可以发现，$A$或$\qty|\xi|$过大均会导致$\eta>0$处没有平衡位置。
+下面求$\eta>0$处恰没有平衡位置的临界条件。
+记$f(\eta) = \qty|\xi| + \frac{A}{\bar{\eta}}$，$g(\eta) = \frac{1}{\sqrt{\bar{\eta}^2 + 1}}$，分析\autoref{fig:equiburium}，有$\eta>0$的相切条件
+\begin{equation}
+    f(\eta) = g(\eta),\quad f'(\eta) = g'(\eta),\quad f''(\eta) > g''(\eta).
+\end{equation}
+即
+\begin{equation}
+    \qty|\xi| + \frac{A}{\bar{\eta}} = \frac{1}{\sqrt{\bar{\eta}^2 + 1}},\quad
+    -\frac{A}{\bar{\eta}^2} = -\frac{\bar{\eta}}{\qty(\bar{\eta}^2 + 1)^\frac{3}{2}},
+\end{equation}
+解得
+\begin{equation}\label{eq:A_xi}
+    A = \frac{\bar{\eta}^3}{\qty(\bar{\eta}^2 + 1)^\frac{3}{2}},\quad
+    \qty|\xi| = \frac{1}{\qty(\bar{\eta}^2 + 1)^\frac{3}{2}},
+\end{equation}
+满足条件$\frac{2A}{\bar{\eta}^3} > \frac{2\bar{\eta}^2 - 1}{\qty(\bar{\eta}^2 + 1)^\frac{5}{2}}$。
+
+我们可以把式 \eqref{eq:A_xi} 进一步写成
+\begin{equation}
+    \xi^\frac{2}{3} + A^\frac{2}{3}
+    = \qty(\frac{x}{l})^\frac{2}{3} + \qty(\frac{mg}{kl})^\frac{2}{3} = 1, \quad A > 0,
+\end{equation}
+考虑上$A<0$的情况，绘图如\autoref{fig:x_g} 所示。
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/x_g.pdf}
+    \caption{系统仅存在一个平衡位置与存在多个平衡位置的分界线。$A=\frac{mg}{kl}$的值域为$[0,\infty]$。分界线内部，系统有三个平衡位置；分界线上有两个；外面一个}
+    \label{fig:x_g}
+\end{figure}
+
+对于$A=g=0$的情况，则是$\qty|\xi|\ge 1$时一个平衡位置，$\qty|\xi|<1$时有两个。
+
+\section{\texorpdfstring{$x$}{x}缓变}\label{sec:slow_x}
+
+以速度 $v$ 缓慢的左移直杆，使$x=2l-vt$。
+$g=0, y(0) = 0.1l, p_y(0)=0$。
+为方便，对式 \eqref{eq:canonical_eq} 进行无量纲化，取
+\begin{equation}
+    \eta = \frac{y}{l},\quad
+    \xi = \frac{x}{l},\quad
+    \mathcal{P} = \frac{p_y}{\sqrt{mk}l},\quad
+    \tau = \sqrt{\frac{k}{m}}t.
+\end{equation}
+得到
+\begin{subequations}
+    \label{eq:dimensionless}
+    \begin{align}
+        \dv{\tau} \eta &{}= \mathcal{P},\\
+        \dv{\tau} \mathcal{P} &{}= -\frac{mg}{kl} - \eta\qty(1-\frac{1}{\sqrt{\xi^2+\eta^2}}).
+    \end{align}
+\end{subequations}
+
+为了获得相轨，计算绝热不变量，需要先求解初值微分方程 \eqref{eq:dimensionless}，然后将$\mathcal{P}\dv{\tau}\eta=\mathcal{P}^2$对$\tau$插值，从而积分获得绝热不变量$\frac{J}{\sqrt{mk}l^2} = \oint \mathcal{P}\dv{\tau}\eta \dd{\tau}$。
+
+\subsection{隐式RK法求解微分方程初值问题}
+IVP问题的求解代码在头文件\verb|misc/ivp.h|中。
+
+首先定义了IVP问题求解器的基类\verb|_IVP_solver<N>|，求解问题
+\begin{equation}
+    \dv{t}\vb{y} =  \vb{f}(t, \vb{y}).
+\end{equation}
+模板参数\verb|N|为一阶微分方程组的方程个数。
+内部存储函数\verb|func|，依次求解过的$t$ \verb|ts|、$\vb{y}$ \verb|ys|、上一次迭代得到的$\vb{y}$ \verb|y|。
+提供构造函数、供子类实现的单步迭代函数\verb|step_inc()|（接收当前$t$，步长$h$，$\vb{y}$，返回$\vb{y}$的增量）、单步迭代函数（接收步长$h$和$\vb{y}$的增量，更新数据），以及结束迭代，转发数值解的接口\verb|finish()|。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:ivp_solver-end:ivp_solver]{../misc/ivp.h}
+}
+
+然后从上派生了使用RADAU 5隐式迭代求解的\verb|_Radau_5<N>|。
+其内部先使用向前欧拉法获得各个划分点上的估计值，然后迭代2轮。
+其精度相比欧拉法提升很多，运算仍很快速。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:radau-end:radau]{../misc/ivp.h}
+}
+
+最后定义了包装函数\verb|ivp_radau()|。
+其提供了变步长参数选项\verb|auto_h|，但本次未使用。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:radau_func-end:radau_func]{../misc/ivp.h}
+}
+
+\subsection{三次厄密插值}
+三次厄密插值接收自变量、因变量与一阶导数，进行分段三次插值，在已知导数值时是比较适合的插值方法。
+自行编写的三次厄密插值见头文件\verb|misc/interpolate/interpolate_spline.h|中的类\verb|Cubic_Hermite<T>|。
+由于代码较长，但核心仅为构造时存储点并算出各个区间上的多项式系数、求值时判断$x$位于哪个区间并调用相应的多项式，故不将代码列出。
+
+\verb|Cubic_Hermite<T>|构造时可选择接收迭代器/容器/\verb|initializer_list|作为提供数据的方式。
+
+其中用到了多项式类\verb|Polynomial|。
+其派生自标准库\verb|vector|，提供求值、乘除运算、求导积分等接口。
+
+\subsection{方程求根}
+计算绝热不变量时，需要判断系统何时完成了一个周期的运动，因此需要数值求根。
+
+自行编写的数值求根工具位于头文件\verb|misc/rootfind.h|中，有二分法\verb|bisection()|，Dekker--Brent方法\verb|dekker_brent()|以及迭代法\verb|steffenson|。
+本题使用\verb|dekker_brent()|。
+此函数接收待求根函数\verb|func|，求根区间左右界\verb|a|，\verb|b|，以及其他可选参数。
+
+该\verb|dekker_brent()|改编自\emph{Numerical Recipes}上的版本\footnote{\textsf{C++}版本，小节9.3，pp. 454--456}，对其运算顺序做了一定优化。
+由于代码较长，故不列出。
+
+\subsection{数值积分}
+计算绝热不变量，需要对求得的离散数据点插值后进行积分。
+数值积分工具位于头文件\verb|misc/integral.h|中。
+头文件内定义了蒙卡积分\verb|monte_carlo_integrate()|、Rumberg积分\verb|integrate()|及其可处理奇点版本、可处理两端为奇点（包括无穷）的双对数变换积分\verb|integrate_DE()|。
+本题无处理奇点的需求，故使用Rumberg积分。
+
+代码较长，故不列出。
+该函数在进行判断积分区间合法性，并变换到$a$小$b$大后，从128划分开始求积分。
+使用标准库容器红黑树\verb|map|保存已求过值的函数值，避免重复计算。
+
+之后不断二分划分长度，直到误差小于给定要求。
+\subsection{求解相轨}
+为方便，定义了类\verb|HamiltonianEq|。
+构造实例时，可指定$g, x$与$t$的函数关系。
+该类的实例是可调用的，传入$t, \{y, p\}$，会返回数组$\{\dot{y}, \dot{p}\}$。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:hamiltonian-end:hamiltonian]{1_adiabatic_invariant.cpp}
+}
+因此，它的实例可以作为\verb|ivp_radau|的参数。
+
+求解相轨的代码如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:prob_2-end:solve_ivp]{1_adiabatic_invariant.cpp}
+}
+即为简单地求解一个IVP问题。
+本题中，由于$g\equiv 0$，故\verb|func_g()|简单地定义为返回0。
+\verb|func_x()|则定义为与$v$有关。
+取时间步长为0.1，让$x$从2变为0。
+
+数据输出部分如下，输出为二进制文件：
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:2_output-beg:prob_3]{1_adiabatic_invariant.cpp}
+}
+然后在\textsf{Python}中使用\textsf{NumPy}读取、用\textsf{matplotlib}绘图于\autoref{fig:prob2_yp}。
+
+\begin{figure}
+    \centering
+    \subfloat[$\sqrt{\frac{m}{k}}\frac{v}{l}=\frac{1}{4}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.2_yp4.pdf}
+    }
+    \subfloat[$\sqrt{\frac{m}{k}}\frac{v}{l}=\frac{1}{16}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.2_yp16.pdf}
+    }\\
+    \subfloat[$\sqrt{\frac{m}{k}}\frac{v}{l}=\frac{1}{64}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.2_yp64.pdf}
+    }
+    \subfloat[$\sqrt{\frac{m}{k}}\frac{v}{l}=\frac{1}{256}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.2_yp256.pdf}
+    }
+    \caption{$x=2-vt$时的系统相轨。时间跨度为$\qty[0, \frac{2}{v}]$}
+    \label{fig:prob2_yp}
+\end{figure}
+
+对于$g=0$，由 \autoref{sec:equiburium} 的讨论，在$x<l$时，系统平衡位置会分裂为两个，关于$y$的原点对称。
+可以发现，\autoref{fig:prob2_yp} 四张图中均可看到这一平衡位置的转变行为。
+但是，对于$x$变化得比较激烈的，相轨也出现了大规模变动，甚至不存在周期性运动。
+而对于$x$变化得十分缓慢的，相轨则是除了在最初的位置作周期性运动外，还能转化到新的平衡位置作周期运动。
+
+可以猜测，对前者甚至无法计算出良定义的绝热不变量；而对后者，则可对两种周期运动都算出不变量。
+
+\subsection{求解绝热不变量}
+求解绝热不变量有两个部分：
+\begin{enumerate}
+    \item 获得连续的被积函数$\mathcal{P}\dv{\tau}\eta=\mathcal{P}^2$；
+    \item 获得每个运动周期的起始时刻。
+\end{enumerate}
+对于前者，我们使用三次厄密插值；对于后者，我们以$\mathcal{P}=0$为判据，在使用插值获得连续的$\mathcal{P}(t)$后，进行求根操作获得$J$积分的上下限。
+
+\subsubsection{插值\texorpdfstring{$\mathcal{P}\dv{\tau}\eta$}{P d/dτ η}}
+由哈密顿正则方程，$\mathcal{P}\dv{\tau}\eta = \mathcal{P}^2$，
+\begin{equation}
+    \dv{\tau}\mathcal{P}\dv{\tau}\eta = 2\mathcal{P}\dv{\tau}\mathcal{P}.
+\end{equation}
+
+计算插值的代码如下。
+\verb|p_dots|为$\dv{\tau}\mathcal{P}$， \verb|p_y_dots|为$\mathcal{P}\dv{\tau}\eta$， \verb|p_y_dot__dots|为$\dv{\tau}\mathcal{P}\dv{\tau}\eta$。
+将这些变量列表都计算出来，然后插值。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=end:solve_ivp-end:spline_p_y_dot]{1_adiabatic_invariant.cpp}
+}
+
+\subsubsection{获得周期运动的起始时刻}
+
+起始时刻通过求解所有$\mathcal{P}=0$的点获得。
+注意到，这样的相邻两个零点仅有半个周期。
+
+首先插值获得连续的$\mathcal{P}(t)$函数，然后先根据离散的$t, \mathcal{P}$关系获得零点的估计值，存入\verb|p_t_zeroes|。
+最后，利用求根函数获得精确零点。
+代码如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=end:spline_p_y_dot-end:find_zero]{1_adiabatic_invariant.cpp}
+}
+
+\subsubsection{获得绝热不变量}
+
+整体想法是，对于前面求得的零点$\tau_{i-1}, \tau_i, \tau_{i+1}$，将$x(\tau_i)$与$\int_{\tau_{i-1}}^{\tau_{i+1}}\mathcal{P}\dv{\tau}\eta \dd{\tau}$存为一对值。
+代码如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=end:find_zero-beg:2_output]{1_adiabatic_invariant.cpp}
+}
+
+将获得的$x-J$绘图于\autoref{fig:prob2_xJ}。
+由于$\sqrt{\frac{m}{k}}\frac{v}{l}=\frac{1}{4}$时系统没有完整运动周期，故未求出绝热不变量，未绘图。
+
+\begin{figure}
+    \centering
+    \subfloat[$\sqrt{\frac{m}{k}}\frac{v}{l}=\frac{1}{16}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.2_xJ16.pdf}
+    }
+    \subfloat[$\sqrt{\frac{m}{k}}\frac{v}{l}=\frac{1}{64}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.2_xJ64.pdf}
+    }\\
+    \subfloat[$\sqrt{\frac{m}{k}}\frac{v}{l}=\frac{1}{256}$]{
+        \includegraphics[width=0.7\textwidth]{figures/adiabatic_1.2_xJ256.pdf}
+    }
+    \caption{$x=2-vt$时的系统绝热不变量$\frac{J}{\sqrt{mk}l^2}$与$\xi = \frac{x}{l}$的关系。时间跨度为$\qty[0, \frac{2}{v}]$}
+    \label{fig:prob2_xJ}
+\end{figure}
+
+可以发现，足够缓变时，系统的$J$是周期运动中的不变量。
+
+\section{\texorpdfstring{$g$}{g}缓变}
+$x$恒定为$0.2l$，$g$作如下周期性变化
+\begin{equation}
+    \frac{mg}{kl} = 2\cos(2\pi \sqrt{\frac{m}{k}}\nu\tau).
+\end{equation}
+$y(0) = -2l, p_y(0)=0$。
+
+求解过程与 \autoref{sec:slow_x} 几乎完全一致，故不多赘述。
+代码如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:prob_3-beg:prob_4]{1_adiabatic_invariant.cpp}
+}
+
+绘制相图于\autoref{fig:prob3_yp}，绝热不变量的曲线于\autoref{fig:prob3_gJ}。
+由于$\sqrt{\frac{m}{k}}\nu=\frac{1}{4}$及$\sqrt{\frac{m}{k}}\nu=\frac{1}{16}$时绝热不变量的数据点仅有0个与1个，故未绘图。
+
+\begin{figure}
+    \centering
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{4}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.3_yp4.pdf}
+    }
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{16}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.3_yp16.pdf}
+    }\\
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{64}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.3_yp64.pdf}
+    }
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{256}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.3_yp256.pdf}
+    }
+    \caption{$\frac{mg}{kl} = 2\cos(2\pi \sqrt{\frac{m}{k}}\nu\tau)$时的系统相轨。时间跨度为$\qty[0, \frac{1}{2\nu}\sqrt{\frac{k}{m}}]$}
+    \label{fig:prob3_yp}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{64}$]{
+        \includegraphics[width=0.8\textwidth]{figures/adiabatic_1.3_gJ64.pdf}
+    }\\
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{256}$]{
+        \includegraphics[width=0.8\textwidth]{figures/adiabatic_1.3_gJ256.pdf}
+    }
+    \caption{$\frac{mg}{kl} = 2\cos(2\pi \sqrt{\frac{m}{k}}\nu\tau)$时的系统绝热不变量$\frac{J}{\sqrt{mk}l^2}$与$\frac{mg}{kl}$的关系。时间跨度为$\qty[0, \frac{1}{2\nu}\sqrt{\frac{k}{m}}]$}
+    \label{fig:prob3_gJ}
+\end{figure}
+
+对于参量变化较为剧烈的系统，无法看到绝热不变量的恒定特性。
+而对于缓变系统，可以看到其在相图上从一个平衡位置跃变到另一个平衡位置，过程中一直有稳定的周期运动，绝热不变量在前后也是分别守恒的。
+
+\section{贝瑞相位}
+
+两参量$x, g$同时随时间变化，自$t_i$至$t_f$后参量复原。
+设系统初末的相空间坐标分别为$(q_i, p_i), (q_f, p_f)$，定义贝瑞相位为
+\begin{equation}
+    \varphi_\mathrm{B} \equiv \qty[
+        \omega(t_i) \int_{(q_i, p_i)}^{(q_f, p_f)} \dd{t}
+        - \int_{t_i}^{t_f}\omega(t)\dd{t}
+    ] \mod{2\pi}.
+\end{equation}
+其中，第一项指的是一个参量维持为$t_i$时的参量的系统演化到$(q_f, p_f)$的用时。
+第二项指的是缓变系统各个瞬时的角频率$\omega(t)$的对时间积分。
+
+让参量以$g(t)=\frac{2kl}{m}\cos(2\pi\nu t),x(t) = 2l\sin(2\pi\nu t)$演化，取初始$y=-2.1l,p_y=0$。
+取$\sqrt{\frac{m}{k}}\nu=\frac{1}{256N}, N=1,2,3,4,5,6$，计算其贝瑞相位。
+
+计算过程中，需要
+\begin{enumerate}
+    \item \label{enum:ivp}计算系统全程演化的IVP问题，对$p, y$关于$t$求插值，获得$(q_f, p_f)$；
+    \item \label{enum:get_omega}对于一系列时间点$t_i$（可以比前面求解IVP时稀疏），利用该时刻的$p, y, x, g$，求解一个IVP问题。该假想系统仅需运行几个周期，以获得该处的$\omega(t)$；
+    \item \label{enum:omega_spline}从上面离散的$\omega(t)$中对$t$插值，得到连续的$omega(t)$函数；
+    \item 将上面的函数对时间积分，得到贝瑞相位的第二项；
+    \item \label{enum:t0} 前面第 \ref{enum:get_omega} 步中，对于$t=t_i$时，要深入计算以获得贝瑞相位第一项。求解假想的静态系统从初态运行到$(q_f,p_f)$的用时。
+\end{enumerate}
+
+$\omega$对$t$插值时导数未知，故需要进行三次样条插值，需要编译时知道节点数量。
+因此定义了函数模板\verb|solve_berry<N>|。
+
+下面我们看一下函数
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:berry-step1]{1_adiabatic_invariant.cpp}
+}
+第 \ref{enum:ivp} 步，计算全程IVP，获得$(q_f, p_f)$。
+时间步长为$0.1$。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=step1-step2]{1_adiabatic_invariant.cpp}
+}
+第 \ref{enum:get_omega} 步，求解离散的$t, \omega$。
+这里，时间步长为$1.0$。
+这里也顺便完成了第 \ref{enum:t0} 步，结果存入\verb|t0|。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=step2-step3]{1_adiabatic_invariant.cpp}
+}
+第 \ref{enum:omega_spline} 步，插值。
+这里计算得到插值节点数量为\verb|256 * N|。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=step3-step4]{1_adiabatic_invariant.cpp}
+}
+最后计算相位。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=step4-step_output]{1_adiabatic_invariant.cpp}
+}
+输出
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=step_output-end:berry]{1_adiabatic_invariant.cpp}
+}
+
+本小题对\verb|solve_berry()|的调用为
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:prob_4-beg:prob_5]{1_adiabatic_invariant.cpp}
+}
+
+可以得到相图于\autoref{fig:prob4_yp}，角频率随时间的变化关系于\autoref{fig:prob4_t_omega}。
+计算得到的贝瑞相位输出见\verb|adiabatic_1.4.txt|，如下
+\begin{verbatim}
+PROBLEM 4
+===========================
+t0 5.803633288226351	1/nu 256	phase -6.259686302557746
+t0 5.289829875121671	1/nu 512	phase -6.271781027311363
+t0 4.782929205787262	1/nu 768	phase -6.276693967590127
+t0 4.279899964055827	1/nu 1024	phase -6.27767799648332
+t0 3.776447393506435	1/nu 1280	phase -6.279071792438081
+t0 3.273416102915363	1/nu 1536	phase -6.280047024163736
+\end{verbatim}
+列出了求得的$t_0$与$\varphi_\mathrm{B}$。
+可以发现，这些相位都与$-2\pi$十分接近，近似不依赖于$\nu$。
+\begin{figure}
+    \centering
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{256}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.4_yp256.pdf}
+    }
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{512}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.4_yp512.pdf}
+    }\\
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{768}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.4_yp768.pdf}
+    }
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{1024}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.4_yp1024.pdf}
+    }\\
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{1280}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.4_yp1280.pdf}
+    }
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{1536}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.4_yp1536.pdf}
+    }
+    \caption{$\frac{mg}{kl} = 2\cos(2\pi \sqrt{\frac{m}{k}}\nu\tau),\frac{x}{l} = 2\sin(2\pi \sqrt{\frac{m}{k}}\nu\tau)$时的系统相轨。时间跨度为$\qty[0, \frac{1}{\nu}\sqrt{\frac{k}{m}}]$}
+    \label{fig:prob4_yp}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{256}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.4_t_omega256.pdf}
+    }
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{512}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.4_t_omega512.pdf}
+    }\\
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{768}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.4_t_omega768.pdf}
+    }
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{1024}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.4_t_omega1024.pdf}
+    }\\
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{1280}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.4_t_omega1280.pdf}
+    }
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{1536}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.4_t_omega1536.pdf}
+    }
+    \caption{$\frac{mg}{kl} = 2\cos(2\pi \sqrt{\frac{m}{k}}\nu\tau),\frac{x}{l} = 2\sin(2\pi \sqrt{\frac{m}{k}}\nu\tau)$时系统角频率随时间关系（已无量纲化）。时间跨度为$\qty[0, \frac{1}{\nu}\sqrt{\frac{k}{m}}]$}
+    \label{fig:prob4_t_omega}
+\end{figure}
+
+改取$g(t)=\frac{0.3kl}{m}\cos(2\pi\nu t),x(t) = 0.3l\sin(2\pi\nu t)$演化，取初始$y=0.32l,p_y=0$。
+仍取$\sqrt{\frac{m}{k}}\nu=\frac{1}{256N}, N=1,2,3,4,5,6$，计算其贝瑞相位。
+
+本小题对\verb|solve_berry()|的调用为
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:prob_5-end:prob_5]{1_adiabatic_invariant.cpp}
+}
+
+可以得到相图于\autoref{fig:prob5_yp}，角频率随时间的变化关系于\autoref{fig:prob5_t_omega}。
+计算得到的贝瑞相位输出见\verb|adiabatic_1.5.txt|，如下
+\begin{verbatim}
+PROBLEM 5
+===========================
+t0 1.205210529032838	1/nu 256	phase -0.004786565168863888
+t0 2.41922950912396	1/nu 512	phase -0.002688984207210865
+t0 3.631519956940133	1/nu 768	phase -0.002024335805579369
+t0 4.843573394670195	1/nu 1024	phase -0.001618307672259789
+t0 6.055019456736868	1/nu 1280	phase -0.001897329569992223
+t0 0.9837711992767286	1/nu 1536	phase -0.00178522224563693
+\end{verbatim}
+列出了求得的$t_0$与$\varphi_\mathrm{B}$。
+可以发现，这些相位都与$0$十分接近，近似不依赖于$\nu$。
+\begin{figure}
+    \centering
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{256}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.5_yp256.pdf}
+    }
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{512}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.5_yp512.pdf}
+    }\\
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{768}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.5_yp768.pdf}
+    }
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{1024}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.5_yp1024.pdf}
+    }\\
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{1280}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.5_yp1280.pdf}
+    }
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{1536}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.5_yp1536.pdf}
+    }
+    \caption{$\frac{mg}{kl} = 0.3\cos(2\pi \sqrt{\frac{m}{k}}\nu\tau),\frac{x}{l} = 0.3\sin(2\pi \sqrt{\frac{m}{k}}\nu\tau)$时的系统相轨。时间跨度为$\qty[0, \frac{1}{\nu}\sqrt{\frac{k}{m}}]$}
+    \label{fig:prob5_yp}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{256}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.5_t_omega256.pdf}
+    }
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{512}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.5_t_omega512.pdf}
+    }\\
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{768}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.5_t_omega768.pdf}
+    }
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{1024}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.5_t_omega1024.pdf}
+    }\\
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{1280}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.5_t_omega1280.pdf}
+    }
+    \subfloat[$\sqrt{\frac{m}{k}}\nu=\frac{1}{1536}$]{
+        \includegraphics[width=0.48\textwidth]{figures/adiabatic_1.5_t_omega1536.pdf}
+    }
+    \caption{$\frac{mg}{kl} = 0.3\cos(2\pi \sqrt{\frac{m}{k}}\nu\tau),\frac{x}{l} = 0.3\sin(2\pi \sqrt{\frac{m}{k}}\nu\tau)$时系统角频率随时间关系（已无量纲化）。时间跨度为$\qty[0, \frac{1}{\nu}\sqrt{\frac{k}{m}}]$}
+    \label{fig:prob5_t_omega}
+\end{figure}
+
+两种参量条件下，贝瑞相位都近似为$0$（即$-2\pi$）。
+
+\end{document}
