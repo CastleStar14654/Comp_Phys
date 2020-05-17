@@ -68,6 +68,14 @@ public:
         }
         else
         {
+            if (right == xs.end())
+            {
+                right = std::prev(right);
+            }
+            else if (right == xs.begin())
+            {
+                right = std::next(right);
+            }
             T eta{x - *std::prev(right)};
             T del{*right - *std::prev(right)};
             return (*(polys.begin() + (std::prev(right) - xs.begin())))(eta / del);
@@ -104,10 +112,10 @@ public:
     void add_point(T x, T y, T dydx)
     {
         T del{x - xs.back()};
-        polys.emplace_back({2 * (ys.back() - y) + del * (dydxs.back() + dydx),
-                            3 * (y - ys.back()) - del * (2 * dydxs.back() + dydx),
-                            dydxs.back() * del,
-                            ys.back()});
+        polys.emplace_back(Polynomial<T>{2 * (ys.back() - y) + del * (dydxs.back() + dydx),
+                                         3 * (y - ys.back()) - del * (2 * dydxs.back() + dydx),
+                                         dydxs.back() * del,
+                                         ys.back()});
         xs.push_back(x);
         ys.push_back(y);
         dydxs.push_back(dydx);
@@ -354,7 +362,8 @@ private:
 
         if ((ex - bx != N) || (ey - by != N))
         {
-            throw std::runtime_error((__FILE__ ":") + std::to_string(__LINE__) + ": wrong knots number");
+            throw std::runtime_error((__FILE__ ":") + std::to_string(__LINE__) + ": wrong knots number, expected "
+                + std::to_string(N) + ", got " + std::to_string(ex - bx) + ", " + std::to_string(ey - by));
         }
         // prepare the tridiagonal matrix
         std::array<T, N> mu_band_x;   // also work as the dydxs

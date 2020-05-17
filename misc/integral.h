@@ -166,6 +166,12 @@ inline T integrate_DE(std::function<T(T)> func, T a, T b, T h = T{}, size_t max_
     {
         return 0.;
     }
+    double reverse{1.};
+    if (a > b)
+    {
+        reverse = -1.;
+        std::swap(a, b);
+    }
     // if infty boundary
     if ((std::isinf(a) || std::isinf(b)) && h == T{})
     {
@@ -173,7 +179,7 @@ inline T integrate_DE(std::function<T(T)> func, T a, T b, T h = T{}, size_t max_
     }
     if (std::isinf(a) && std::isinf(b))
     {
-        return integrate(
+        return reverse * integrate(
             std::function<T(T)>{[&func](T t) {
                 return func(std::sinh(std::sinh(t))) * std::cosh(std::sinh(t)) * std::cosh(t);
             }},
@@ -181,7 +187,7 @@ inline T integrate_DE(std::function<T(T)> func, T a, T b, T h = T{}, size_t max_
     }
     else if (std::isinf(a))
     {
-        return integrate(
+        return reverse *  integrate(
             std::function<T(T)>{[&func, &b](T t) {
                 return func(b - std::exp(2 * std::sinh(t))) * 2 * std::exp(2 * std::sinh(t)) * std::cosh(t);
             }},
@@ -189,7 +195,7 @@ inline T integrate_DE(std::function<T(T)> func, T a, T b, T h = T{}, size_t max_
     }
     else if (std::isinf(b))
     {
-        return integrate(
+        return reverse * integrate(
             std::function<T(T)>{[&func, &a](T t) {
                 return func(a + std::exp(2 * std::sinh(t))) * 2 * std::exp(2 * std::sinh(t)) * std::cosh(t);
             }},
@@ -231,7 +237,7 @@ inline T integrate_DE(std::function<T(T)> func, T a, T b, T h = T{}, size_t max_
         delta = current - prev;
         if (std::abs(delta / current) < rel_epsilon || std::abs(delta) < abs_epsilon)
         {
-            return current;
+            return reverse * current;
         }
         prev = current;
         current = 0.;
