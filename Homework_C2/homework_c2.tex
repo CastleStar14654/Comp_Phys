@@ -1,0 +1,379 @@
+\documentclass[a4paper,unicode]{report}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{textgreek}
+\usepackage{esint}
+\usepackage{subfig}
+\usepackage{rotating}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{paralist}
+\usepackage{titlesec}
+\usepackage{graphicx}
+\usepackage{physics}
+\usepackage{ucs}
+\usepackage{listings}
+\usepackage{multirow}
+\usepackage{tablefootnote}
+\usepackage{indentfirst}
+\usepackage{tikz}
+\usepackage{warpcol}
+\usepackage[pdftitle=计算物理第三次大作业第二部分,pdfauthor=***,bookmarksnumbered=true]{hyperref}
+\usepackage{natbib}
+\usepackage{xcolor}
+\usepackage{xeCJK}
+    \setCJKmainfont[BoldFont={Noto Serif CJK SC Bold},ItalicFont={FangSong}]{Noto Serif CJK SC}
+    \setCJKsansfont[BoldFont={Noto Sans CJK SC Bold},ItalicFont={KaiTi}]{Noto Sans CJK SC}
+    \setCJKmonofont[BoldFont={Noto Sans Mono CJK SC Bold}]{Noto Sans Mono CJK SC}
+
+\title{计算物理第三次大作业第二部分}
+\author{物理学院\quad ***\quad 1800011***}
+
+\DeclareUnicodeCharacter{"00B0}{\textdegree}
+\DeclareUnicodeCharacter{"00B5}{\textmu}
+
+\renewcommand{\today}{\number\year 年\number\month 月\number\day 日}
+\renewcommand{\refname}{参考文献}
+\renewcommand{\abstractname}{摘要}
+\renewcommand{\contentsname}{目录}
+\renewcommand{\figurename}{图}
+\renewcommand{\tablename}{表}
+\renewcommand{\appendixname}{附录}
+\renewcommand{\chaptername}{第}
+\newcommand{\chapterendname}{章}
+
+\renewcommand{\equationautorefname}{式}
+\renewcommand{\figureautorefname}{图}
+\newcommand{\subfigureautorefname}{子图}
+\renewcommand{\tableautorefname}{表}
+\renewcommand{\subsectionautorefname}{小节}
+\newcommand{\mythmautorefname}{定理}
+\renewcommand{\sectionautorefname}{\S}
+
+\newtheorem{mythm}{定理}
+
+\lstset{
+    basicstyle=\scriptsize\ttfamily\color{black}, % print whole listing small
+    keywordstyle=\color{teal}\bfseries,
+    identifierstyle=, % nothing happens
+    commentstyle=\color{gray}\ttfamily, % white comments
+    stringstyle=\color{violet}, % typewriter type for strings
+    showstringspaces=true,
+    numbers=left,
+    numberstyle=\tiny\color{brown},
+    stepnumber=2,
+    numbersep=5pt,
+    firstnumber=auto,
+    frame=lines,
+    language=[11]C++,
+    rangeprefix=/*,
+    rangesuffix=*/,
+    includerangemarker=false
+}
+
+% \pgfsetxvec{\pgfpoint{0.02cm}{0}}
+% \pgfsetyvec{\pgfpoint{0}{0.1em}}
+
+% \usetikzlibrary{datavisualization,plotmarks,datavisualization.formats.functions}
+% \usetikzlibrary{math,fpu,datavisualization}
+% \graphicspath{{figure/}}
+\linespread{1.3}
+
+\titleformat{\chapter}[display]{\huge\bfseries}{\chaptertitlename\ \thechapter\ \chapterendname}{20pt}{\Huge}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\begin{center}
+    \textbf{编译与运行环境说明}
+\end{center}
+
+本地操作系统版本为\textsf{Windows 10 x64 1909 (18363.836)}。
+
+第二次大作业第一题主要使用\textsf{C++}编写，编译器为Windows下的\texttt{g++ 10.1.0} (Rev3, Built by MSYS2 project)，标准为\textsf{C++17}。
+除标准库外未使用其他第三方库。
+最后上交的程序的编译命令为\begin{verbatim}
+    g++ -O3 -static -std=c++17 -o <可执行文件名> <源文件名>
+\end{verbatim}
+
+对于绘图部分，使用了必要的\textsf{Python}的第三方库\textsf{NumPy}和\texttt{matplotlib}进行处理。
+
+\setcounter{chapter}{1}
+\chapter{玻尔兹曼方程}
+玻尔兹曼方程是描述分布函数$ f = f(\vb{r},\vb{p},t)$在相空间的演化的偏微分方程，一般形式为
+\begin{equation}\label{eq:boltzmann}
+    \pdv{f}{t} + \frac{\vb{p}}{m}\cdot\grad f + \vb{F}\cdot\pdv{f}{\vb{p}} = \qty(\pdv{f}{t})_\text{coll},
+\end{equation}
+其中等式右侧为碰撞项。
+在弛豫时间近似下，有
+\begin{equation}
+    \qty(\pdv{f}{t})_\text{coll} = -\nu (f -f_0),
+\end{equation}
+其中$f_0$为平衡分布（即麦克斯韦--玻尔兹曼分布），而$\nu$为碰撞频率。
+
+本题考虑这样一个热力学系统的演化：
+有两个体积为 V 的方盒，竖直叠放，中间有一挡板。
+盒子内各有$N$个种类相同的粒子，从下到上分别与温度为$T_1$和$T_2$的大热源接触，其中的粒子已经达到了稳定的玻尔兹曼分布。
+之后我们去除挡板，再将盒子与温度为$T_3$的大热源相接触。
+
+为简化问题，忽略各物理量的单位。
+考虑$T_1 = 10$，$T_2 = 20$，$T_3 = 30$，$N = 1$。
+仅考虑$z$方向，每个盒子$z$方向高度固定为 1。
+同时令 $k = 1, m = 1$，碰撞频率$\nu = 100$，重力加速度取$g = 10$。
+通过认为粒子在到达空间边界时发生弹性碰撞来使粒子数守恒。
+
+此外，玻尔兹曼基于玻尔兹曼方程也提出了用于判断体系演化方向的 H 定理。
+状态函数
+\begin{equation}
+    H(t) = \int f(\vb{r},\vb{p},t)\ln f(\vb{r},\vb{p},t)\dd\vb{r}\dd\vb{p}
+\end{equation}
+将向极小值演化。
+接下来将会利用状态函数$H(t)$做一些说明。
+
+\section{不考虑重力时的初始态}
+简化起见，先不考虑重力。
+则空间上粒子将在两个盒子里均匀分布，而动量则遵循麦克斯韦分布。
+即
+\begin{equation}
+    f(z, p, 0) = \begin{cases}
+        \frac{1}{\sqrt{2\pi T_1}}\exp(-\frac{p^2}{2T_1}), & z < 0,\\
+        \frac{1}{\sqrt{2\pi T_2}}\exp(-\frac{p^2}{2T_2}), & z \ge 0,\\
+    \end{cases}
+\end{equation}
+其中系数已做了归一化。
+
+使用如下函数构造这样的平衡分布于数组\verb|data|。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:equi_dec-end:equi_dec]{2_Boltzmann_eq.cpp}
+    \lstinputlisting[linerange=beg:equi-end:equi]{2_Boltzmann_eq.cpp}
+}
+其中参数\verb|T|为温度，\verb|g|为预留的引入玻尔兹曼分布的接口，\verb|from| \verb|to|为仅处理一个盒子时指定$z$方向上的起始坐标使用。
+函数的思路即为先计算系数，再对各个数据点赋值。
+
+绘制得到$z\in [-1, 1], p\in [-20, 20]$中的分布函数于\autoref{fig:1}。
+可以看到，高处 ($T_2$) 的盒子中的动量弥散较大。
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/1.pdf}
+    \caption{初始无重力时的分布函数}
+    \label{fig:1}
+\end{figure}
+
+\section{无重力的演化}
+下面考虑离散化求解方程 \eqref{eq:boltzmann}，使用迎风格式求解。
+
+首先是网格离散化。
+取$p$绝对值最大为20，在$p, z$上各均匀分为200段，取各小区间的中心为数据点。
+注意到，对时间步长$\tau$，有要求
+\begin{equation}
+    \tau \le \frac{h_z}{p}, \quad \tau \le \frac{h_p}{F},
+\end{equation}
+可得到，前者在$p=20$时对$\tau$加了最强的限制，$\tau\le 0.0005$。
+保险起见，取$\tau = 0.0005$。
+其他一些预定义参数如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:grid-end:grid]{2_Boltzmann_eq.cpp}
+}
+其中\verb|p_s|, \verb|z_s|为各格点的$p, z$坐标，初始化如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:init-end:init]{2_Boltzmann_eq.cpp}
+}
+
+\subsection{迎风格式}
+\eqref{eq:boltzmann} 即
+\begin{equation}
+    \pdv{f}{t} + p\pdv{z} f - g\pdv{p} f = -\nu (f -f_0), \tag{\ref{eq:boltzmann}b}
+\end{equation}
+按迎风格式离散化可得
+\begin{equation}\label{eq:upwind}
+    \frac{f_{ij}^{(m+1)} - f_{ij}^{(m)}}{\tau}
+    + p_{ij}^{(m)} \pdv{z} f
+    - g \frac{f_{i,j+1}^{(m)} - f_{ij}^{(m)}}{h_p}
+    = -\nu (f_{ij}^{(m)} - f_{ij}^{(\text{eq})}),
+\end{equation}
+其中
+\begin{equation}
+    \pdv{z} f = \begin{cases}
+        \frac{f_{i,j}^{(m)} - f_{i-1,j}^{(m)}}{h_z}, & p_{ij}^{(m)} \ge 0,\\
+        \frac{f_{i+1,j}^{(m)} - f_{i,j}^{(m)}}{h_z}, & p_{ij}^{(m)} \le 0.
+    \end{cases}
+\end{equation}
+
+根据式 \eqref{eq:upwind}，可得到单步迭代的函数
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:step_dec-end:step_dec]{2_Boltzmann_eq.cpp}
+    \lstinputlisting[linerange=beg:step-end:step]{2_Boltzmann_eq.cpp}
+}
+
+其中有涉及到关于边界条件的处理，处理方式如下。
+\begin{enumerate}
+    \item 对于$p$方向上越界的情况，直接截断。
+    \item 对于$x$方向上越界的情况，假设其访问的越界格点为$x$值相同，而$p$值相反的格点。根据迎风格式的特点，这一格点恰对应将要被弹性反弹回来的粒子。
+\end{enumerate}
+
+\subsection{分布函数的演化}
+使用如下函数生成稳定分布\verb|*p_equi_array|，以及初始的分布\verb|*current|。
+使用\verb|*next_frame|临时存储下一帧的内容。
+每10帧（0.0040时间单位）输出一次数据，输出前15次，迭代到200帧（0.0800时间单位）。
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=end:init-end:problem_2]{2_Boltzmann_eq.cpp}
+}
+其中\verb|output|函数为自定义的二进制输出。
+此外，以上代码还计算了$H(t)$（见后）。
+
+计算得到的分布函数见\autoref{fig:f_no_g}。
+由于到0.0280时间单位时，肉眼已难以看出与平衡态的区别，故仅绘制前8张。
+注意每一张的色标不同。
+
+\begin{figure}
+    \centering
+    \subfloat{
+        \includegraphics[width=0.48\textwidth]{figures/2_0.0000.pdf}
+    }
+    \subfloat{
+        \includegraphics[width=0.48\textwidth]{figures/2_0.0040.pdf}
+    }\\
+    \subfloat{
+        \includegraphics[width=0.48\textwidth]{figures/2_0.0080.pdf}
+    }
+    \subfloat{
+        \includegraphics[width=0.48\textwidth]{figures/2_0.0120.pdf}
+    }\\
+    \subfloat{
+        \includegraphics[width=0.48\textwidth]{figures/2_0.0160.pdf}
+    }
+    \subfloat{
+        \includegraphics[width=0.48\textwidth]{figures/2_0.0200.pdf}
+    }\\
+    \subfloat{
+        \includegraphics[width=0.48\textwidth]{figures/2_0.0240.pdf}
+    }
+    \subfloat{
+        \includegraphics[width=0.48\textwidth]{figures/2_0.0280.pdf}
+    }
+    \caption{无重力时，分布函数$f$的演化}
+    \label{fig:f_no_g}
+\end{figure}
+
+可以看到，图上出现了“顺时针”的混合，最后变为均匀的、$p$上的高斯分布。
+
+将$z$或$p$方向上进行求和，得到不同时间的$p$上或$z$上的分布函数于\autoref{fig:f_zp_no_g}。
+可以看到，由于升温，$p$上的高斯分布峰高降低、展宽增大。
+$x$上的分布则为一个向两侧传播、最终重新平缓的震荡。
+
+\begin{figure}
+    \centering
+    \subfloat[分布函数与$z$的关系]{
+        \includegraphics[width=0.85\textwidth]{figures/2_f_z.pdf}
+    }\\
+    \subfloat[分布函数与$p$的关系]{
+        \includegraphics[width=0.85\textwidth]{figures/2_f_p.pdf}
+    }
+    \caption{无重力时，分布函数$f$的演化}
+    \label{fig:f_zp_no_g}
+\end{figure}
+
+\subsection{\texorpdfstring{$H(t)$}{H(t)}的演化}
+前面的代码中调用了计算$H(t)$的函数\verb|H_status()|，定义如下
+{
+    \linespread{1.0}
+    \lstinputlisting[linerange=beg:H-end:H]{2_Boltzmann_eq.cpp}
+}
+
+得到的本小题中$H(t)$的演化如\autoref{fig:H_no_g} 所示。
+$H(t)$最后大致稳定于$-6.23$。
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/2_H.pdf}
+    \caption{无重力时，$H$的演化}
+    \label{fig:H_no_g}
+\end{figure}
+
+\section{有重力的演化}
+有重力时，初始的分布函数为
+\begin{equation}
+    f(z, p, 0) = \begin{cases}
+        \frac{1}{\sqrt{2\pi T_1}}\frac{g/2T}{\exp(-g/2T)\sinh(g/2T)} \exp(-\frac{p^2}{2T_1}-\frac{gz}{T_1}), & z < 0,\\
+        \frac{1}{\sqrt{2\pi T_2}}\frac{g/2T}{\exp(g/2T)\sinh(g/2T)} \exp(-\frac{p^2}{2T_2}-\frac{gz}{T_2}), & z \ge 0,\\
+    \end{cases}
+\end{equation}
+最终稳态为
+\begin{equation}
+    f^{(\text{eq})}(z, p, 0) =
+        \frac{1}{\sqrt{2\pi T_3}}
+        \frac{g/T}{\sinh(g/T)}
+        \exp(-\frac{p^2}{2T_3}-\frac{gz}{T_3}).
+\end{equation}
+只需向前面定义的接口中传入重力加速度$g$，即可容易求解。
+
+得到的分布函数随时间的变化如\autoref{fig:f_g} 所示。
+可以发现，初始时（$t=0$），粒子堆积在两个盒子的底端，同时温度较低的盒子中粒子在动量空间上更为密集。
+
+\begin{figure}
+    \centering
+    \subfloat{
+        \includegraphics[width=0.48\textwidth]{figures/3_0.0000.pdf}
+    }
+    \subfloat{
+        \includegraphics[width=0.48\textwidth]{figures/3_0.0040.pdf}
+    }\\
+    \subfloat{
+        \includegraphics[width=0.48\textwidth]{figures/3_0.0080.pdf}
+    }
+    \subfloat{
+        \includegraphics[width=0.48\textwidth]{figures/3_0.0120.pdf}
+    }\\
+    \subfloat{
+        \includegraphics[width=0.48\textwidth]{figures/3_0.0160.pdf}
+    }
+    \subfloat{
+        \includegraphics[width=0.48\textwidth]{figures/3_0.0200.pdf}
+    }\\
+    \subfloat{
+        \includegraphics[width=0.48\textwidth]{figures/3_0.0240.pdf}
+    }
+    \subfloat{
+        \includegraphics[width=0.48\textwidth]{figures/3_0.0280.pdf}
+    }
+    \caption{有重力时，分布函数$f$的演化}
+    \label{fig:f_g}
+\end{figure}
+
+随着时间的推移，同样是经过相空间上一个“顺时针”的演化，粒子到达了堆积到大盒子底部的分布。
+
+更清晰的$p$上或$z$上的分布函数见\autoref{fig:f_zp_g}。
+可以看到，由于升温，$p$上的高斯分布峰高降低、展宽增大。
+$x$上的分布则由两个分离的指数分布演化为同一个指数分布。
+
+\begin{figure}
+    \centering
+    \subfloat[分布函数与$z$的关系]{
+        \includegraphics[width=0.85\textwidth]{figures/3_f_z.pdf}
+    }\\
+    \subfloat[分布函数与$p$的关系]{
+        \includegraphics[width=0.85\textwidth]{figures/3_f_p.pdf}
+    }
+    \caption{有重力时，分布函数$f$的演化}
+    \label{fig:f_zp_g}
+\end{figure}
+
+$H(t)$的演化见\autoref{fig:H_g}。
+$H(t)$最后大致稳定于$-6.20$。
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/3_H.pdf}
+    \caption{有重力时，$H$的演化}
+    \label{fig:H_g}
+\end{figure}
+
+\end{document}
